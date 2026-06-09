@@ -3,6 +3,8 @@
 Free, no-login web tools for new UK limited company directors — the deadlines, taxes
 and obligations nobody hands you a manual for.
 
+**Live:** https://guy841.github.io/founders-toolkit/
+
 Every tool is a **single self-contained HTML file**: no build step, no server, no
 database. Open it in a browser, host it on any static host, or embed it in another
 site via an `<iframe>`.
@@ -17,8 +19,10 @@ founders-toolkit/
     │   └── index.html             # Director's Deadline Copilot (live)
     ├── corporation-tax/
     │   └── index.html             # Corporation Tax Estimator (live)
-    └── company-records/
-        └── index.html             # Company Records — private on-device store (live)
+    ├── company-records/
+    │   └── index.html             # Company Records — private on-device store (live)
+    └── setup-checklist/
+        └── index.html             # New Company Setup Checklist (live)
 ```
 
 ## Tools
@@ -29,7 +33,7 @@ founders-toolkit/
 | **Corporation Tax Estimator** | ✅ Live | Profit → tax owed, including 19%/25% bands and marginal relief. |
 | **Company Records** | ✅ Live | A private, on-device store for key company details (CRN, UTR, VAT, PAYE, insurance, bank, advisers) with backup export/import and print. |
 | **Salary vs Dividends Optimiser** | 🚧 Planned | Most tax-efficient director's salary/dividend split. |
-| **New Company Setup Checklist** | 🚧 Planned | Personalised list of registrations, insurances and legal duties. |
+| **New Company Setup Checklist** | ✅ Live | Personalised list of registrations, insurances and legal duties, with progress tracking. |
 | **Insurance Needs Check** | 🚧 Planned | Which cover is legally required vs advised, by trade. |
 | **VAT Registration Checker** | 🚧 Planned | Rolling 12-month turnover vs the £90k threshold. |
 

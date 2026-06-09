@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>New Company Setup Checklist — Founder's Toolkit</title>
+<meta name="description" content="A personalised checklist of the registrations, insurances, tax steps and legal duties a new UK limited company needs — including the ones nobody warns you about." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #F9F9F7; --card: #FFFFFF; --moss: #4F6354; --moss-dark: #41513F;
+    --text: #1C1C1A; --text-2: #5C5C58; --muted: #8A8A85; --border: #E5E5DF; --input-bg: #F2F2F0;
+    --green-bg: #EAF0EB; --green-bd: #C3D6C8; --green-tx: #2B5332;
+    --amber-bg: #FDF3E1; --amber-bd: #EAD5AE; --amber-tx: #995C14;
+    --red-bg: #F9E8E8; --red-bd: #E6C5C5; --red-tx: #9E2A27;
+    --radius-card: 1rem; --radius-btn: 0.75rem;
+    --shadow: 0 1px 2px rgba(28,28,26,.04), 0 8px 24px rgba(28,28,26,.05);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Manrope", system-ui, sans-serif; font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: "Outfit", sans-serif; letter-spacing: -0.01em; }
+  a { color: var(--moss); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo img { height: 38px; width: auto; display: block; }
+  .logo .wordmark { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 700; color: var(--moss); font-size: 1.05rem; letter-spacing: -0.02em; }
+  .logo .mark { width: 32px; height: 32px; border-radius: 9px; background: var(--moss); color: #fff; display: grid; place-items: center; }
+  .back { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.85rem; text-decoration: none; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+  .back:hover { color: var(--moss); }
+  .back svg { width: 16px; height: 16px; }
+
+  .hero { margin-bottom: 24px; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 700; margin: 0 0 8px; }
+  .hero p { color: var(--text-2); margin: 0; max-width: 680px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); padding: 22px; }
+
+  /* Questions */
+  .q-card { margin-bottom: 24px; }
+  .q-title { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 16px; }
+  .q-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 680px) { .q-grid { grid-template-columns: 1fr 1fr; } }
+  .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 12px; background: var(--input-bg); border-radius: 0.7rem; }
+  .switch-row .lbl { font-weight: 600; font-size: 0.9rem; }
+  .switch-row .sub { font-weight: 400; font-size: 0.78rem; color: var(--muted); display: block; margin-top: 1px; }
+  .switch { position: relative; flex: none; width: 46px; height: 26px; border-radius: 999px; background: #D7D7D1; border: none; cursor: pointer; padding: 0; transition: background .18s ease; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .18s ease; }
+  .switch[aria-checked="true"] { background: var(--moss); }
+  .switch[aria-checked="true"]::after { transform: translateX(20px); }
+  .switch:focus-visible { outline: 2px solid var(--moss); outline-offset: 2px; }
+
+  /* Progress */
+  .progress-wrap { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+  .progress-text { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 1.05rem; }
+  .progress-text span { color: var(--moss); }
+  .bar { flex: 1; min-width: 160px; height: 10px; background: var(--input-bg); border-radius: 999px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--moss); border-radius: 999px; transition: width .3s ease; }
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.85rem; border: 1px solid var(--border); border-radius: var(--radius-btn); cursor: pointer; padding: 9px 14px; min-height: 42px; background: var(--card); color: var(--text); transition: background .14s; }
+  .btn:hover { background: var(--input-bg); }
+  .btn svg { width: 16px; height: 16px; }
+
+  /* Checklist sections */
+  .section { margin-bottom: 26px; }
+  .section h2 { font-size: 1.25rem; font-weight: 700; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+  .section .sec-sub { color: var(--muted); font-size: 0.85rem; margin: 0 0 14px; }
+  .items { display: grid; gap: 12px; }
+
+  .item { display: flex; gap: 14px; align-items: flex-start; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 16px 18px; box-shadow: var(--shadow); transition: opacity .15s; }
+  .item.done { opacity: .62; }
+  .item.done .it-title { text-decoration: line-through; }
+  .check { flex: none; margin-top: 2px; }
+  .check input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .check .box { width: 24px; height: 24px; border: 2px solid var(--border); border-radius: 7px; display: grid; place-items: center; cursor: pointer; transition: background .14s, border-color .14s; background: var(--card); }
+  .check .box svg { width: 15px; height: 15px; color: #fff; opacity: 0; transition: opacity .12s; }
+  .check input:checked + .box { background: var(--moss); border-color: var(--moss); }
+  .check input:checked + .box svg { opacity: 1; }
+  .check input:focus-visible + .box { outline: 2px solid var(--moss); outline-offset: 2px; }
+
+  .it-main { min-width: 0; flex: 1; }
+  .it-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 4px; }
+  .it-title { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 1.02rem; }
+  .badge { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+  .badge.law { background: var(--red-bg); color: var(--red-tx); border: 1px solid var(--red-bd); }
+  .badge.required { background: var(--amber-bg); color: var(--amber-tx); border: 1px solid var(--amber-bd); }
+  .badge.recommended { background: var(--green-bg); color: var(--green-tx); border: 1px solid var(--green-bd); }
+  .it-desc { font-size: 0.88rem; color: var(--text-2); margin: 0 0 8px; }
+  .it-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 0.8rem; }
+  .it-meta .cost { color: var(--muted); }
+  .it-meta a { font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+  .it-meta a:hover { text-decoration: underline; }
+  .it-meta a svg { width: 13px; height: 13px; }
+
+  .disclaimer { margin-top: 12px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 16px; }
+
+  @media print {
+    .topbar, .q-card, .toolbar, .switch, .back { display: none !important; }
+    .item { box-shadow: none; break-inside: avoid; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <a class="logo" href="../../index.html" data-testid="logo" aria-label="Founder's Toolkit home">
+      <img id="logo-img" alt="Logo" style="display:none" />
+      <span class="wordmark" id="logo-fallback">
+        <span class="mark" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg></span>
+        Founder's&nbsp;Toolkit
+      </span>
+    </a>
+    <a class="back" href="../../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> All tools</a>
+  </div>
+
+  <header class="hero">
+    <h1>New Company Setup Checklist</h1>
+    <p>Tell us a little about your company and we'll build a tailored list of what to register, insure and put in place — flagging what's required by law versus simply good practice. Your progress is saved on this device.</p>
+  </header>
+
+  <div class="card q-card">
+    <p class="q-title">Tell us about your business</p>
+    <div class="q-grid" id="questions"></div>
+  </div>
+
+  <div class="progress-wrap">
+    <span class="progress-text" id="progress-text"></span>
+    <span class="bar"><i id="progress-bar"></i></span>
+    <span class="toolbar">
+      <button type="button" class="btn" id="print-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print / PDF</button>
+      <button type="button" class="btn" id="reset-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8"/><path d="M3 3v5h5"/></svg> Reset ticks</button>
+    </span>
+  </div>
+
+  <div id="checklist"></div>
+
+  <div class="disclaimer">
+    This checklist covers common obligations for UK limited companies and is general information, not legal or tax advice. Requirements depend on your specific circumstances — confirm anything important with HMRC, Companies House, the relevant regulator, or a qualified adviser. Thresholds and rules current for the 2024/25 tax year.
+  </div>
+
+</div>
+
+<script>
+/* CONFIG — set your own logo */
+const LOGO_URL = "";
+(function(){ if(LOGO_URL){ const i=document.getElementById("logo-img"); i.src=LOGO_URL; i.onload=()=>{i.style.display="block";document.getElementById("logo-fallback").style.display="none";}; i.onerror=()=>{i.style.display="none";document.getElementById("logo-fallback").style.display="flex";}; } })();
+
+const STORAGE_KEY = "founders-toolkit:setup-checklist:v1";
+
+/* ---------- Questions ---------- */
+const QUESTIONS = [
+  { key: "employees",   label: "Do you (or will you) have employees?",        sub: "Including yourself on a payroll" },
+  { key: "publicFacing",label: "Do clients or the public visit you, or you them?", sub: "Premises, events, client sites" },
+  { key: "advice",      label: "Do you provide professional advice or services?", sub: "Consultancy, design, accounting, etc." },
+  { key: "products",    label: "Do you sell physical products?",               sub: "Goods sold to businesses or consumers" },
+  { key: "data",        label: "Do you handle customers' personal data?",      sub: "Names, emails, payment details", def: true },
+  { key: "online",      label: "Do you operate online or take card payments?", sub: "Website, e-commerce, stored data" },
+  { key: "multiOwner",  label: "More than one shareholder or director?",       sub: "Affects agreements & control" },
+  { key: "highTurnover",label: "Will turnover approach £90,000 a year?",       sub: "The VAT registration threshold" },
+  { key: "construction",label: "Do you work in construction?",                 sub: "May fall under CIS" },
+  { key: "importExport",label: "Do you import or export goods?",               sub: "Needs an EORI number" },
+];
+
+/* ---------- Checklist items ---------- */
+const DEADLINE_TOOL = "../deadline-copilot/index.html";
+const SECTIONS = [
+  { key: "registration", title: "Registrations & set-up", sub: "Getting the company onto the right registers." },
+  { key: "tax",          title: "Tax", sub: "Telling HMRC what you're liable for." },
+  { key: "employer",     title: "Employing people", sub: "Legal duties the moment you take on staff." },
+  { key: "insurance",    title: "Insurance", sub: "Some is required by law; the rest protects the business." },
+  { key: "data",         title: "Data & intellectual property", sub: "Protecting information and your brand." },
+  { key: "good",         title: "Good practice", sub: "Not required, but most founders are glad they did these." },
+];
+
+const show = {
+  always: () => true,
+};
+
+const ITEMS = [
+  // Registrations & set-up
+  { id: "incorporate", cat: "registration", level: "law", title: "Register the company with Companies House",
+    desc: "You'll have done this if the company already exists. Keep your incorporation certificate and company number to hand.",
+    link: "https://www.gov.uk/limited-company-formation", linkLabel: "gov.uk", cost: "£50 online", show: () => true },
+  { id: "authcode", cat: "registration", level: "required", title: "Get your Companies House authentication code",
+    desc: "The code you need to file online (confirmation statements, accounts, changes). Request it early — it's posted to your registered office.",
+    link: "https://www.gov.uk/guidance/company-authentication-codes-for-online-filing", linkLabel: "gov.uk", cost: "Free", show: () => true },
+  { id: "bank", cat: "registration", level: "required", title: "Open a business bank account",
+    desc: "A limited company is a separate legal entity — its money must be kept separate from your personal account.",
+    cost: "£0–£15/mo", show: () => true },
+  { id: "records", cat: "registration", level: "law", title: "Keep proper accounting & company records",
+    desc: "You must keep accounting records and statutory registers (members, directors, and the PSC register of people with significant control).",
+    link: "https://www.gov.uk/running-a-limited-company/company-and-accounting-records", linkLabel: "gov.uk", cost: "—", show: () => true },
+  { id: "deadlines", cat: "registration", level: "law", title: "Diarise your filing deadlines",
+    desc: "Annual accounts and the confirmation statement must be filed on time. Use the Deadline Copilot to calculate yours.",
+    link: DEADLINE_TOOL, linkLabel: "Open Deadline Copilot", cost: "—", show: () => true },
+  { id: "accountant", cat: "registration", level: "recommended", title: "Appoint an accountant",
+    desc: "Not required, but most directors save more than the fee in tax, time and avoided penalties.",
+    cost: "varies", show: () => true },
+
+  // Tax
+  { id: "corptax", cat: "tax", level: "law", title: "Register for Corporation Tax with HMRC",
+    desc: "You must register within 3 months of starting to do business (trading, advertising, employing, etc.).",
+    link: "https://www.gov.uk/corporation-tax", linkLabel: "gov.uk", cost: "Free", show: () => true },
+  { id: "vat", cat: "tax", level: "required", title: "Register for VAT",
+    desc: "Mandatory once VAT-taxable turnover exceeds £90,000 in any rolling 12 months. You can also register voluntarily below that.",
+    link: "https://www.gov.uk/vat-registration", linkLabel: "gov.uk", cost: "Free", show: (a) => a.highTurnover || a.products },
+  { id: "sa", cat: "tax", level: "recommended", title: "Check if you need Self Assessment",
+    desc: "Directors often need to file a personal Self Assessment return — for example if you take dividends. Register if so.",
+    link: "https://www.gov.uk/register-for-self-assessment", linkLabel: "gov.uk", cost: "Free", show: () => true },
+  { id: "cis", cat: "tax", level: "required", title: "Register for the Construction Industry Scheme (CIS)",
+    desc: "Contractors and most subcontractors in construction must register for CIS with HMRC.",
+    link: "https://www.gov.uk/what-is-the-construction-industry-scheme", linkLabel: "gov.uk", cost: "Free", show: (a) => a.construction },
+  { id: "eori", cat: "tax", level: "required", title: "Get an EORI number",
+    desc: "You need an EORI number to move goods into or out of the UK.",
+    link: "https://www.gov.uk/eori", linkLabel: "gov.uk", cost: "Free", show: (a) => a.importExport },
+
+  // Employing people
+  { id: "paye", cat: "employer", level: "law", title: "Register as an employer & set up PAYE",
+    desc: "Register with HMRC before your first payday and run payroll to deduct tax and National Insurance.",
+    link: "https://www.gov.uk/register-employer", linkLabel: "gov.uk", cost: "Free", show: (a) => a.employees },
+  { id: "pension", cat: "employer", level: "law", title: "Set up a workplace pension (auto-enrolment)",
+    desc: "Every employer has automatic-enrolment duties from the first member of staff, and must submit a declaration of compliance.",
+    link: "https://www.thepensionsregulator.gov.uk/en/employers", linkLabel: "Pensions Regulator", cost: "Employer contributions", show: (a) => a.employees },
+  { id: "rtw", cat: "employer", level: "law", title: "Carry out right-to-work checks",
+    desc: "You must check every employee has the legal right to work in the UK before they start.",
+    link: "https://www.gov.uk/check-job-applicant-right-to-work", linkLabel: "gov.uk", cost: "Free", show: (a) => a.employees },
+  { id: "contracts", cat: "employer", level: "law", title: "Give a written statement of employment",
+    desc: "Employees and workers are entitled to a written statement of main terms on or before day one.",
+    link: "https://www.gov.uk/employment-contracts-and-conditions", linkLabel: "gov.uk", cost: "—", show: (a) => a.employees },
+
+  // Insurance
+  { id: "el", cat: "insurance", level: "law", title: "Employers' liability insurance",
+    desc: "Legally required as soon as you employ anyone (with very few exceptions). Fines can reach £2,500 for each day uninsured.",
+    link: "https://www.gov.uk/employers-liability-insurance", linkLabel: "gov.uk", cost: "from ~£60/yr", show: (a) => a.employees },
+  { id: "pl", cat: "insurance", level: "recommended", title: "Public liability insurance",
+    desc: "Covers claims if a member of the public or client is injured, or their property is damaged, by your business.",
+    cost: "from ~£60/yr", show: (a) => a.publicFacing || a.products },
+  { id: "pi", cat: "insurance", level: "recommended", title: "Professional indemnity insurance",
+    desc: "Covers claims that your advice, services or designs caused a client financial loss. Some regulators/clients require it.",
+    cost: "varies", show: (a) => a.advice },
+  { id: "product", cat: "insurance", level: "recommended", title: "Product liability insurance",
+    desc: "Covers claims that a product you sold caused injury or damage.",
+    cost: "varies", show: (a) => a.products },
+  { id: "cyber", cat: "insurance", level: "recommended", title: "Cyber insurance",
+    desc: "Worth considering if you hold customer data or trade online — covers breaches, ransomware and related costs.",
+    cost: "varies", show: (a) => a.online || a.data },
+
+  // Data & IP
+  { id: "ico", cat: "data", level: "law", title: "Pay the ICO data protection fee",
+    desc: "Most organisations that process personal data must register with the ICO and pay an annual fee — a commonly-missed legal duty.",
+    link: "https://ico.org.uk/for-organisations/data-protection-fee/", linkLabel: "ico.org.uk", cost: "£40–£60/yr", show: (a) => a.data || a.online || a.employees },
+  { id: "privacy", cat: "data", level: "recommended", title: "Publish a privacy notice & meet UK GDPR basics",
+    desc: "Tell people how you use their data and put basic data-protection practices in place.",
+    link: "https://ico.org.uk/for-organisations/", linkLabel: "ico.org.uk", cost: "—", show: (a) => a.data || a.online },
+  { id: "trademark", cat: "data", level: "recommended", title: "Protect your brand & domain",
+    desc: "Register key domain names, and consider a trademark to protect your company or product name.",
+    link: "https://www.gov.uk/how-to-register-a-trade-mark", linkLabel: "gov.uk", cost: "from £170", show: () => true },
+
+  // Good practice
+  { id: "shareholders", cat: "good", level: "recommended", title: "Put a shareholders' agreement in place",
+    desc: "With more than one owner, agree up front what happens if someone wants out, dies, or you disagree.",
+    cost: "varies", show: (a) => a.multiOwner },
+  { id: "taxpot", cat: "good", level: "recommended", title: "Set aside money for tax",
+    desc: "Keep Corporation Tax (and VAT, if registered) in a separate pot from day one — the classic year-one cash-flow trap.",
+    cost: "—", show: () => true },
+  { id: "duties", cat: "good", level: "recommended", title: "Understand your director's responsibilities",
+    desc: "As a director you have legal duties to the company. Know what you're signing up for.",
+    link: "https://www.gov.uk/running-a-limited-company/directors-responsibilities", linkLabel: "gov.uk", cost: "—", show: () => true },
+];
+
+/* ---------- State ---------- */
+let state = { answers: {}, done: {} };
+(function loadState(){
+  try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); if (s) state = { answers: s.answers || {}, done: s.done || {} }; } catch(e){}
+  QUESTIONS.forEach(q => { if (state.answers[q.key] === undefined && q.def) state.answers[q.key] = true; });
+})();
+function saveState(){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){} }
+
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+const extLink = (href) => /^https?:/.test(href);
+
+/* ---------- Render questions ---------- */
+function renderQuestions(){
+  document.getElementById("questions").innerHTML = QUESTIONS.map(q => `
+    <div class="switch-row">
+      <span><span class="lbl">${esc(q.label)}</span><span class="sub">${esc(q.sub)}</span></span>
+      <button type="button" class="switch" role="switch" data-q="${q.key}" aria-checked="${state.answers[q.key] ? "true" : "false"}" aria-label="${esc(q.label)}"></button>
+    </div>`).join("");
+}
+
+/* ---------- Render checklist ---------- */
+const LEVEL_LABEL = { law: "Required by law", required: "Required", recommended: "Recommended" };
+function renderChecklist(){
+  const a = state.answers;
+  const visible = ITEMS.filter(it => it.show(a));
+  const container = document.getElementById("checklist");
+  let html = "";
+  SECTIONS.forEach(sec => {
+    const items = visible.filter(it => it.cat === sec.key);
+    if (!items.length) return;
+    html += `<section class="section"><h2>${esc(sec.title)}</h2><p class="sec-sub">${esc(sec.sub)}</p><div class="items">`;
+    items.forEach(it => {
+      const done = !!state.done[it.id];
+      const meta = [];
+      if (it.cost) meta.push(`<span class="cost">${esc(it.cost)}</span>`);
+      if (it.link) meta.push(`<a href="${esc(it.link)}" ${extLink(it.link) ? 'target="_blank" rel="noopener"' : ''}>${esc(it.linkLabel || "Open")} ${extLink(it.link) ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' : ''}</a>`);
+      html += `
+        <div class="item ${done ? "done" : ""}" data-testid="checklist-item">
+          <label class="check">
+            <input type="checkbox" data-id="${it.id}" ${done ? "checked" : ""} />
+            <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </label>
+          <div class="it-main">
+            <div class="it-head"><span class="it-title">${esc(it.title)}</span><span class="badge ${it.level}">${LEVEL_LABEL[it.level]}</span></div>
+            <p class="it-desc">${esc(it.desc)}</p>
+            ${meta.length ? `<div class="it-meta">${meta.join("")}</div>` : ""}
+          </div>
+        </div>`;
+    });
+    html += `</div></section>`;
+  });
+  container.innerHTML = html;
+  updateProgress(visible);
+}
+
+function updateProgress(visible){
+  const total = visible.length;
+  const done = visible.filter(it => state.done[it.id]).length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById("progress-text").innerHTML = `<span>${done}</span> of ${total} done`;
+  document.getElementById("progress-bar").style.width = pct + "%";
+}
+
+/* ---------- Events ---------- */
+document.getElementById("questions").addEventListener("click", (e) => {
+  const sw = e.target.closest("[data-q]");
+  if (!sw) return;
+  const key = sw.getAttribute("data-q");
+  const on = sw.getAttribute("aria-checked") === "true";
+  sw.setAttribute("aria-checked", String(!on));
+  state.answers[key] = !on;
+  saveState();
+  renderChecklist();
+});
+
+document.getElementById("checklist").addEventListener("change", (e) => {
+  const cb = e.target.closest('input[type="checkbox"][data-id]');
+  if (!cb) return;
+  state.done[cb.getAttribute("data-id")] = cb.checked;
+  saveState();
+  const item = cb.closest(".item");
+  if (item) item.classList.toggle("done", cb.checked);
+  updateProgress(ITEMS.filter(it => it.show(state.answers)));
+});
+
+document.getElementById("print-btn").addEventListener("click", () => window.print());
+document.getElementById("reset-btn").addEventListener("click", () => {
+  if (!confirm("Clear all your ticks? Your answers above are kept.")) return;
+  state.done = {};
+  saveState();
+  renderChecklist();
+});
+
+renderQuestions();
+renderChecklist();
+</script>
+</body>
+</html>

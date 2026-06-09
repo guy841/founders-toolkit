@@ -15,8 +15,10 @@ founders-toolkit/
 └── tools/
     ├── deadline-copilot/
     │   └── index.html             # Director's Deadline Copilot (live)
-    └── corporation-tax/
-        └── index.html             # Corporation Tax Estimator (live)
+    ├── corporation-tax/
+    │   └── index.html             # Corporation Tax Estimator (live)
+    └── company-records/
+        └── index.html             # Company Records — private on-device store (live)
 ```
 
 ## Tools
@@ -25,6 +27,7 @@ founders-toolkit/
 |------|--------|--------------|
 | **Deadline Copilot** | ✅ Live | Calculates every company filing & payment deadline (accounts, Corporation Tax, confirmation statement, VAT, PAYE, Self Assessment), counted down from today, with `.ics` calendar export. |
 | **Corporation Tax Estimator** | ✅ Live | Profit → tax owed, including 19%/25% bands and marginal relief. |
+| **Company Records** | ✅ Live | A private, on-device store for key company details (CRN, UTR, VAT, PAYE, insurance, bank, advisers) with backup export/import and print. |
 | **Salary vs Dividends Optimiser** | 🚧 Planned | Most tax-efficient director's salary/dividend split. |
 | **New Company Setup Checklist** | 🚧 Planned | Personalised list of registrations, insurances and legal duties. |
 | **Insurance Needs Check** | 🚧 Planned | Which cover is legally required vs advised, by trade. |

@@ -25,8 +25,10 @@ founders-toolkit/
     │   └── index.html             # New Company Setup Checklist (live)
     ├── insurance-check/
     │   └── index.html             # Insurance Needs Check (live)
-    └── salary-dividends/
-        └── index.html             # Salary vs Dividends Optimiser + director's loan (live)
+    ├── salary-dividends/
+    │   └── index.html             # Salary vs Dividends Optimiser + director's loan (live)
+    └── vat-checker/
+        └── index.html             # VAT Registration Checker (live)
 ```
 
 ## Tools
@@ -39,7 +41,7 @@ founders-toolkit/
 | **Salary vs Dividends Optimiser** | ✅ Live | Most tax-efficient director's salary/dividend split, plus a director's-loan comparison (BIK & s455). |
 | **New Company Setup Checklist** | ✅ Live | Personalised list of registrations, insurances and legal duties, with progress tracking. |
 | **Insurance Needs Check** | ✅ Live | Which cover is legally required vs advised, based on what the business does. |
-| **VAT Registration Checker** | 🚧 Planned | Rolling 12-month turnover vs the £90k threshold. |
+| **VAT Registration Checker** | ✅ Live | Rolling 12-month turnover vs the £90k threshold, the forward-look test, and voluntary registration. |
 
 ## Branding & configuration
 

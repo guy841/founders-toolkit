@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Do I Need to Register for VAT? — Founder's Toolkit</title>
+<meta name="description" content="Check whether your UK business needs to register for VAT against the £90,000 threshold — the rolling 12-month test and the next-30-days test — plus voluntary registration." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #F9F9F7; --card: #FFFFFF; --moss: #4F6354; --moss-dark: #41513F;
+    --text: #1C1C1A; --text-2: #5C5C58; --muted: #8A8A85; --border: #E5E5DF; --input-bg: #F2F2F0;
+    --green-bg: #EAF0EB; --green-bd: #C3D6C8; --green-tx: #2B5332;
+    --amber-bg: #FDF3E1; --amber-bd: #EAD5AE; --amber-tx: #995C14;
+    --red-bg: #F9E8E8; --red-bd: #E6C5C5; --red-tx: #9E2A27;
+    --radius-card: 1rem; --radius-btn: 0.75rem;
+    --shadow: 0 1px 2px rgba(28,28,26,.04), 0 8px 24px rgba(28,28,26,.05);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Manrope", system-ui, sans-serif; font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: "Outfit", sans-serif; letter-spacing: -0.01em; }
+  a { color: var(--moss); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo img { height: 38px; width: auto; display: block; }
+  .logo .wordmark { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 700; color: var(--moss); font-size: 1.05rem; letter-spacing: -0.02em; }
+  .logo .mark { width: 32px; height: 32px; border-radius: 9px; background: var(--moss); color: #fff; display: grid; place-items: center; }
+  .back { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.85rem; text-decoration: none; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+  .back:hover { color: var(--moss); }
+  .back svg { width: 16px; height: 16px; }
+
+  .hero { margin-bottom: 24px; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 700; margin: 0 0 8px; }
+  .hero p { color: var(--text-2); margin: 0; max-width: 680px; }
+
+  .grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  @media (min-width: 880px) { .grid { grid-template-columns: 5fr 7fr; align-items: start; } }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); padding: 22px; }
+
+  .field { margin-bottom: 18px; }
+  .field label.lbl { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 7px; }
+  .field .hint { font-size: 0.78rem; color: var(--muted); margin-top: 5px; }
+  .money { position: relative; }
+  .money .sym { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 600; pointer-events: none; }
+  input[type=text] { width: 100%; border: 1px solid var(--border); border-radius: 0.6rem; background: var(--input-bg); padding: 12px 14px 12px 28px; font: inherit; font-size: 1rem; color: var(--text); min-height: 48px; transition: border-color .15s, box-shadow .15s; }
+  input:focus { outline: none; border-color: var(--moss); box-shadow: 0 0 0 3px rgba(79,99,84,.15); }
+  input.invalid { border-color: var(--red-bd); background: var(--red-bg); }
+
+  .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 0; }
+  .switch-row .lbl { font-weight: 600; font-size: 0.9rem; }
+  .switch-row .sub { font-weight: 400; font-size: 0.78rem; color: var(--muted); display: block; margin-top: 1px; }
+  .switch { position: relative; flex: none; width: 46px; height: 26px; border-radius: 999px; background: #D7D7D1; border: none; cursor: pointer; padding: 0; transition: background .18s ease; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .18s ease; }
+  .switch[aria-checked="true"] { background: var(--moss); }
+  .switch[aria-checked="true"]::after { transform: translateX(20px); }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.95rem; border: none; border-radius: var(--radius-btn); cursor: pointer; padding: 13px 20px; min-height: 48px; transition: background .15s, transform .05s; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--moss); color: #fff; width: 100%; margin-top: 4px; }
+  .btn-primary:hover { background: var(--moss-dark); }
+  .btn svg { width: 18px; height: 18px; }
+
+  .error-banner { display: flex; gap: 10px; align-items: flex-start; background: var(--red-bg); border: 1px solid var(--red-bd); color: var(--red-tx); border-radius: 0.6rem; padding: 12px 14px; margin-bottom: 16px; font-size: 0.88rem; }
+  .error-banner svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+
+  .result-empty { border: 1.5px dashed var(--border); border-radius: var(--radius-card); padding: 56px 28px; text-align: center; color: var(--muted); }
+  .result-empty svg { width: 40px; height: 40px; margin-bottom: 14px; color: #C8C8C2; }
+  .result-empty .big { font-family: "Outfit", sans-serif; font-weight: 600; color: var(--text-2); font-size: 1.05rem; }
+
+  .headline { border-radius: var(--radius-card); padding: 22px; margin-bottom: 18px; border: 1px solid; }
+  .headline.green { background: var(--green-bg); border-color: var(--green-bd); color: var(--green-tx); }
+  .headline.amber { background: var(--amber-bg); border-color: var(--amber-bd); color: var(--amber-tx); }
+  .headline.red { background: var(--red-bg); border-color: var(--red-bd); color: var(--red-tx); }
+  .headline .label { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; opacity: .85; margin-bottom: 6px; }
+  .headline .amount { font-family: "Outfit", sans-serif; font-weight: 700; font-size: clamp(1.5rem, 4.5vw, 2.1rem); line-height: 1.1; }
+  .headline .sub { font-size: 0.9rem; margin-top: 8px; opacity: .92; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  @media (max-width: 460px) { .split { grid-template-columns: 1fr; } }
+  .split .s { background: var(--input-bg); border-radius: 0.7rem; padding: 13px 15px; }
+  .split .k { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .split .v { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 1.15rem; margin-top: 3px; }
+
+  h3.block-title { font-size: 1.02rem; font-weight: 600; margin: 20px 0 10px; }
+  .explain { border: 1px solid var(--border); border-radius: 0.7rem; overflow: hidden; }
+  .explain .row { display: flex; gap: 11px; padding: 12px 15px; font-size: 0.88rem; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .explain .row:last-child { border-bottom: none; }
+  .explain .row svg { width: 17px; height: 17px; flex: none; margin-top: 1px; }
+  .explain .row.hit svg { color: var(--red-tx); }
+  .explain .row.ok svg { color: var(--green-tx); }
+  .explain .row .t { color: var(--text-2); }
+  .explain .row .t b { color: var(--text); }
+
+  .pros { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 520px) { .pros { grid-template-columns: 1fr; } }
+  .pros .col { border: 1px solid var(--border); border-radius: 0.7rem; padding: 13px 15px; }
+  .pros .col h4 { font-family: "Outfit", sans-serif; font-size: 0.85rem; margin: 0 0 8px; display: flex; align-items: center; gap: 6px; }
+  .pros .col h4 svg { width: 15px; height: 15px; }
+  .pros .col.up h4 { color: var(--green-tx); }
+  .pros .col.down h4 { color: var(--amber-tx); }
+  .pros ul { margin: 0; padding-left: 17px; font-size: 0.83rem; color: var(--text-2); }
+  .pros ul li { margin-bottom: 5px; }
+
+  .cross { margin-top: 18px; background: var(--green-bg); border: 1px solid var(--green-bd); color: var(--green-tx); border-radius: var(--radius-card); padding: 14px 16px; font-size: 0.86rem; display: flex; gap: 10px; align-items: flex-start; }
+  .cross svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+  .cross a { color: var(--green-tx); font-weight: 700; }
+
+  .links { margin-top: 14px; font-size: 0.85rem; }
+  .links a { font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+  .links a:hover { text-decoration: underline; }
+  .links a svg { width: 13px; height: 13px; }
+
+  .disclaimer { margin-top: 18px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 16px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <a class="logo" href="../../index.html" data-testid="logo" aria-label="Founder's Toolkit home">
+      <img id="logo-img" alt="Logo" style="display:none" />
+      <span class="wordmark" id="logo-fallback">
+        <span class="mark" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg></span>
+        Founder's&nbsp;Toolkit
+      </span>
+    </a>
+    <a class="back" href="../../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> All tools</a>
+  </div>
+
+  <header class="hero">
+    <h1>Do I Need to Register for VAT?</h1>
+    <p>Check your VAT-taxable turnover against the £90,000 registration threshold — both the rolling 12-month test and the next-30-days test — and weigh up registering voluntarily.</p>
+  </header>
+
+  <div class="grid">
+    <!-- INPUT -->
+    <form class="card" id="form" novalidate>
+      <div id="error-box"></div>
+      <div class="field">
+        <label class="lbl" for="rolling">VAT-taxable turnover, last 12 months</label>
+        <div class="money"><span class="sym">£</span><input type="text" id="rolling" data-testid="rolling" inputmode="numeric" placeholder="72,000" autocomplete="off" /></div>
+        <div class="hint">Your rolling total over the last 12 months — not the financial year. Exclude VAT-exempt sales.</div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="monthly">Typical monthly turnover <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+        <div class="money"><span class="sym">£</span><input type="text" id="monthly" data-testid="monthly" inputmode="numeric" placeholder="6,500" autocomplete="off" /></div>
+        <div class="hint">Used to show your annualised run-rate against the threshold.</div>
+      </div>
+      <div class="switch-row">
+        <span><span class="lbl">Expecting a big spike soon?</span><span class="sub">Over £90,000 in the next 30 days <em>alone</em></span></span>
+        <button type="button" class="switch" id="sw-forward" data-testid="toggle-forward" role="switch" aria-checked="false" aria-label="Forward look"></button>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="calc-btn" data-testid="calculate-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Check my VAT status
+      </button>
+
+      <div class="disclaimer">
+        Based on standard UK rules for the current £90,000 registration threshold (since 1 April 2024). Some sales are exempt or outside the scope of VAT and don't count — if you're unsure what your VAT-taxable turnover is, check with HMRC or your accountant.
+      </div>
+    </form>
+
+    <!-- RESULT -->
+    <section class="card" id="result-card" aria-live="polite">
+      <div id="result-empty" class="result-empty" data-testid="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div class="big">Enter your turnover to check your VAT status</div>
+      </div>
+      <div id="result" class="hidden"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* CONFIG — set your own logo */
+const LOGO_URL = "";
+(function(){ if(LOGO_URL){ const i=document.getElementById("logo-img"); i.src=LOGO_URL; i.onload=()=>{i.style.display="block";document.getElementById("logo-fallback").style.display="none";}; i.onerror=()=>{i.style.display="none";document.getElementById("logo-fallback").style.display="flex";}; } })();
+
+const VAT_THRESHOLD = 90000;     // registration threshold (since 1 April 2024)
+const DEREG_THRESHOLD = 88000;   // deregistration threshold
+const WATCH_FROM = 85000;        // start watching closely
+
+const gbp = (n) => "£" + Math.round(n).toLocaleString("en-GB");
+function parseMoney(s) { if (s == null) return NaN; const c = String(s).replace(/[,£\s]/g, ""); return c === "" ? NaN : Number(c); }
+function fmtInput(el) { const n = el.value.replace(/[^\d]/g, ""); el.value = n ? Number(n).toLocaleString("en-GB") : ""; }
+
+const ICON = {
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
+  ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
+};
+
+function showErrors(list) {
+  document.getElementById("error-box").innerHTML =
+    `<div class="error-banner" data-testid="error-banner">${ICON.alert}<div>${list.map(e => `<div>${e}</div>`).join("")}</div></div>`;
+}
+
+const VOLUNTARY = `
+  <h3 class="block-title">Registering voluntarily?</h3>
+  <div class="pros">
+    <div class="col up"><h4>${ICON.check} Could be worth it</h4><ul>
+      <li>Reclaim VAT on your purchases and expenses</li>
+      <li>Reclaim some VAT on things bought before registering</li>
+      <li>Looks established to larger or VAT-registered clients</li>
+      <li>Avoids a scramble if you're growing fast</li>
+    </ul></div>
+    <div class="col down"><h4>${ICON.alert} The trade-offs</h4><ul>
+      <li>You must add 20% VAT to most sales — a problem if your customers can't reclaim it</li>
+      <li>Quarterly VAT returns and Making Tax Digital admin</li>
+      <li>You collect VAT on HMRC's behalf and pay it over</li>
+    </ul></div>
+  </div>`;
+
+function render(rolling, monthly, forward) {
+  const overBackward = rolling > VAT_THRESHOLD;
+  const must = overBackward || forward;
+  const headroom = VAT_THRESHOLD - rolling;
+  const annualised = (!isNaN(monthly) && monthly > 0) ? monthly * 12 : null;
+
+  let cls, label, amount, sub;
+  if (must) {
+    cls = "red"; label = "You need to register for VAT";
+    amount = overBackward ? `You're ${gbp(rolling - VAT_THRESHOLD)} over the threshold` : "You've triggered the 30-day test";
+    sub = "Register with HMRC — see the deadline and rule below.";
+  } else if (rolling >= WATCH_FROM || (annualised && annualised > VAT_THRESHOLD)) {
+    cls = "amber"; label = "You're approaching the threshold";
+    amount = `${gbp(headroom)} of headroom left`;
+    sub = "Not required yet, but keep a close eye on your rolling 12-month total.";
+  } else {
+    cls = "green"; label = "You don't need to register yet";
+    amount = `${gbp(headroom)} below the threshold`;
+    sub = "You can still choose to register voluntarily.";
+  }
+
+  let html = `
+    <div class="headline ${cls}" data-testid="vat-status">
+      <div class="label">${label}</div>
+      <div class="amount">${amount}</div>
+      <div class="sub">${sub}</div>
+    </div>
+    <div class="split">
+      <div class="s"><div class="k">Last 12 months</div><div class="v">${gbp(rolling)}</div></div>
+      <div class="s"><div class="k">Threshold</div><div class="v">${gbp(VAT_THRESHOLD)}</div></div>
+      <div class="s"><div class="k">${must ? "Over by" : "Headroom"}</div><div class="v">${must && overBackward ? gbp(rolling - VAT_THRESHOLD) : gbp(Math.max(0, headroom))}</div></div>
+    </div>`;
+
+  // Which tests are triggered
+  html += `<h3 class="block-title">How you measure up</h3><div class="explain">`;
+  html += `<div class="row ${overBackward ? "hit" : "ok"}">${overBackward ? ICON.alert : ICON.check}<div class="t"><b>Backward look:</b> your turnover for the last 12 months is ${gbp(rolling)}. ${overBackward ? `This is over £90,000, so you <b>must register</b> — within 30 days of the end of the month you went over. Your registration takes effect on the first day of the second month after you exceeded it.` : `This is within £90,000, so this test isn't triggered.`}</div></div>`;
+  html += `<div class="row ${forward ? "hit" : "ok"}">${forward ? ICON.alert : ICON.check}<div class="t"><b>Forward look:</b> ${forward ? `you expect to go over £90,000 in the next 30 days <b>alone</b>. You <b>must register by the end of that 30-day period</b>, and you're liable for VAT from the date you became aware.` : `you don't expect to exceed £90,000 in the next 30 days alone, so this test isn't triggered.`}</div></div>`;
+  if (annualised) {
+    const over = annualised > VAT_THRESHOLD;
+    html += `<div class="row ${over && !must ? "hit" : "ok"}">${over && !must ? ICON.alert : ICON.info}<div class="t"><b>Run-rate:</b> at about ${gbp(monthly)}/month your annualised turnover is ${gbp(annualised)}. ${over ? (must ? "" : "That's above £90,000 — your rolling total is likely heading over the threshold, so keep monitoring it each month.") : "That's below the threshold at your current rate."}</div></div>`;
+  }
+  html += `</div>`;
+
+  html += VOLUNTARY;
+
+  // deregistration note
+  html += `<div class="explain" style="margin-top:14px"><div class="row ok">${ICON.info}<div class="t"><b>Already registered and shrinking?</b> You can apply to deregister if your VAT-taxable turnover will fall below the £88,000 deregistration threshold.</div></div></div>`;
+
+  html += `<div class="cross">${ICON.info}<div>Once you register, keep your VAT number and quarter dates in <a href="../company-records/index.html">Company Records</a>, and track VAT-return deadlines with the <a href="../deadline-copilot/index.html">Deadline Copilot</a>.</div></div>`;
+
+  html += `<div class="links"><a href="https://www.gov.uk/vat-registration" target="_blank" rel="noopener">Register for VAT on gov.uk ${ICON.ext}</a></div>`;
+
+  html += `<div class="disclaimer">Estimates based on standard rules. VAT-taxable turnover excludes VAT-exempt and out-of-scope sales, and special schemes (Flat Rate, margin schemes) have their own rules. Confirm your position with HMRC or your accountant.</div>`;
+
+  document.getElementById("result").innerHTML = html;
+  document.getElementById("result-empty").classList.add("hidden");
+  document.getElementById("result").classList.remove("hidden");
+}
+
+const rollingEl = document.getElementById("rolling");
+const monthlyEl = document.getElementById("monthly");
+rollingEl.addEventListener("input", () => fmtInput(rollingEl));
+monthlyEl.addEventListener("input", () => fmtInput(monthlyEl));
+document.getElementById("sw-forward").addEventListener("click", () => {
+  const b = document.getElementById("sw-forward"); b.setAttribute("aria-checked", b.getAttribute("aria-checked") === "true" ? "false" : "true");
+});
+
+document.getElementById("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  document.getElementById("error-box").innerHTML = "";
+  rollingEl.classList.remove("invalid");
+  const rolling = parseMoney(rollingEl.value);
+  const monthly = parseMoney(monthlyEl.value);
+  if (isNaN(rolling) || rolling < 0) { showErrors(["Please enter your VAT-taxable turnover for the last 12 months."]); rollingEl.classList.add("invalid"); return; }
+  if (rolling > 100000000) { showErrors(["That turnover looks too large — please check the figure."]); rollingEl.classList.add("invalid"); return; }
+  const forward = document.getElementById("sw-forward").getAttribute("aria-checked") === "true";
+  render(rolling, monthly, forward);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Insurance Needs Check — Founder's Toolkit</title>
+<meta name="description" content="Find out which business insurance your UK company needs — what's required by law (like employers' liability), what clients expect, and what's worth considering." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #F9F9F7; --card: #FFFFFF; --moss: #4F6354; --moss-dark: #41513F;
+    --text: #1C1C1A; --text-2: #5C5C58; --muted: #8A8A85; --border: #E5E5DF; --input-bg: #F2F2F0;
+    --green-bg: #EAF0EB; --green-bd: #C3D6C8; --green-tx: #2B5332;
+    --amber-bg: #FDF3E1; --amber-bd: #EAD5AE; --amber-tx: #995C14;
+    --red-bg: #F9E8E8; --red-bd: #E6C5C5; --red-tx: #9E2A27;
+    --radius-card: 1rem; --radius-btn: 0.75rem;
+    --shadow: 0 1px 2px rgba(28,28,26,.04), 0 8px 24px rgba(28,28,26,.05);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Manrope", system-ui, sans-serif; font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: "Outfit", sans-serif; letter-spacing: -0.01em; }
+  a { color: var(--moss); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo img { height: 38px; width: auto; display: block; }
+  .logo .wordmark { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 700; color: var(--moss); font-size: 1.05rem; letter-spacing: -0.02em; }
+  .logo .mark { width: 32px; height: 32px; border-radius: 9px; background: var(--moss); color: #fff; display: grid; place-items: center; }
+  .back { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.85rem; text-decoration: none; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+  .back:hover { color: var(--moss); }
+  .back svg { width: 16px; height: 16px; }
+
+  .hero { margin-bottom: 24px; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 700; margin: 0 0 8px; }
+  .hero p { color: var(--text-2); margin: 0; max-width: 680px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); padding: 22px; }
+
+  /* Questions */
+  .q-card { margin-bottom: 24px; }
+  .q-title { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 16px; }
+  .q-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 680px) { .q-grid { grid-template-columns: 1fr 1fr; } }
+  .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 12px; background: var(--input-bg); border-radius: 0.7rem; }
+  .switch-row .lbl { font-weight: 600; font-size: 0.9rem; }
+  .switch-row .sub { font-weight: 400; font-size: 0.78rem; color: var(--muted); display: block; margin-top: 1px; }
+  .switch { position: relative; flex: none; width: 46px; height: 26px; border-radius: 999px; background: #D7D7D1; border: none; cursor: pointer; padding: 0; transition: background .18s ease; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .18s ease; }
+  .switch[aria-checked="true"] { background: var(--moss); }
+  .switch[aria-checked="true"]::after { transform: translateX(20px); }
+  .switch:focus-visible { outline: 2px solid var(--moss); outline-offset: 2px; }
+
+  /* Summary + toolbar */
+  .summary-wrap { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .summary-text { font-size: 0.95rem; color: var(--text-2); flex: 1; min-width: 200px; }
+  .summary-text strong { color: var(--text); }
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.85rem; border: 1px solid var(--border); border-radius: var(--radius-btn); cursor: pointer; padding: 9px 14px; min-height: 42px; background: var(--card); color: var(--text); transition: background .14s; }
+  .btn:hover { background: var(--input-bg); }
+  .btn svg { width: 16px; height: 16px; }
+
+  .items { display: grid; gap: 12px; }
+  .item { display: flex; gap: 14px; align-items: flex-start; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 16px 18px; box-shadow: var(--shadow); transition: opacity .15s; }
+  .item.law { border-left: 4px solid var(--red-bd); }
+  .item.got { opacity: .6; }
+  .item.got .it-title { text-decoration: line-through; }
+  .check { flex: none; margin-top: 2px; }
+  .check input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .check .box { width: 24px; height: 24px; border: 2px solid var(--border); border-radius: 7px; display: grid; place-items: center; cursor: pointer; transition: background .14s, border-color .14s; background: var(--card); }
+  .check .box svg { width: 15px; height: 15px; color: #fff; opacity: 0; transition: opacity .12s; }
+  .check input:checked + .box { background: var(--moss); border-color: var(--moss); }
+  .check input:checked + .box svg { opacity: 1; }
+  .check input:focus-visible + .box { outline: 2px solid var(--moss); outline-offset: 2px; }
+
+  .it-main { min-width: 0; flex: 1; }
+  .it-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 4px; }
+  .it-title { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 1.05rem; }
+  .badge { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+  .badge.law { background: var(--red-bg); color: var(--red-tx); border: 1px solid var(--red-bd); }
+  .badge.required { background: var(--amber-bg); color: var(--amber-tx); border: 1px solid var(--amber-bd); }
+  .badge.advised { background: rgba(79,99,84,.10); color: var(--moss-dark); border: 1px solid #C7D2CA; }
+  .badge.consider { background: var(--input-bg); color: var(--muted); border: 1px solid var(--border); }
+  .it-desc { font-size: 0.88rem; color: var(--text-2); margin: 0 0 7px; }
+  .it-why { font-size: 0.82rem; color: var(--moss-dark); margin: 0 0 8px; display: flex; gap: 6px; align-items: flex-start; }
+  .it-why svg { width: 14px; height: 14px; flex: none; margin-top: 2px; }
+  .it-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 0.8rem; }
+  .it-meta .cost { color: var(--muted); }
+  .it-meta a { font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+  .it-meta a:hover { text-decoration: underline; }
+  .it-meta a svg { width: 13px; height: 13px; }
+
+  .empty { border: 1.5px dashed var(--border); border-radius: var(--radius-card); padding: 48px 28px; text-align: center; color: var(--muted); }
+
+  .cross { margin-top: 22px; background: var(--green-bg); border: 1px solid var(--green-bd); color: var(--green-tx); border-radius: var(--radius-card); padding: 16px 18px; font-size: 0.88rem; display: flex; gap: 10px; align-items: flex-start; }
+  .cross svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+  .cross a { color: var(--green-tx); font-weight: 700; }
+
+  .disclaimer { margin-top: 18px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 16px; }
+
+  @media print { .topbar, .q-card, .toolbar, .switch, .back { display: none !important; } .item { box-shadow: none; break-inside: avoid; } body { background: #fff; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <a class="logo" href="../../index.html" data-testid="logo" aria-label="Founder's Toolkit home">
+      <img id="logo-img" alt="Logo" style="display:none" />
+      <span class="wordmark" id="logo-fallback">
+        <span class="mark" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg></span>
+        Founder's&nbsp;Toolkit
+      </span>
+    </a>
+    <a class="back" href="../../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> All tools</a>
+  </div>
+
+  <header class="hero">
+    <h1>Insurance Needs Check</h1>
+    <p>Answer a few questions about your business and see which cover is required by law, which your clients or regulator will expect, and which is simply worth considering — starting with employers' liability, the one that's a legal duty.</p>
+  </header>
+
+  <div class="card q-card">
+    <p class="q-title">Tell us about your business</p>
+    <div class="q-grid" id="questions"></div>
+  </div>
+
+  <div class="summary-wrap">
+    <span class="summary-text" id="summary"></span>
+    <span class="toolbar">
+      <button type="button" class="btn" id="print-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print / PDF</button>
+      <button type="button" class="btn" id="reset-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8"/><path d="M3 3v5h5"/></svg> Reset</button>
+    </span>
+  </div>
+
+  <div id="results"></div>
+
+  <div class="cross">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <div>Once you've arranged a policy, keep the insurer, policy number and renewal date in <a href="../company-records/index.html">Company Records</a> so it's always to hand.</div>
+  </div>
+
+  <div class="disclaimer">
+    This is general information to help you plan, not insurance advice — what you need, and the right level of cover, depends on your circumstances. Speak to a broker or insurer to arrange suitable cover. Employers' liability is a legal requirement once you employ staff, with fines of up to £2,500 for each day you're uninsured.
+  </div>
+
+</div>
+
+<script>
+/* CONFIG — set your own logo */
+const LOGO_URL = "";
+(function(){ if(LOGO_URL){ const i=document.getElementById("logo-img"); i.src=LOGO_URL; i.onload=()=>{i.style.display="block";document.getElementById("logo-fallback").style.display="none";}; i.onerror=()=>{i.style.display="none";document.getElementById("logo-fallback").style.display="flex";}; } })();
+
+const STORAGE_KEY = "founders-toolkit:insurance-check:v1";
+
+const QUESTIONS = [
+  { key: "employees",  label: "Do you employ anyone (now or soon)?",          sub: "Even one part-time employee" },
+  { key: "regulated",  label: "Are you in a regulated profession?",            sub: "Finance, law, accountancy, architecture…" },
+  { key: "advice",     label: "Do you give advice or professional services?",  sub: "Consultancy, design, IT, marketing…" },
+  { key: "publicFacing",label: "Do clients or the public interact with you?",   sub: "Visit you, events, or you visit them" },
+  { key: "products",   label: "Do you make, sell or supply products?",         sub: "Goods to businesses or consumers" },
+  { key: "premises",   label: "Do you have premises or stock?",                sub: "Office, shop, warehouse, equipment on site" },
+  { key: "equipment",  label: "Do you rely on tools or equipment?",            sub: "Laptops, cameras, machinery, tools" },
+  { key: "vehicles",   label: "Do you use vehicles for business?",             sub: "Vans, cars, a fleet" },
+  { key: "data",       label: "Do you hold customer data or trade online?",    sub: "Website, databases, card payments" },
+];
+
+const RANK = { law: 0, required: 1, advised: 2, consider: 3 };
+const LEVEL_LABEL = { law: "Required by law", required: "Often required", advised: "Strongly advised", consider: "Worth considering" };
+
+const ITEMS = [
+  { id: "el", level: () => "law", title: "Employers' Liability insurance",
+    desc: "Covers claims from employees who are injured or made ill through their work.",
+    why: "Legally required as soon as you employ staff — minimum £5m cover, with fines up to £2,500 a day if you're uninsured.",
+    cost: "from ~£60–£200/yr", link: "https://www.gov.uk/employers-liability-insurance", linkLabel: "gov.uk",
+    show: (a) => a.employees },
+
+  { id: "motor", level: () => "law", title: "Commercial motor insurance",
+    desc: "Insures vehicles used for your business against third-party and other risks.",
+    why: "Any vehicle used on public roads must be insured for business use — a personal policy usually won't cover it.",
+    cost: "varies", link: "https://www.gov.uk/vehicle-insurance", linkLabel: "gov.uk",
+    show: (a) => a.vehicles },
+
+  { id: "pi", level: (a) => a.regulated ? "required" : "advised", title: "Professional Indemnity insurance",
+    desc: "Covers claims that your advice, services or work caused a client financial loss.",
+    why: "Required by many regulators and professional bodies, and increasingly written into client contracts.",
+    cost: "from ~£100–£500/yr", show: (a) => a.regulated || a.advice },
+
+  { id: "pl", level: () => "advised", title: "Public Liability insurance",
+    desc: "Covers claims if someone is injured, or their property damaged, because of your business.",
+    why: "Not a legal requirement, but routinely demanded by clients, landlords and venues before they'll work with you.",
+    cost: "from ~£60–£150/yr", show: (a) => a.publicFacing || a.products || a.premises },
+
+  { id: "product", level: () => "advised", title: "Product Liability insurance",
+    desc: "Covers claims that a product you made, sold or supplied caused injury or damage.",
+    why: "You can be liable even if you only supplied the product. Often bundled with public liability.",
+    cost: "varies", show: (a) => a.products },
+
+  { id: "property", level: () => "advised", title: "Business contents / property insurance",
+    desc: "Covers your premises, stock, furniture and fittings against fire, theft and damage.",
+    why: "Protects the physical things the business depends on to keep running.",
+    cost: "varies", show: (a) => a.premises },
+
+  { id: "equipment", level: () => "consider", title: "Business equipment / tools cover",
+    desc: "Covers laptops, cameras, machinery or tools against loss, theft or damage — including away from base.",
+    why: "If losing your kit would stop you working, this gets you back up quickly.",
+    cost: "from ~£50/yr", show: (a) => a.equipment },
+
+  { id: "bi", level: () => "consider", title: "Business interruption insurance",
+    desc: "Replaces lost income if an insured event (like a fire or flood) stops you trading.",
+    why: "Property cover repairs the premises; this keeps the cash flowing while you recover. Usually added to a property policy.",
+    cost: "varies", show: (a) => a.premises },
+
+  { id: "cyber", level: (a) => (a.data && a.online) ? "advised" : "consider", title: "Cyber insurance",
+    desc: "Covers data breaches, ransomware, system damage and the costs of putting things right.",
+    why: "If you hold customer data or trade online, a breach can be expensive and reportable.",
+    cost: "from ~£100/yr", show: (a) => a.data },
+
+  { id: "do", level: () => "consider", title: "Directors' & Officers (D&O) insurance",
+    desc: "Protects directors personally against claims arising from how they run the company.",
+    why: "Directors can be held personally liable for certain decisions — D&O covers your defence and any award.",
+    cost: "from ~£100–£300/yr", show: () => true },
+
+  { id: "keyperson", level: () => "consider", title: "Key person insurance",
+    desc: "Pays out if a person the business critically depends on dies or can't work.",
+    why: "Helps the company survive the loss of a founder or essential employee.",
+    cost: "varies", show: (a) => a.employees },
+];
+
+let state = { answers: {}, got: {} };
+(function load(){ try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); if (s) state = { answers: s.answers || {}, got: s.got || {} }; } catch(e){} })();
+function save(){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){} }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function renderQuestions(){
+  document.getElementById("questions").innerHTML = QUESTIONS.map(q => `
+    <div class="switch-row">
+      <span><span class="lbl">${esc(q.label)}</span><span class="sub">${esc(q.sub)}</span></span>
+      <button type="button" class="switch" role="switch" data-q="${q.key}" aria-checked="${state.answers[q.key] ? "true" : "false"}" aria-label="${esc(q.label)}"></button>
+    </div>`).join("");
+}
+
+function visibleItems(){
+  const a = state.answers;
+  return ITEMS.filter(it => it.show(a))
+    .map(it => ({ ...it, lvl: it.level(a) }))
+    .sort((x, y) => RANK[x.lvl] - RANK[y.lvl]);
+}
+
+function renderResults(){
+  const items = visibleItems();
+  const el = document.getElementById("results");
+  if (!items.length) {
+    el.innerHTML = `<div class="empty">Turn on the answers above that apply to your business, and your insurance recommendations will appear here.</div>`;
+    document.getElementById("summary").innerHTML = "";
+    return;
+  }
+  const counts = items.reduce((m, it) => (m[it.lvl] = (m[it.lvl] || 0) + 1, m), {});
+  const parts = [];
+  if (counts.law) parts.push(`<strong>${counts.law} required by law</strong>`);
+  if (counts.required) parts.push(`${counts.required} often required`);
+  if (counts.advised) parts.push(`${counts.advised} strongly advised`);
+  if (counts.consider) parts.push(`${counts.consider} worth considering`);
+  document.getElementById("summary").innerHTML = "Based on your answers: " + parts.join(" · ") + ".";
+
+  el.innerHTML = `<div class="items">` + items.map(it => {
+    const got = !!state.got[it.id];
+    const meta = [];
+    if (it.cost) meta.push(`<span class="cost">${esc(it.cost)}</span>`);
+    if (it.link) meta.push(`<a href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.linkLabel || "Learn more")} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`);
+    return `
+      <div class="item ${it.lvl === "law" ? "law" : ""} ${got ? "got" : ""}" data-testid="insurance-item">
+        <label class="check" title="Mark as arranged">
+          <input type="checkbox" data-id="${it.id}" ${got ? "checked" : ""} />
+          <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        </label>
+        <div class="it-main">
+          <div class="it-head"><span class="it-title">${esc(it.title)}</span><span class="badge ${it.lvl}">${LEVEL_LABEL[it.lvl]}</span></div>
+          <p class="it-desc">${esc(it.desc)}</p>
+          <p class="it-why"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> ${esc(it.why)}</p>
+          ${meta.length ? `<div class="it-meta">${meta.join("")}</div>` : ""}
+        </div>
+      </div>`;
+  }).join("") + `</div>`;
+}
+
+document.getElementById("questions").addEventListener("click", (e) => {
+  const sw = e.target.closest("[data-q]");
+  if (!sw) return;
+  const key = sw.getAttribute("data-q");
+  const on = sw.getAttribute("aria-checked") === "true";
+  sw.setAttribute("aria-checked", String(!on));
+  state.answers[key] = !on;
+  save();
+  renderResults();
+});
+
+document.getElementById("results").addEventListener("change", (e) => {
+  const cb = e.target.closest('input[type="checkbox"][data-id]');
+  if (!cb) return;
+  state.got[cb.getAttribute("data-id")] = cb.checked;
+  save();
+  const item = cb.closest(".item");
+  if (item) item.classList.toggle("got", cb.checked);
+});
+
+document.getElementById("print-btn").addEventListener("click", () => window.print());
+document.getElementById("reset-btn").addEventListener("click", () => {
+  if (!confirm("Reset your answers and ticks?")) return;
+  state = { answers: {}, got: {} };
+  save();
+  renderQuestions();
+  renderResults();
+});
+
+renderQuestions();
+renderResults();
+</script>
+</body>
+</html>

@@ -55,6 +55,14 @@
   .btn-danger:hover { background: var(--red-bg); }
   .save-status { margin-left: auto; font-size: 0.82rem; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
   .save-status svg { width: 15px; height: 15px; color: var(--green-tx); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn:disabled:hover { background: var(--card); }
+
+  /* Company switcher */
+  .company-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); }
+  .company-bar .cb-label { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .company-select { flex: 1 1 200px; min-width: 170px; appearance: none; -webkit-appearance: none; border: 1px solid var(--border); border-radius: 0.6rem; background: var(--input-bg) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A8A85' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 12px center; padding: 11px 34px 11px 13px; font: inherit; font-size: 0.95rem; font-weight: 600; color: var(--text); min-height: 46px; cursor: pointer; }
+  .company-select:focus { outline: none; border-color: var(--moss); box-shadow: 0 0 0 3px rgba(79,99,84,.13); }
 
   /* Sections */
   .section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden; }
@@ -116,7 +124,7 @@
 
   <header class="hero">
     <h1>Company Records</h1>
-    <p>Your company's key numbers and details in one place — the references you're always digging through emails to find. Fill in what you have; come back and update it anytime.</p>
+    <p>Your companies' key numbers and details in one place — the references you're always digging through emails to find. Add as many companies as you like and switch between them; fill in what you have and update anytime.</p>
   </header>
 
   <div class="privacy" data-testid="privacy-banner">
@@ -124,12 +132,19 @@
     <div><strong>Private to this device.</strong> Everything you enter is saved only in this browser — nothing is sent to us or anyone else. Use <strong>Export</strong> to keep a backup, and avoid entering details on a shared or public computer.</div>
   </div>
 
+  <div class="company-bar" data-testid="company-bar">
+    <span class="cb-label">Company</span>
+    <select class="company-select" id="company-select" data-testid="company-select" aria-label="Select company"></select>
+    <button type="button" class="btn" id="add-company-btn" data-testid="add-company-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add company</button>
+    <button type="button" class="btn btn-danger" id="delete-company-btn" data-testid="delete-company-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Delete</button>
+  </div>
+
   <div class="toolbar">
     <button type="button" class="btn" id="export-btn" data-testid="export-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export backup</button>
     <button type="button" class="btn" id="import-btn" data-testid="import-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import</button>
     <input type="file" id="import-file" accept="application/json,.json" style="display:none" />
     <button type="button" class="btn" id="print-btn" data-testid="print-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print / PDF</button>
-    <button type="button" class="btn btn-danger" id="clear-btn" data-testid="clear-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Clear all</button>
+    <button type="button" class="btn btn-danger" id="clear-btn" data-testid="clear-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Clear this company</button>
     <span class="save-status" id="save-status"></span>
   </div>
 
@@ -274,34 +289,58 @@ function render() {
     </details>`).join("");
 }
 
-/* ---------- Persistence ---------- */
-function collect() {
+/* ---------- State + persistence (multi-company) ---------- */
+function uid() { try { return crypto.randomUUID(); } catch (e) { return "c-" + Date.now() + "-" + Math.floor(Math.random() * 1e6); } }
+
+let store = { version: 2, companies: [], activeId: null };
+
+function collectForm() {
   const data = {};
-  document.querySelectorAll("[data-key]").forEach(el => {
-    const v = el.value.trim();
-    if (v) data[el.getAttribute("data-key")] = el.value;
-  });
+  document.querySelectorAll("[data-key]").forEach(el => { if (el.value.trim()) data[el.getAttribute("data-key")] = el.value; });
   return data;
 }
-function save() {
+function activeCompany() { return store.companies.find(c => c.id === store.activeId) || store.companies[0]; }
+function companyLabel(c) { return (c && c.data && c.data.companyName && c.data.companyName.trim()) || "Untitled company"; }
+function writeActiveFromForm() { const c = activeCompany(); if (c) c.data = collectForm(); }
+
+function persist() {
   try {
-    const payload = { version: 1, savedAt: new Date().toISOString(), data: collect() };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    showSaved(payload.savedAt);
-  } catch (e) {
-    document.getElementById("save-status").textContent = "Couldn't save (storage blocked)";
+    store.savedAt = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    showSaved(store.savedAt);
+  } catch (e) { document.getElementById("save-status").textContent = "Couldn't save (storage blocked)"; }
+}
+
+function normaliseCompanies(arr) {
+  return arr.filter(c => c && typeof c === "object").map(c => ({ id: c.id || uid(), data: (c.data && typeof c.data === "object") ? c.data : {} }));
+}
+
+function loadStore() {
+  let parsed = null;
+  try { parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch (e) {}
+  if (parsed && Array.isArray(parsed.companies)) {
+    store = { version: 2, companies: normaliseCompanies(parsed.companies), activeId: parsed.activeId, savedAt: parsed.savedAt };
+  } else if (parsed && parsed.data && typeof parsed.data === "object") {
+    store = { version: 2, companies: [{ id: uid(), data: parsed.data }], savedAt: parsed.savedAt }; // migrate v1
+  } else {
+    store = { version: 2, companies: [] };
   }
+  if (!store.companies.length) store.companies.push({ id: uid(), data: {} });
+  if (!store.activeId || !store.companies.some(c => c.id === store.activeId)) store.activeId = store.companies[0].id;
 }
-function load() {
-  let payload = null;
-  try { payload = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch (e) {}
-  const data = (payload && payload.data) || {};
-  Object.entries(data).forEach(([k, v]) => {
-    const el = document.getElementById("fld-" + k);
-    if (el) el.value = v;
-  });
-  if (payload && payload.savedAt) showSaved(payload.savedAt);
+
+function renderSwitcher() {
+  const sel = document.getElementById("company-select");
+  sel.innerHTML = store.companies.map(c => `<option value="${c.id}">${esc(companyLabel(c))}</option>`).join("");
+  sel.value = store.activeId;
+  document.getElementById("delete-company-btn").disabled = store.companies.length <= 1;
 }
+
+function renderForm() {
+  const data = (activeCompany() && activeCompany().data) || {};
+  document.querySelectorAll("[data-key]").forEach(el => { el.value = data[el.getAttribute("data-key")] || ""; });
+}
+
 function showSaved(iso) {
   const el = document.getElementById("save-status");
   let when = "";
@@ -315,13 +354,21 @@ function showSaved(iso) {
 
 /* ---------- Wire up ---------- */
 render();
-load();
+loadStore();
+renderSwitcher();
+renderForm();
+if (store.savedAt) showSaved(store.savedAt);
 
 let saveTimer = null;
-document.getElementById("sections").addEventListener("input", () => {
+document.getElementById("sections").addEventListener("input", (e) => {
+  // keep the switcher label in sync as the company name is typed
+  if (e.target.getAttribute && e.target.getAttribute("data-key") === "companyName") {
+    const opt = document.querySelector('#company-select option[value="' + store.activeId + '"]');
+    if (opt) opt.textContent = e.target.value.trim() || "Untitled company";
+  }
   document.getElementById("save-status").textContent = "Saving…";
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(save, 350);
+  saveTimer = setTimeout(() => { writeActiveFromForm(); persist(); }, 350);
 });
 
 // Reveal / copy (event delegation)
@@ -346,14 +393,44 @@ document.getElementById("sections").addEventListener("click", async (e) => {
   }
 });
 
+/* ---------- Company switcher actions ---------- */
+document.getElementById("company-select").addEventListener("change", (e) => {
+  writeActiveFromForm();
+  store.activeId = e.target.value;
+  renderForm();
+  persist();
+});
+
+document.getElementById("add-company-btn").addEventListener("click", () => {
+  writeActiveFromForm();
+  const c = { id: uid(), data: {} };
+  store.companies.push(c);
+  store.activeId = c.id;
+  renderSwitcher(); renderForm(); persist();
+  const nameEl = document.getElementById("fld-companyName");
+  if (nameEl) { const det = nameEl.closest("details"); if (det) det.open = true; nameEl.focus(); }
+});
+
+document.getElementById("delete-company-btn").addEventListener("click", () => {
+  if (store.companies.length <= 1) return;
+  const c = activeCompany();
+  if (!confirm('Delete "' + companyLabel(c) + '" and all its details? Export a backup first if you might need them.')) return;
+  store.companies = store.companies.filter(x => x.id !== store.activeId);
+  store.activeId = store.companies[0].id;
+  renderSwitcher(); renderForm(); persist();
+});
+
 /* ---------- Export / Import / Print / Clear ---------- */
+function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+
 document.getElementById("export-btn").addEventListener("click", () => {
-  const payload = { version: 1, savedAt: new Date().toISOString(), data: collect() };
+  writeActiveFromForm();
+  const payload = { version: 2, savedAt: new Date().toISOString(), activeId: store.activeId, companies: store.companies };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const name = (collect().companyName || "company").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  a.href = url; a.download = `${name || "company"}-records-backup.json`;
+  const base = store.companies.length === 1 ? (slug(companyLabel(store.companies[0])) || "company") : "all-companies";
+  a.href = url; a.download = base + "-records-backup.json";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
@@ -366,12 +443,16 @@ document.getElementById("import-file").addEventListener("change", (e) => {
   reader.onload = () => {
     try {
       const parsed = JSON.parse(reader.result);
-      const data = parsed.data || parsed;
-      if (typeof data !== "object") throw new Error("bad");
-      if (!confirm("Import will replace what's currently here. Continue?")) return;
-      document.querySelectorAll("[data-key]").forEach(el => { el.value = ""; });
-      Object.entries(data).forEach(([k, v]) => { const el = document.getElementById("fld-" + k); if (el) el.value = v; });
-      save();
+      let companies;
+      if (parsed && Array.isArray(parsed.companies)) companies = normaliseCompanies(parsed.companies);
+      else if (parsed && parsed.data && typeof parsed.data === "object") companies = [{ id: uid(), data: parsed.data }];
+      else if (parsed && typeof parsed === "object") companies = [{ id: uid(), data: parsed }];
+      else throw new Error("bad");
+      if (!companies.length) throw new Error("empty");
+      if (!confirm("Import will replace ALL companies currently stored in this browser. Continue?")) return;
+      store.companies = companies;
+      store.activeId = (parsed.activeId && companies.some(c => c.id === parsed.activeId)) ? parsed.activeId : companies[0].id;
+      renderSwitcher(); renderForm(); persist();
     } catch (err) {
       alert("That file didn't look like a valid records backup.");
     }
@@ -380,13 +461,13 @@ document.getElementById("import-file").addEventListener("change", (e) => {
   e.target.value = "";
 });
 
-document.getElementById("print-btn").addEventListener("click", () => window.print());
+document.getElementById("print-btn").addEventListener("click", () => { writeActiveFromForm(); window.print(); });
 
 document.getElementById("clear-btn").addEventListener("click", () => {
-  if (!confirm("Clear all saved company records from this browser? Export a backup first if you might need them.")) return;
-  localStorage.removeItem(STORAGE_KEY);
-  document.querySelectorAll("[data-key]").forEach(el => { el.value = ""; });
-  document.getElementById("save-status").textContent = "Cleared";
+  const c = activeCompany();
+  if (!confirm('Clear all details for "' + companyLabel(c) + '"? The company stays in your list, but its fields are emptied.')) return;
+  c.data = {};
+  renderForm(); renderSwitcher(); persist();
 });
 
 // Reveal sensitive fields for printing, then re-hide

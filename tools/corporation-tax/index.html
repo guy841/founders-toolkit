@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Corporation Tax Estimator — Founder's Toolkit</title>
+<meta name="description" content="Estimate your UK Corporation Tax, including the 19% and 25% rates and marginal relief between £50,000 and £250,000 profit." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #F9F9F7; --card: #FFFFFF; --moss: #4F6354; --moss-dark: #41513F;
+    --text: #1C1C1A; --text-2: #5C5C58; --muted: #8A8A85; --border: #E5E5DF; --input-bg: #F2F2F0;
+    --green-bg: #EAF0EB; --green-bd: #C3D6C8; --green-tx: #2B5332;
+    --amber-bg: #FDF3E1; --amber-bd: #EAD5AE; --amber-tx: #995C14;
+    --red-bg: #F9E8E8; --red-bd: #E6C5C5; --red-tx: #9E2A27;
+    --radius-card: 1rem; --radius-btn: 0.75rem;
+    --shadow: 0 1px 2px rgba(28,28,26,.04), 0 8px 24px rgba(28,28,26,.05);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Manrope", system-ui, sans-serif; font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: "Outfit", sans-serif; letter-spacing: -0.01em; }
+  a { color: var(--moss); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 64px; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo img { height: 38px; width: auto; display: block; }
+  .logo .wordmark { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 700; color: var(--moss); font-size: 1.05rem; letter-spacing: -0.02em; }
+  .logo .mark { width: 32px; height: 32px; border-radius: 9px; background: var(--moss); color: #fff; display: grid; place-items: center; }
+  .back { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.85rem; text-decoration: none; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+  .back:hover { color: var(--moss); }
+  .back svg { width: 16px; height: 16px; }
+
+  .hero { margin-bottom: 28px; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; margin: 0 0 8px; }
+  .hero p { color: var(--text-2); margin: 0; max-width: 640px; }
+
+  .grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  @media (min-width: 880px) { .grid { grid-template-columns: 5fr 7fr; align-items: start; } }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); padding: 22px; }
+
+  .field { margin-bottom: 18px; }
+  .field:last-of-type { margin-bottom: 0; }
+  .field label.lbl { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 7px; }
+  .field .hint { font-weight: 400; font-size: 0.78rem; color: var(--muted); margin-top: 5px; }
+
+  .money { position: relative; }
+  .money .sym { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 600; pointer-events: none; }
+  input[type=text], input[type=number] {
+    width: 100%; border: 1px solid var(--border); border-radius: 0.6rem;
+    background: var(--input-bg); padding: 12px 14px; font: inherit; font-size: 1rem; color: var(--text);
+    min-height: 48px; transition: border-color .15s, box-shadow .15s;
+  }
+  .money input { padding-left: 28px; }
+  input:focus { outline: none; border-color: var(--moss); box-shadow: 0 0 0 3px rgba(79,99,84,.15); }
+  input.invalid { border-color: var(--red-bd); background: var(--red-bg); }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.95rem; border: none; border-radius: var(--radius-btn); cursor: pointer; padding: 13px 20px; min-height: 48px; transition: background .15s, transform .05s; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--moss); color: #fff; width: 100%; margin-top: 4px; }
+  .btn-primary:hover { background: var(--moss-dark); }
+
+  .error-banner { display: flex; gap: 10px; align-items: flex-start; background: var(--red-bg); border: 1px solid var(--red-bd); color: var(--red-tx); border-radius: 0.6rem; padding: 12px 14px; margin-bottom: 16px; font-size: 0.88rem; }
+  .error-banner svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+
+  /* Result */
+  .result-empty { border: 1.5px dashed var(--border); border-radius: var(--radius-card); padding: 56px 28px; text-align: center; color: var(--muted); }
+  .result-empty svg { width: 40px; height: 40px; margin-bottom: 14px; color: #C8C8C2; }
+  .result-empty .big { font-family: "Outfit", sans-serif; font-weight: 600; color: var(--text-2); font-size: 1.05rem; }
+
+  .headline { background: var(--green-bg); border: 1px solid var(--green-bd); border-radius: var(--radius-card); padding: 24px; margin-bottom: 18px; }
+  .headline .label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--green-tx); margin-bottom: 6px; }
+  .headline .amount { font-family: "Outfit", sans-serif; font-weight: 700; font-size: clamp(2.2rem, 6vw, 3rem); line-height: 1; color: var(--green-tx); }
+  .headline .sub { color: var(--green-tx); opacity: .85; font-size: 0.9rem; margin-top: 8px; }
+
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .stat { background: var(--input-bg); border-radius: 0.7rem; padding: 14px 16px; }
+  .stat .k { font-size: 0.76rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat .v { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 1.3rem; margin-top: 3px; }
+
+  .breakdown { border: 1px solid var(--border); border-radius: 0.7rem; overflow: hidden; }
+  .breakdown .row { display: flex; justify-content: space-between; gap: 12px; padding: 11px 16px; font-size: 0.9rem; border-bottom: 1px solid var(--border); }
+  .breakdown .row:last-child { border-bottom: none; }
+  .breakdown .row.total { font-weight: 700; background: var(--input-bg); font-family: "Outfit", sans-serif; }
+  .breakdown .row .lbl2 { color: var(--text-2); }
+  .breakdown .row.credit .val { color: var(--green-tx); }
+
+  .band-pill { display: inline-flex; align-items: center; gap: 7px; font-size: 0.78rem; font-weight: 600; padding: 6px 12px; border-radius: 999px; margin-bottom: 16px; }
+  .band-pill.b19 { background: var(--green-bg); color: var(--green-tx); border: 1px solid var(--green-bd); }
+  .band-pill.bmarg { background: var(--amber-bg); color: var(--amber-tx); border: 1px solid var(--amber-bd); }
+  .band-pill.b25 { background: var(--red-bg); color: var(--red-tx); border: 1px solid var(--red-bd); }
+
+  .note { margin-top: 16px; font-size: 0.8rem; color: var(--muted); }
+  .note a { color: var(--moss); }
+
+  .disclaimer { margin-top: 18px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 16px; }
+
+  details.adv { margin-top: 6px; }
+  details.adv summary { cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--moss); list-style: none; padding: 6px 0; }
+  details.adv summary::-webkit-details-marker { display: none; }
+  details.adv summary::before { content: "+ "; }
+  details.adv[open] summary::before { content: "– "; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <a class="logo" href="../../index.html" data-testid="logo" aria-label="Founder's Toolkit home">
+      <img id="logo-img" alt="Logo" style="display:none" />
+      <span class="wordmark" id="logo-fallback">
+        <span class="mark" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg></span>
+        Founder's&nbsp;Toolkit
+      </span>
+    </a>
+    <a class="back" href="../../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> All tools</a>
+  </div>
+
+  <header class="hero">
+    <h1>Corporation Tax Estimator</h1>
+    <p>Estimate the Corporation Tax your company owes — including the small profits rate, the main rate, and the marginal relief in between that trips most people up.</p>
+  </header>
+
+  <div class="grid">
+    <!-- INPUT -->
+    <form class="card" id="form" novalidate>
+      <div id="error-box"></div>
+
+      <div class="field">
+        <label class="lbl" for="profit">Taxable profit for the period</label>
+        <div class="money">
+          <span class="sym">£</span>
+          <input type="text" id="profit" data-testid="profit" inputmode="numeric" placeholder="100,000" autocomplete="off" />
+        </div>
+        <div class="hint">Your profit chargeable to Corporation Tax (after allowable expenses and reliefs).</div>
+      </div>
+
+      <details class="adv">
+        <summary>Advanced options</summary>
+        <div class="field" style="margin-top:12px">
+          <label class="lbl" for="assoc">Number of associated companies</label>
+          <input type="number" id="assoc" data-testid="assoc" min="0" step="1" value="0" />
+          <div class="hint">Companies under common control. Each one shrinks the £50k / £250k thresholds proportionally.</div>
+        </div>
+        <div class="field">
+          <label class="lbl" for="days">Length of accounting period (days)</label>
+          <input type="number" id="days" data-testid="days" min="1" max="731" step="1" value="365" />
+          <div class="hint">Leave at 365 for a standard 12-month year. Shorter periods reduce the thresholds pro-rata.</div>
+        </div>
+      </details>
+
+      <button type="submit" class="btn btn-primary" id="calc-btn" data-testid="calculate-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Estimate my Corporation Tax
+      </button>
+    </form>
+
+    <!-- RESULT -->
+    <section class="card" id="result-card" aria-live="polite">
+      <div id="result-empty" class="result-empty" data-testid="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <div class="big">Enter your profit to estimate your Corporation Tax</div>
+      </div>
+      <div id="result" class="hidden"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* CONFIG — set your own logo */
+const LOGO_URL = "";
+(function(){ if(LOGO_URL){ const i=document.getElementById("logo-img"); i.src=LOGO_URL; i.onload=()=>{i.style.display="block";document.getElementById("logo-fallback").style.display="none";}; i.onerror=()=>{i.style.display="none";document.getElementById("logo-fallback").style.display="flex";}; } })();
+
+/* ---- UK Corporation Tax rules: Financial Years 2023–2025 (rates unchanged since 1 April 2023) ---- */
+const SMALL_RATE = 0.19;
+const MAIN_RATE  = 0.25;
+const MR_FRACTION = 3/200;     // standard marginal relief fraction
+const LOWER_LIMIT = 50000;
+const UPPER_LIMIT = 250000;
+const RATES_LABEL = "Financial Year 2024/25 & 2025/26";
+
+function gbp(n) {
+  return "£" + n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function gbp0(n) {
+  return "£" + Math.round(n).toLocaleString("en-GB");
+}
+function parseMoney(str) {
+  if (str == null) return NaN;
+  const cleaned = String(str).replace(/[,£\s]/g, "");
+  if (cleaned === "") return NaN;
+  return Number(cleaned);
+}
+
+function computeCT(profit, assoc, days) {
+  const n = assoc + 1;
+  const factor = (days / 365) / n;
+  const lower = LOWER_LIMIT * factor;
+  const upper = UPPER_LIMIT * factor;
+
+  let band, mainRateTax, marginalRelief = 0, tax;
+  if (profit <= lower) {
+    band = "small";
+    tax = profit * SMALL_RATE;
+    mainRateTax = tax;
+  } else if (profit >= upper) {
+    band = "main";
+    tax = profit * MAIN_RATE;
+    mainRateTax = tax;
+  } else {
+    band = "marginal";
+    mainRateTax = profit * MAIN_RATE;
+    marginalRelief = MR_FRACTION * (upper - profit);
+    tax = mainRateTax - marginalRelief;
+  }
+  return { band, tax, mainRateTax, marginalRelief, lower, upper,
+           effectiveRate: profit > 0 ? tax / profit : 0,
+           afterTax: profit - tax };
+}
+
+/* Live thousands-formatting on the profit field */
+const profitEl = document.getElementById("profit");
+profitEl.addEventListener("input", () => {
+  const caretEnd = profitEl.selectionStart === profitEl.value.length;
+  const num = profitEl.value.replace(/[^\d]/g, "");
+  profitEl.value = num ? Number(num).toLocaleString("en-GB") : "";
+  if (caretEnd) profitEl.setSelectionRange(profitEl.value.length, profitEl.value.length);
+});
+
+function showErrors(list) {
+  document.getElementById("error-box").innerHTML =
+    `<div class="error-banner" data-testid="error-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div>${list.map(e=>`<div>${e}</div>`).join("")}</div></div>`;
+}
+
+function render(profit, r) {
+  const bandPill = r.band === "small"
+    ? `<span class="band-pill b19">Small profits rate · 19%</span>`
+    : r.band === "main"
+    ? `<span class="band-pill b25">Main rate · 25%</span>`
+    : `<span class="band-pill bmarg">Marginal relief band</span>`;
+
+  let rows = "";
+  if (r.band === "marginal") {
+    rows = `
+      <div class="row"><span class="lbl2">Tax at main rate (25%)</span><span class="val">${gbp(r.mainRateTax)}</span></div>
+      <div class="row credit"><span class="lbl2">Less marginal relief</span><span class="val">− ${gbp(r.marginalRelief)}</span></div>
+      <div class="row total"><span>Corporation Tax due</span><span>${gbp(r.tax)}</span></div>`;
+  } else {
+    const rateTxt = r.band === "small" ? "19%" : "25%";
+    rows = `
+      <div class="row"><span class="lbl2">Profit taxed at ${rateTxt}</span><span class="val">${gbp0(profit)}</span></div>
+      <div class="row total"><span>Corporation Tax due</span><span>${gbp(r.tax)}</span></div>`;
+  }
+
+  let limitsNote = "";
+  if (Math.round(r.upper) !== UPPER_LIMIT) {
+    limitsNote = `<div class="note">Your thresholds were adjusted to ${gbp0(r.lower)} and ${gbp0(r.upper)} (from £50,000 / £250,000) for associated companies and/or a non-standard accounting period.</div>`;
+  }
+
+  document.getElementById("result").innerHTML = `
+    ${bandPill}
+    <div class="headline">
+      <div class="label">Estimated Corporation Tax</div>
+      <div class="amount" data-testid="ct-amount">${gbp(r.tax)}</div>
+      <div class="sub">on ${gbp0(profit)} taxable profit · ${RATES_LABEL}</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="k">Effective rate</div><div class="v" data-testid="effective-rate">${(r.effectiveRate*100).toFixed(2)}%</div></div>
+      <div class="stat"><div class="k">Profit after tax</div><div class="v">${gbp0(r.afterTax)}</div></div>
+    </div>
+    <div class="breakdown">${rows}</div>
+    ${limitsNote}
+    <div class="disclaimer">
+      Estimate based on standard UK rules for the 2024/25 &amp; 2025/26 financial years. It assumes the profit shown is your full taxable total profit with no ring-fence (oil &amp; gas) profits or franked investment income. Confirm your figure with HMRC or your accountant — see
+      <a href="https://www.gov.uk/marginal-relief-calculator" target="_blank" rel="noopener">HMRC's Marginal Relief calculator</a>.
+    </div>`;
+
+  document.getElementById("result-empty").classList.add("hidden");
+  document.getElementById("result").classList.remove("hidden");
+}
+
+document.getElementById("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  document.getElementById("error-box").innerHTML = "";
+  profitEl.classList.remove("invalid");
+  document.getElementById("assoc").classList.remove("invalid");
+  document.getElementById("days").classList.remove("invalid");
+
+  const errors = [];
+  const profit = parseMoney(profitEl.value);
+  const assoc = parseInt(document.getElementById("assoc").value, 10);
+  const days = parseInt(document.getElementById("days").value, 10);
+
+  if (isNaN(profit)) { errors.push("Please enter your taxable profit."); profitEl.classList.add("invalid"); }
+  else if (profit < 0) { errors.push("Profit can't be negative — a loss means no Corporation Tax is due this period."); profitEl.classList.add("invalid"); }
+
+  if (isNaN(assoc) || assoc < 0) { errors.push("Number of associated companies must be 0 or more."); document.getElementById("assoc").classList.add("invalid"); }
+  if (isNaN(days) || days < 1 || days > 731) { errors.push("Accounting period must be between 1 and 731 days."); document.getElementById("days").classList.add("invalid"); }
+
+  if (errors.length) { showErrors(errors); return; }
+
+  render(profit, computeCT(profit, assoc, days));
+});
+</script>
+</body>
+</html>

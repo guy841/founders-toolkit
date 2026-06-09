@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Director's Deadline Copilot</title>
+<meta name="description" content="Calculate your UK limited company filing and tax deadlines — accounts, Corporation Tax, confirmation statement, VAT, Self Assessment and PAYE." />
+
+<!-- Fonts: Outfit (headings) + Manrope (body) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    /* Palette */
+    --bg: #F9F9F7;
+    --card: #FFFFFF;
+    --moss: #4F6354;
+    --moss-dark: #41513F;
+    --text: #1C1C1A;
+    --text-2: #5C5C58;
+    --muted: #8A8A85;
+    --border: #E5E5DF;
+    --input-bg: #F2F2F0;
+
+    --green-bg: #EAF0EB;  --green-bd: #C3D6C8;  --green-tx: #2B5332;
+    --amber-bg: #FDF3E1;  --amber-bd: #EAD5AE;  --amber-tx: #995C14;
+    --red-bg:   #F9E8E8;  --red-bd:   #E6C5C5;  --red-tx:   #9E2A27;
+
+    --radius-card: 1rem;     /* rounded-2xl */
+    --radius-btn: 0.75rem;   /* rounded-xl */
+    --shadow: 0 1px 2px rgba(28,28,26,.04), 0 8px 24px rgba(28,28,26,.05);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Manrope", system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .font-head { font-family: "Outfit", system-ui, sans-serif; letter-spacing: -0.01em; }
+
+  a { color: var(--moss); }
+
+  /* ---- Logo (top-left, scrolls with page) ---- */
+  .logo {
+    display: inline-flex; align-items: center; gap: 10px;
+    text-decoration: none;
+  }
+  .logo img { height: 40px; width: auto; display: block; }
+  .logo .wordmark {
+    display: flex; align-items: center; gap: 10px;
+    font-family: "Outfit", sans-serif; font-weight: 700;
+    color: var(--moss); font-size: 1.1rem; letter-spacing: -0.02em;
+  }
+  .logo .mark {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: var(--moss); color: #fff;
+    display: grid; place-items: center;
+  }
+  @media (max-width: 640px) {
+    .logo img { height: 30px; }
+    .logo .wordmark { font-size: 0.95rem; }
+    .logo .mark { width: 28px; height: 28px; }
+  }
+
+  /* ---- Layout ---- */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 64px; }
+  .hero { margin-bottom: 28px; }
+  .logo { margin-bottom: 28px; }
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3rem); /* text-4xl sm:text-5xl */
+    font-weight: 700; margin: 0 0 8px;
+  }
+  .hero p { color: var(--text-2); margin: 0; max-width: 640px; }
+
+  .grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: 5fr 7fr; align-items: start; }
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow);
+    padding: 22px;
+  }
+
+  /* ---- Form ---- */
+  .section-title {
+    display: flex; align-items: center; gap: 9px;
+    font-family: "Outfit", sans-serif; font-weight: 600;
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin: 4px 0 12px;
+  }
+  .section-title svg { width: 16px; height: 16px; }
+  .form-section { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .form-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+  .field { margin-bottom: 16px; }
+  .field > label.lbl {
+    display: block; font-weight: 600; font-size: 0.9rem;
+    color: var(--text); margin-bottom: 7px;
+  }
+  .date-row { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 8px; }
+  select {
+    width: 100%;
+    appearance: none;
+    background: var(--input-bg) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A8A85' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 10px center;
+    border: 1px solid var(--border);
+    border-radius: 0.6rem;
+    padding: 10px 28px 10px 12px;
+    font: inherit; font-size: 0.92rem; color: var(--text);
+    cursor: pointer; min-height: 44px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  select:focus { outline: none; border-color: var(--moss); box-shadow: 0 0 0 3px rgba(79,99,84,.15); }
+  select.invalid { border-color: var(--red-bd); background-color: var(--red-bg); }
+
+  /* ---- Switch (toggle) ---- */
+  .switch-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; padding: 4px 0;
+  }
+  .switch-row .switch-lbl { font-weight: 600; font-size: 0.92rem; }
+  .switch-row .switch-sub { font-weight: 400; font-size: 0.8rem; color: var(--muted); display: block; }
+  .switch {
+    position: relative; flex: none;
+    width: 46px; height: 26px; border-radius: 999px;
+    background: #D7D7D1; border: none; cursor: pointer; padding: 0;
+    transition: background .18s ease;
+  }
+  .switch::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    transition: transform .18s ease;
+  }
+  .switch[aria-checked="true"] { background: var(--moss); }
+  .switch[aria-checked="true"]::after { transform: translateX(20px); }
+  .switch:focus-visible { outline: 2px solid var(--moss); outline-offset: 2px; }
+
+  .collapsible { margin-top: 12px; }
+  .hidden { display: none !important; }
+
+  /* ---- Buttons ---- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.95rem;
+    border: none; border-radius: var(--radius-btn); cursor: pointer;
+    padding: 13px 20px; min-height: 48px;
+    transition: background .15s, transform .05s, box-shadow .15s, color .15s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--moss); color: #fff; width: 100%; }
+  .btn-primary:hover { background: var(--moss-dark); }
+  .btn-primary:disabled { opacity: .6; cursor: default; }
+  .btn-ghost {
+    background: transparent; color: var(--moss);
+    border: 1px solid var(--border); padding: 9px 14px; min-height: 40px; font-size: 0.85rem;
+  }
+  .btn-ghost:hover { background: var(--input-bg); }
+  .btn svg { width: 18px; height: 18px; }
+
+  /* ---- Error banner ---- */
+  .error-banner {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--red-bg); border: 1px solid var(--red-bd); color: var(--red-tx);
+    border-radius: 0.6rem; padding: 12px 14px; margin-bottom: 16px; font-size: 0.88rem;
+  }
+  .error-banner svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+
+  /* ---- Results ---- */
+  .results-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .results-head h2 { font-size: clamp(1.5rem, 3.5vw, 1.875rem); font-weight: 700; margin: 0; }
+
+  .empty-state {
+    border: 1.5px dashed var(--border); border-radius: var(--radius-card);
+    padding: 56px 28px; text-align: center; color: var(--muted);
+  }
+  .empty-state svg { width: 40px; height: 40px; margin-bottom: 14px; color: #C8C8C2; }
+  .empty-state .big { font-family: "Outfit", sans-serif; font-weight: 600; color: var(--text-2); font-size: 1.05rem; margin-bottom: 4px; }
+
+  .deadlines { display: grid; gap: 14px; }
+  .dl-card {
+    border-radius: var(--radius-card); border: 1px solid var(--border);
+    padding: 18px; background: var(--card);
+    display: flex; gap: 16px; align-items: flex-start; justify-content: space-between;
+  }
+  .dl-card.status-green { background: var(--green-bg); border-color: var(--green-bd); }
+  .dl-card.status-amber { background: var(--amber-bg); border-color: var(--amber-bd); }
+  .dl-card.status-red   { background: var(--red-bg);   border-color: var(--red-bd); }
+
+  .dl-main { min-width: 0; }
+  .dl-cat {
+    display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+    background: rgba(28,28,26,.06); color: var(--text-2); margin-bottom: 8px;
+  }
+  .dl-name { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 1.12rem; margin: 0 0 4px; }
+  .dl-date { font-weight: 600; font-size: 0.95rem; color: var(--text); margin: 0 0 6px; display: flex; align-items: center; gap: 6px; }
+  .dl-date svg { width: 15px; height: 15px; }
+  .dl-desc { font-size: 0.85rem; color: var(--text-2); margin: 0; }
+
+  .dl-count { text-align: right; flex: none; }
+  .dl-count .num { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 1.6rem; line-height: 1; }
+  .dl-count .word { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; margin-top: 4px; }
+  .status-green .dl-count, .status-green .dl-cat { color: var(--green-tx); }
+  .status-amber .dl-count, .status-amber .dl-cat { color: var(--amber-tx); }
+  .status-red   .dl-count, .status-red   .dl-cat { color: var(--red-tx); }
+  .status-green .dl-cat { background: rgba(43,83,50,.10); }
+  .status-amber .dl-cat { background: rgba(153,92,20,.10); }
+  .status-red   .dl-cat { background: rgba(158,42,39,.10); }
+
+  .disclaimer {
+    margin-top: 20px; font-size: 0.8rem; color: var(--muted);
+    border-top: 1px solid var(--border); padding-top: 16px;
+  }
+
+  @media (max-width: 480px) {
+    .dl-card { flex-direction: column; }
+    .dl-count { text-align: left; display: flex; align-items: baseline; gap: 8px; }
+    .dl-count .word { margin-top: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- =========================================================
+     LOGO — to use your own branding, set LOGO_URL in the
+     <script> config block below to your image URL. If it is
+     left blank (or fails to load) the wordmark placeholder
+     below is shown instead.
+     =========================================================
+<a class="logo" href="#" data-testid="logo" aria-label="Director's Deadline Copilot home">
+  <img id="logo-img" alt="Logo" style="display:none" />
+  <span class="wordmark" id="logo-fallback">
+    <span class="mark" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    </span>
+    Deadline&nbsp;Copilot
+  </span>
+</a> -->
+
+<div class="wrap">
+  <a class="logo" href="#" data-testid="logo" aria-label="Director's Deadline Copilot home">
+    <img id="logo-img" alt="Logo" style="display:none" />
+    <span class="wordmark" id="logo-fallback">
+      <span class="mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </span>
+      Deadline&nbsp;Copilot
+    </span>
+  </a>
+
+  <header class="hero">
+    <h1>Director's Deadline Copilot</h1>
+    <p>Enter your UK limited company details to see every filing and payment deadline, counted down from today. No login, nothing stored.</p>
+  </header>
+
+  <div class="grid">
+    <!-- ================= FORM ================= -->
+    <form class="card" id="form" novalidate>
+      <div id="error-box"></div>
+
+      <!-- Company info -->
+      <div class="form-section">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>
+          Company information
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="ye-day">Accounting year-end date</label>
+          <div class="date-row">
+            <select id="ye-day" data-testid="ye-day" aria-label="Year-end day"></select>
+            <select id="ye-month" data-testid="ye-month" aria-label="Year-end month"></select>
+            <select id="ye-year" data-testid="ye-year" aria-label="Year-end year"></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="inc-day">Date of incorporation</label>
+          <div class="date-row">
+            <select id="inc-day" data-testid="inc-day" aria-label="Incorporation day"></select>
+            <select id="inc-month" data-testid="inc-month" aria-label="Incorporation month"></select>
+            <select id="inc-year" data-testid="inc-year" aria-label="Incorporation year"></select>
+          </div>
+        </div>
+
+        <div class="switch-row">
+          <span>
+            <span class="switch-lbl">Are these your first accounts?</span>
+            <span class="switch-sub">Changes the accounts deadline rule</span>
+          </span>
+          <button type="button" class="switch" id="sw-first" data-testid="toggle-first-accounts" role="switch" aria-checked="false" aria-label="First accounts"></button>
+        </div>
+
+        <div class="switch-row" style="margin-top:6px">
+          <span>
+            <span class="switch-lbl">Add last confirmation statement date</span>
+            <span class="switch-sub">Optional — improves accuracy if you know it</span>
+          </span>
+          <button type="button" class="switch" id="sw-cs" data-testid="toggle-confirmation" role="switch" aria-checked="false" aria-label="Add confirmation statement date"></button>
+        </div>
+        <div class="collapsible hidden" id="cs-fields">
+          <div class="field" style="margin-top:12px; margin-bottom:0">
+            <label class="lbl" for="cs-day">Last confirmation statement date</label>
+            <div class="date-row">
+              <select id="cs-day" data-testid="cs-day" aria-label="Confirmation statement day"></select>
+              <select id="cs-month" data-testid="cs-month" aria-label="Confirmation statement month"></select>
+              <select id="cs-year" data-testid="cs-year" aria-label="Confirmation statement year"></select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tax obligations -->
+      <div class="form-section">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          Tax obligations
+        </div>
+
+        <div class="switch-row">
+          <span class="switch-lbl">VAT registered</span>
+          <button type="button" class="switch" id="sw-vat" data-testid="toggle-vat" role="switch" aria-checked="false" aria-label="VAT registered"></button>
+        </div>
+        <div class="collapsible hidden" id="vat-fields">
+          <div class="field" style="margin-top:12px; margin-bottom:0">
+            <label class="lbl" for="vat-day">VAT quarter-end date</label>
+            <div class="date-row">
+              <select id="vat-day" data-testid="vat-day" aria-label="VAT quarter-end day"></select>
+              <select id="vat-month" data-testid="vat-month" aria-label="VAT quarter-end month"></select>
+              <select id="vat-year" data-testid="vat-year" aria-label="VAT quarter-end year"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="switch-row" style="margin-top:10px">
+          <span class="switch-lbl">PAYE (Payroll)</span>
+          <button type="button" class="switch" id="sw-paye" data-testid="toggle-paye" role="switch" aria-checked="false" aria-label="PAYE payroll"></button>
+        </div>
+
+        <div class="switch-row" style="margin-top:10px">
+          <span class="switch-lbl">Self Assessment</span>
+          <button type="button" class="switch" id="sw-sa" data-testid="toggle-self-assessment" role="switch" aria-checked="false" aria-label="Self Assessment"></button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="calc-btn" data-testid="calculate-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        Calculate deadlines
+      </button>
+    </form>
+
+    <!-- ================= RESULTS ================= -->
+    <section class="card" id="results-card" aria-live="polite">
+      <div class="results-head">
+        <h2>Your deadlines</h2>
+        <button type="button" class="btn btn-ghost hidden" id="export-btn" data-testid="export-calendar-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export to calendar
+        </button>
+      </div>
+
+      <div id="empty" class="empty-state" data-testid="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <div class="big">Enter your company details and calculate your deadlines</div>
+        <div>Your results will appear here.</div>
+      </div>
+
+      <div id="deadlines" class="deadlines hidden"></div>
+
+      <div id="disclaimer" class="disclaimer hidden">
+        These are estimates based on standard rules — always confirm your exact dates on the
+        <a href="https://www.gov.uk/file-your-company-accounts-and-tax-return" target="_blank" rel="noopener">Companies House service</a>.
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   CONFIG — set your own logo here.
+   Leave as "" to show the built-in wordmark placeholder.
+   ========================================================= */
+const LOGO_URL = ""; // e.g. "https://yourdomain.com/logo.png"
+
+(function initLogo(){
+  if (LOGO_URL) {
+    const img = document.getElementById("logo-img");
+    img.src = LOGO_URL;
+    img.onload = () => { img.style.display = "block"; document.getElementById("logo-fallback").style.display = "none"; };
+    img.onerror = () => { img.style.display = "none"; document.getElementById("logo-fallback").style.display = "flex"; };
+  }
+})();
+
+/* ===================== DATE HELPERS ===================== */
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function daysInMonth(year, month /*1-12*/) { return new Date(year, month, 0).getDate(); }
+
+// True if y/m/d is a real calendar date (catches Feb 30, Feb 29 non-leap, etc.)
+function isValidDate(y, m, d) {
+  if (!y || !m || !d) return false;
+  return d <= daysInMonth(y, m);
+}
+
+// Build a Date at local midnight (avoids timezone drift)
+function makeDate(y, m, d) { return new Date(y, m - 1, d); }
+
+// Add months with end-of-month clamping (relativedelta-style)
+function addMonths(date, months) {
+  const y = date.getFullYear();
+  const m = date.getMonth(); // 0-11
+  const d = date.getDate();
+  const total = m + months;
+  const newYear = y + Math.floor(total / 12);
+  const newMonth = ((total % 12) + 12) % 12; // 0-11
+  const maxDay = daysInMonth(newYear, newMonth + 1);
+  return new Date(newYear, newMonth, Math.min(d, maxDay));
+}
+function addDays(date, days) { const r = new Date(date); r.setDate(r.getDate() + days); return r; }
+function addYears(date, years) { return addMonths(date, years * 12); }
+
+function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function today() { return startOfDay(new Date()); }
+
+function daysBetween(from, to) {
+  const ms = startOfDay(to) - startOfDay(from);
+  return Math.round(ms / 86400000);
+}
+
+function formatLong(d) { return d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear(); }
+
+// Next anniversary of a (month/day) on or after a reference date, clamping Feb 29.
+function nextAnniversary(month /*1-12*/, day, ref) {
+  let year = ref.getFullYear();
+  const make = (yr) => new Date(yr, month - 1, Math.min(day, daysInMonth(yr, month)));
+  let candidate = make(year);
+  while (startOfDay(candidate) < startOfDay(ref)) { year++; candidate = make(year); }
+  return candidate;
+}
+
+/* ===================== DROPDOWNS ===================== */
+function fillSelect(id, options, placeholder) {
+  const sel = document.getElementById(id);
+  let html = `<option value="">${placeholder}</option>`;
+  for (const o of options) html += `<option value="${o.value}">${o.label}</option>`;
+  sel.innerHTML = html;
+}
+function populateDateSelects(prefix, yearStart, yearEnd) {
+  const days = Array.from({length:31}, (_,i)=>({value:i+1, label:i+1}));
+  const months = MONTHS.map((m,i)=>({value:i+1, label:m}));
+  const years = [];
+  for (let y = yearEnd; y >= yearStart; y--) years.push({value:y, label:y});
+  fillSelect(prefix+"-day", days, "Day");
+  fillSelect(prefix+"-month", months, "Month");
+  fillSelect(prefix+"-year", years, "Year");
+}
+
+const NOW_YEAR = new Date().getFullYear();
+populateDateSelects("ye",  NOW_YEAR - 8,  NOW_YEAR + 4);
+populateDateSelects("inc", 1980,          NOW_YEAR + 1);
+populateDateSelects("cs",  NOW_YEAR - 8,  NOW_YEAR + 1);
+populateDateSelects("vat", NOW_YEAR - 4,  NOW_YEAR + 2);
+
+/* ===================== SWITCHES ===================== */
+function toggle(btn) {
+  const on = btn.getAttribute("aria-checked") === "true";
+  btn.setAttribute("aria-checked", String(!on));
+  return !on;
+}
+const swFirst = document.getElementById("sw-first");
+const swCs    = document.getElementById("sw-cs");
+const swVat   = document.getElementById("sw-vat");
+const swPaye  = document.getElementById("sw-paye");
+const swSa    = document.getElementById("sw-sa");
+
+swFirst.addEventListener("click", () => toggle(swFirst));
+swCs.addEventListener("click", () => {
+  document.getElementById("cs-fields").classList.toggle("hidden", !toggle(swCs));
+});
+swVat.addEventListener("click", () => {
+  document.getElementById("vat-fields").classList.toggle("hidden", !toggle(swVat));
+});
+swPaye.addEventListener("click", () => toggle(swPaye));
+swSa.addEventListener("click", () => toggle(swSa));
+
+const isOn = (btn) => btn.getAttribute("aria-checked") === "true";
+
+/* ===================== READ + VALIDATE FORM ===================== */
+function readDate(prefix) {
+  const d = +document.getElementById(prefix+"-day").value || 0;
+  const m = +document.getElementById(prefix+"-month").value || 0;
+  const y = +document.getElementById(prefix+"-year").value || 0;
+  return { d, m, y, filled: !!(d && m && y) };
+}
+function markInvalid(prefix, bad) {
+  ["day","month","year"].forEach(p => {
+    document.getElementById(prefix+"-"+p).classList.toggle("invalid", bad);
+  });
+}
+
+function gatherAndValidate() {
+  ["ye","inc","cs","vat"].forEach(p => markInvalid(p, false));
+  const errors = [];
+
+  const ye = readDate("ye");
+  const inc = readDate("inc");
+
+  if (!ye.filled) { errors.push("Please choose your full accounting year-end date."); markInvalid("ye", true); }
+  else if (!isValidDate(ye.y, ye.m, ye.d)) { errors.push(`${ye.d} ${MONTHS[ye.m-1]||"?"} ${ye.y} isn't a real date — please check your year-end.`); markInvalid("ye", true); }
+
+  if (!inc.filled) { errors.push("Please choose your full date of incorporation."); markInvalid("inc", true); }
+  else if (!isValidDate(inc.y, inc.m, inc.d)) { errors.push(`${inc.d} ${MONTHS[inc.m-1]||"?"} ${inc.y} isn't a real date — please check your incorporation date.`); markInvalid("inc", true); }
+
+  let cs = null;
+  if (isOn(swCs)) {
+    cs = readDate("cs");
+    if (!cs.filled) { errors.push("Please complete the last confirmation statement date, or switch it off."); markInvalid("cs", true); }
+    else if (!isValidDate(cs.y, cs.m, cs.d)) { errors.push(`The confirmation statement date isn't a real date — please check it.`); markInvalid("cs", true); }
+  }
+
+  let vat = null;
+  if (isOn(swVat)) {
+    vat = readDate("vat");
+    if (!vat.filled) { errors.push("VAT is enabled — please choose your VAT quarter-end date."); markInvalid("vat", true); }
+    else if (!isValidDate(vat.y, vat.m, vat.d)) { errors.push(`The VAT quarter-end isn't a real date — please check it.`); markInvalid("vat", true); }
+  }
+
+  if (errors.length) return { ok: false, errors };
+
+  return {
+    ok: true,
+    yearEnd: makeDate(ye.y, ye.m, ye.d),
+    incorporation: makeDate(inc.y, inc.m, inc.d),
+    firstAccounts: isOn(swFirst),
+    confirmation: cs ? makeDate(cs.y, cs.m, cs.d) : null,
+    vat: vat ? makeDate(vat.y, vat.m, vat.d) : null,
+    paye: isOn(swPaye),
+    selfAssessment: isOn(swSa),
+  };
+}
+
+/* ===================== DEADLINE CALCULATIONS ===================== */
+function computeDeadlines(input) {
+  const t = today();
+  const list = [];
+  const ye = input.yearEnd;
+
+  // Annual Accounts (Companies House)
+  const accountsDate = input.firstAccounts
+    ? addMonths(input.incorporation, 21)
+    : addMonths(ye, 9);
+  list.push({
+    name: "Annual Accounts",
+    category: "Companies House",
+    date: accountsDate,
+    description: input.firstAccounts
+      ? "File your first annual accounts with Companies House (21 months after incorporation)."
+      : "File your annual accounts with Companies House (9 months after your year-end)."
+  });
+
+  // Corporation Tax Payment (HMRC) — 9 months + 1 day after year-end
+  list.push({
+    name: "Corporation Tax Payment",
+    category: "HMRC",
+    date: addDays(addMonths(ye, 9), 1),
+    description: "Pay your Corporation Tax bill to HMRC (9 months and 1 day after your year-end)."
+  });
+
+  // Company Tax Return / CT600 (HMRC) — 12 months after year-end
+  list.push({
+    name: "Company Tax Return (CT600)",
+    category: "HMRC",
+    date: addMonths(ye, 12),
+    description: "File your Company Tax Return (CT600) with HMRC (12 months after your year-end)."
+  });
+
+  // Confirmation Statement (Companies House)
+  let csDate;
+  if (input.confirmation) {
+    csDate = addDays(addYears(input.confirmation, 1), 14);
+    // roll forward to the next future due date if the supplied one is already past
+    while (startOfDay(csDate) < t) csDate = addDays(addYears(addDays(csDate, -14), 1), 14);
+  } else {
+    const anniv = nextAnniversary(input.incorporation.getMonth()+1, input.incorporation.getDate(), t);
+    csDate = addDays(anniv, 14);
+  }
+  list.push({
+    name: "Confirmation Statement",
+    category: "Companies House",
+    date: csDate,
+    description: input.confirmation
+      ? "File your confirmation statement with Companies House (1 year after your last statement, plus 14 days)."
+      : "File your confirmation statement with Companies House (incorporation anniversary, plus 14 days)."
+  });
+
+  // VAT Return (HMRC) — 1 month + 7 days after quarter-end
+  if (input.vat) {
+    list.push({
+      name: "VAT Return",
+      category: "HMRC",
+      date: addDays(addMonths(input.vat, 1), 7),
+      description: "Submit your VAT return and pay any VAT due (1 month and 7 days after your quarter-end)."
+    });
+  }
+
+  // Self Assessment (HMRC) — 31 Jan following the tax year (ends 5 April)
+  if (input.selfAssessment) {
+    const afterApr5 = (ye.getMonth()+1 > 4) || (ye.getMonth()+1 === 4 && ye.getDate() > 5);
+    const saYear = ye.getFullYear() + (afterApr5 ? 2 : 1);
+    list.push({
+      name: "Self Assessment",
+      category: "HMRC",
+      date: new Date(saYear, 0, 31),
+      description: "File your Self Assessment tax return and pay any tax due to HMRC (31 January after the tax year)."
+    });
+  }
+
+  // PAYE Payment (HMRC) — 22nd of each month (electronic). Show next upcoming.
+  if (input.paye) {
+    let paye = new Date(t.getFullYear(), t.getMonth(), 22);
+    if (startOfDay(paye) < t) paye = new Date(t.getFullYear(), t.getMonth()+1, 22);
+    list.push({
+      name: "PAYE Payment",
+      category: "HMRC",
+      date: paye,
+      description: "Pay PAYE tax and National Insurance to HMRC electronically (due by the 22nd each month)."
+    });
+  }
+
+  // Attach countdown + status, then sort by soonest
+  for (const dl of list) {
+    dl.daysLeft = daysBetween(t, dl.date);
+    dl.status = dl.daysLeft > 60 ? "green" : dl.daysLeft >= 15 ? "amber" : "red";
+  }
+  list.sort((a,b) => a.date - b.date);
+  return list;
+}
+
+/* ===================== RENDER ===================== */
+let lastDeadlines = [];
+
+function render(deadlines) {
+  lastDeadlines = deadlines;
+  const container = document.getElementById("deadlines");
+  container.innerHTML = deadlines.map(dl => {
+    const overdue = dl.daysLeft < 0;
+    const num = Math.abs(dl.daysLeft);
+    const word = overdue ? (num === 1 ? "DAY OVERDUE" : "DAYS OVERDUE")
+                         : (num === 1 ? "DAY LEFT" : "DAYS LEFT");
+    return `
+      <article class="dl-card status-${dl.status}" data-testid="deadline-card">
+        <div class="dl-main">
+          <span class="dl-cat">${dl.category}</span>
+          <h3 class="dl-name">${dl.name}</h3>
+          <p class="dl-date">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            ${formatLong(dl.date)}
+          </p>
+          <p class="dl-desc">${dl.description}</p>
+        </div>
+        <div class="dl-count">
+          <div class="num">${num}</div>
+          <div class="word">${word}</div>
+        </div>
+      </article>`;
+  }).join("");
+
+  document.getElementById("empty").classList.add("hidden");
+  container.classList.remove("hidden");
+  document.getElementById("disclaimer").classList.remove("hidden");
+  document.getElementById("export-btn").classList.remove("hidden");
+}
+
+function showErrors(errors) {
+  document.getElementById("error-box").innerHTML = `
+    <div class="error-banner" data-testid="error-banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div>${errors.map(e => `<div>${e}</div>`).join("")}</div>
+    </div>`;
+}
+function clearErrors() { document.getElementById("error-box").innerHTML = ""; }
+
+/* ===================== ICS EXPORT ===================== */
+function icsEscape(s) { return String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n"); }
+function pad(n) { return String(n).padStart(2,"0"); }
+function icsDate(d) { return d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()); }
+function icsStamp() {
+  const n = new Date();
+  return n.getUTCFullYear()+pad(n.getUTCMonth()+1)+pad(n.getUTCDate())+"T"+pad(n.getUTCHours())+pad(n.getUTCMinutes())+pad(n.getUTCSeconds())+"Z";
+}
+
+function buildICS(deadlines) {
+  const stamp = icsStamp();
+  let out = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Director's Deadline Copilot//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH"
+  ];
+  deadlines.forEach((dl, i) => {
+    const start = icsDate(dl.date);
+    const end = icsDate(addDays(dl.date, 1)); // all-day → DTEND is next day
+    const uid = `ddc-${i}-${start}-${Math.random().toString(36).slice(2,8)}@deadline-copilot`;
+    out.push(
+      "BEGIN:VEVENT",
+      "UID:" + uid,
+      "DTSTAMP:" + stamp,
+      "DTSTART;VALUE=DATE:" + start,
+      "DTEND;VALUE=DATE:" + end,
+      "SUMMARY:" + icsEscape(`${dl.name} (${dl.category})`),
+      "DESCRIPTION:" + icsEscape(dl.description),
+      "TRANSP:TRANSPARENT",
+      "BEGIN:VALARM",
+      "TRIGGER:-P7D",
+      "ACTION:DISPLAY",
+      "DESCRIPTION:" + icsEscape(`Reminder: ${dl.name} due in 7 days`),
+      "END:VALARM",
+      "END:VEVENT"
+    );
+  });
+  out.push("END:VCALENDAR");
+  return out.join("\r\n");
+}
+
+document.getElementById("export-btn").addEventListener("click", () => {
+  if (!lastDeadlines.length) return;
+  const blob = new Blob([buildICS(lastDeadlines)], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "uk-company-deadlines.ics";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+/* ===================== SUBMIT ===================== */
+document.getElementById("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  clearErrors();
+  const result = gatherAndValidate();
+  if (!result.ok) {
+    showErrors(result.errors);
+    document.getElementById("error-box").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    return;
+  }
+  const btn = document.getElementById("calc-btn");
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = "Calculating…";
+  setTimeout(() => {
+    try {
+      render(computeDeadlines(result));
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  }, 250);
+});
+</script>
+</body>
+</html>

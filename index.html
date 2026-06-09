@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Founder's Toolkit — Free tools for new UK company directors</title>
+<meta name="description" content="Free, no-login tools for new UK limited company directors: deadline tracking, Corporation Tax estimates, salary vs dividend planning, setup checklists and more." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #F9F9F7;
+    --card: #FFFFFF;
+    --moss: #4F6354;
+    --moss-dark: #41513F;
+    --text: #1C1C1A;
+    --text-2: #5C5C58;
+    --muted: #8A8A85;
+    --border: #E5E5DF;
+    --input-bg: #F2F2F0;
+    --green-bg: #EAF0EB; --green-bd: #C3D6C8; --green-tx: #2B5332;
+    --amber-bg: #FDF3E1; --amber-bd: #EAD5AE; --amber-tx: #995C14;
+    --radius-card: 1rem;
+    --radius-btn: 0.75rem;
+    --shadow: 0 1px 2px rgba(28,28,26,.04), 0 8px 24px rgba(28,28,26,.05);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Manrope", system-ui, -apple-system, sans-serif;
+    font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .font-head { font-family: "Outfit", system-ui, sans-serif; letter-spacing: -0.01em; }
+  a { color: var(--moss); }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 72px; }
+
+  /* Logo */
+  .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: 40px; }
+  .logo img { height: 40px; width: auto; display: block; }
+  .logo .wordmark { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 700; color: var(--moss); font-size: 1.1rem; letter-spacing: -0.02em; }
+  .logo .mark { width: 34px; height: 34px; border-radius: 9px; background: var(--moss); color: #fff; display: grid; place-items: center; }
+  @media (max-width: 640px) { .logo img { height: 30px; } .logo .wordmark { font-size: 0.95rem; } .logo .mark { width: 28px; height: 28px; } }
+
+  /* Hero */
+  .hero { max-width: 720px; margin-bottom: 44px; }
+  .eyebrow { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--moss); margin-bottom: 12px; }
+  .hero h1 { font-size: clamp(2.1rem, 5.5vw, 3.25rem); font-weight: 700; margin: 0 0 14px; line-height: 1.08; }
+  .hero p { color: var(--text-2); font-size: 1.08rem; margin: 0; }
+
+  /* Section label */
+  .section-label { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 8px 0 16px; }
+
+  /* Tile grid */
+  .grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  @media (min-width: 640px) { .grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 980px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+  .tile {
+    position: relative; display: flex; flex-direction: column;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-card); box-shadow: var(--shadow);
+    padding: 22px; text-decoration: none; color: inherit;
+    transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+  }
+  a.tile:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(28,28,26,.06), 0 16px 36px rgba(28,28,26,.08); border-color: #D7D7CF; }
+  .tile.soon { cursor: default; }
+  .tile.soon:hover { transform: none; }
+
+  .tile-icon { width: 44px; height: 44px; border-radius: 11px; background: var(--input-bg); color: var(--moss); display: grid; place-items: center; margin-bottom: 16px; }
+  .tile-icon svg { width: 22px; height: 22px; }
+  .tile h3 { font-size: 1.18rem; font-weight: 600; margin: 0 0 7px; }
+  .tile p { font-size: 0.9rem; color: var(--text-2); margin: 0 0 16px; flex: 1; }
+
+  .badge { position: absolute; top: 18px; right: 18px; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; }
+  .badge.live { background: var(--green-bg); color: var(--green-tx); border: 1px solid var(--green-bd); }
+  .badge.soon { background: var(--amber-bg); color: var(--amber-tx); border: 1px solid var(--amber-bd); }
+
+  .tile-cta { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.9rem; color: var(--moss); display: inline-flex; align-items: center; gap: 6px; }
+  .tile-cta svg { width: 16px; height: 16px; transition: transform .14s ease; }
+  a.tile:hover .tile-cta svg { transform: translateX(3px); }
+  .tile.soon .tile-cta { color: var(--muted); }
+
+  /* CTA band */
+  .cta-band {
+    margin-top: 44px; background: var(--moss); color: #fff;
+    border-radius: var(--radius-card); padding: 34px 30px;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px;
+  }
+  .cta-band h2 { font-size: clamp(1.4rem, 3vw, 1.75rem); font-weight: 700; margin: 0 0 6px; color: #fff; }
+  .cta-band p { margin: 0; color: rgba(255,255,255,.82); max-width: 460px; }
+  .cta-btn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--moss); font-family: "Outfit", sans-serif; font-weight: 600; text-decoration: none; padding: 13px 22px; border-radius: var(--radius-btn); min-height: 48px; transition: transform .05s, box-shadow .14s; }
+  .cta-btn:hover { box-shadow: 0 8px 20px rgba(0,0,0,.18); }
+  .cta-btn:active { transform: translateY(1px); }
+
+  /* Footer */
+  footer { margin-top: 52px; padding-top: 22px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); }
+  footer p { margin: 0 0 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOGO — set LOGO_URL below to use your own brand image -->
+  <a class="logo" href="#" data-testid="logo" aria-label="Founder's Toolkit home">
+    <img id="logo-img" alt="Logo" style="display:none" />
+    <span class="wordmark" id="logo-fallback">
+      <span class="mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
+      </span>
+      Founder's&nbsp;Toolkit
+    </span>
+  </a>
+
+  <header class="hero">
+    <div class="eyebrow">Free tools · No login · Nothing stored</div>
+    <h1>Everything a new UK company director wishes they'd been told.</h1>
+    <p>Simple, accurate tools for the deadlines, taxes and obligations that come with running a limited company — the things nobody hands you a manual for.</p>
+  </header>
+
+  <div class="section-label">The tools</div>
+  <div class="grid" id="tiles">
+
+    <!-- LIVE: Deadline Copilot -->
+    <a class="tile" href="tools/deadline-copilot/index.html" data-testid="tile-deadline-copilot">
+      <span class="badge live">Live</span>
+      <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+      <h3>Deadline Copilot</h3>
+      <p>Every filing and payment deadline for your company — accounts, Corporation Tax, confirmation statement, VAT, PAYE — counted down from today, with calendar export.</p>
+      <span class="tile-cta">Open tool <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+    </a>
+
+    <!-- SOON: Corporation Tax estimator -->
+    <div class="tile soon" data-testid="tile-corp-tax">
+      <span class="badge soon">Coming soon</span>
+      <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+      <h3>Corporation Tax Estimator</h3>
+      <p>Enter your profit and get your Corporation Tax — including the 19%/25% bands and the marginal relief most people get wrong.</p>
+      <span class="tile-cta">In progress</span>
+    </div>
+
+    <!-- SOON: Salary vs Dividends -->
+    <div class="tile soon" data-testid="tile-salary-dividends">
+      <span class="badge soon">Coming soon</span>
+      <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+      <h3>Salary vs Dividends Optimiser</h3>
+      <p>Find the most tax-efficient split between director's salary and dividends for your profit level — and see exactly how much you'd save.</p>
+      <span class="tile-cta">In progress</span>
+    </div>
+
+    <!-- SOON: Setup Checklist -->
+    <div class="tile soon" data-testid="tile-setup-checklist">
+      <span class="badge soon">Coming soon</span>
+      <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+      <h3>New Company Setup Checklist</h3>
+      <p>Answer a few questions and get your personalised list of registrations, insurances and legal duties — including the ones nobody warns you about.</p>
+      <span class="tile-cta">In progress</span>
+    </div>
+
+    <!-- SOON: Insurance assessment -->
+    <div class="tile soon" data-testid="tile-insurance">
+      <span class="badge soon">Coming soon</span>
+      <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+      <h3>Insurance Needs Check</h3>
+      <p>Tell us what your business does and see which cover is legally required versus strongly advised — starting with employers' liability, the one that's the law.</p>
+      <span class="tile-cta">In progress</span>
+    </div>
+
+    <!-- SOON: VAT checker -->
+    <div class="tile soon" data-testid="tile-vat">
+      <span class="badge soon">Coming soon</span>
+      <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></div>
+      <h3>Do I Need to Register for VAT?</h3>
+      <p>Track your rolling 12-month turnover against the £90,000 threshold and weigh up voluntary registration — before you accidentally cross the line.</p>
+      <span class="tile-cta">In progress</span>
+    </div>
+
+  </div>
+
+  <!-- Lead-gen CTA — point the link at your booking page / contact form -->
+  <div class="cta-band">
+    <div>
+      <h2>Want a human to check it properly?</h2>
+      <p>These tools give you a fast, accurate starting point. When you'd like it confirmed for your exact situation, we're here to help.</p>
+    </div>
+    <a class="cta-btn" href="#" id="cta-link" data-testid="cta-book">
+      Book a free call
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+
+  <footer>
+    <p>These tools provide general estimates based on standard UK rules and are not a substitute for professional advice. Always confirm your exact obligations with HMRC, Companies House or a qualified adviser.</p>
+    <p>© <span id="year"></span> Founder's Toolkit.</p>
+  </footer>
+
+</div>
+
+<script>
+/* =========================================================
+   CONFIG
+   - LOGO_URL: your brand image (leave "" for the placeholder)
+   - BOOKING_URL: where the "Book a free call" button points
+   ========================================================= */
+const LOGO_URL = "";
+const BOOKING_URL = ""; // e.g. "https://blincoe.example/book"
+
+(function init(){
+  if (LOGO_URL) {
+    const img = document.getElementById("logo-img");
+    img.src = LOGO_URL;
+    img.onload = () => { img.style.display = "block"; document.getElementById("logo-fallback").style.display = "none"; };
+    img.onerror = () => { img.style.display = "none"; document.getElementById("logo-fallback").style.display = "flex"; };
+  }
+  if (BOOKING_URL) document.getElementById("cta-link").href = BOOKING_URL;
+  // current year without Date.now-style helpers issues
+  document.getElementById("year").textContent = new Date().getFullYear();
+})();
+</script>
+</body>
+</html>

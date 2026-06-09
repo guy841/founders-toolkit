@@ -147,8 +147,19 @@
         <div class="hint">Profit for the year before any director's salary or Corporation Tax.</div>
       </div>
 
+      <div class="field">
+        <label class="lbl" for="directors">Number of directors sharing the profit</label>
+        <select id="directors" data-testid="directors">
+          <option value="1" selected>1 director</option>
+          <option value="2">2 directors</option>
+          <option value="3">3 directors</option>
+          <option value="4">4 directors</option>
+        </select>
+        <div class="hint">Assumes directors take an equal salary and split the dividends equally.</div>
+      </div>
+
       <div class="switch-row">
-        <span><span class="lbl">Can you claim the Employment Allowance?</span><span class="sub">No if you're the only person on the payroll</span></span>
+        <span><span class="lbl">Can you claim the Employment Allowance?</span><span class="sub" id="ea-sub">No if you're the only person on the payroll</span></span>
         <button type="button" class="switch" id="sw-ea" data-testid="toggle-ea" role="switch" aria-checked="false" aria-label="Employment Allowance eligible"></button>
       </div>
 
@@ -247,18 +258,23 @@ function personalTax(salary, dividends) {
   const employeeNI = Math.max(0, Math.min(salary, EE_UEL) - EE_PT) * EE_R1 + Math.max(0, salary - EE_UEL) * EE_R2;
   return { incomeTax, dividendTax, employeeNI };
 }
-function scenario(profit, salary, ea) {
-  let employerNI = Math.max(0, salary - ER_ST) * ER_RATE;
-  if (ea) employerNI = Math.max(0, employerNI - EMP_ALLOW);
-  const taxableProfit = profit - salary - employerNI;
+// salaryEach is the salary paid to EACH of N directors; dividends are split equally.
+function scenario(profit, salaryEach, N, ea) {
+  let employerNI = N * Math.max(0, salaryEach - ER_ST) * ER_RATE;
+  if (ea) employerNI = Math.max(0, employerNI - EMP_ALLOW);   // one Employment Allowance per company
+  const taxableProfit = profit - salaryEach * N - employerNI;
   if (taxableProfit < 0) return null;
   const ct = computeCT(taxableProfit);
-  const dividends = Math.max(0, taxableProfit - ct);
-  const pt = personalTax(salary, dividends);
-  const personalTaxTotal = pt.incomeTax + pt.dividendTax + pt.employeeNI;
-  const net = salary + dividends - personalTaxTotal;
-  const totalTax = employerNI + ct + personalTaxTotal;
-  return { salary, employerNI, ct, dividends, incomeTax: pt.incomeTax, dividendTax: pt.dividendTax, employeeNI: pt.employeeNI, net, totalTax };
+  const totalDividends = Math.max(0, taxableProfit - ct);
+  const dividendsEach = totalDividends / N;
+  const pt = personalTax(salaryEach, dividendsEach);
+  const ptEach = pt.incomeTax + pt.dividendTax + pt.employeeNI;
+  const netEach = salaryEach + dividendsEach - ptEach;
+  return {
+    salaryEach, N, employerNI, ct, totalDividends, dividendsEach,
+    incomeTax: pt.incomeTax, dividendTax: pt.dividendTax, employeeNI: pt.employeeNI,
+    netEach, netTotal: netEach * N, totalTax: employerNI + ct + N * ptEach,
+  };
 }
 
 const PRESETS = [
@@ -273,42 +289,45 @@ function showErrors(list) {
     `<div class="error-banner" data-testid="error-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div>${list.map(e => `<div>${e}</div>`).join("")}</div></div>`;
 }
 
-function renderResult(profit, ea) {
-  const rows = PRESETS.map(p => ({ ...p, r: scenario(profit, p.salary, ea) })).filter(x => x.r);
+function renderResult(profit, N, ea) {
+  const rows = PRESETS.map(p => ({ ...p, r: scenario(profit, p.salary, N, ea) })).filter(x => x.r);
   if (!rows.length) return;
-  let best = rows[0]; rows.forEach(x => { if (x.r.net > best.r.net) best = x; });
+  let best = rows[0]; rows.forEach(x => { if (x.r.netTotal > best.r.netTotal) best = x; });
   const recommended = rows.find(x => x.salary === 12570) || best;
   const rec = recommended.r;
+  const each = N > 1 ? " (each)" : "";
+  const dirWord = N > 1 ? `${N} directors` : "1 director";
 
   // headline = recommended strategy
   let html = `
     <div class="headline">
-      <div class="label">Take-home pay${recommended.salary === 12570 ? " · recommended split" : ""}</div>
-      <div class="amount" data-testid="net-takehome">${gbp(rec.net)}</div>
-      <div class="sub">${gbp(rec.salary)} salary + ${gbp(rec.dividends)} dividends, from ${gbp(profit)} profit</div>
+      <div class="label">${N > 1 ? "Household take-home" : "Take-home pay"}${recommended.salary === 12570 ? " · recommended split" : ""}</div>
+      <div class="amount" data-testid="net-takehome">${gbp(rec.netTotal)}</div>
+      <div class="sub">${dirWord} · ${gbp(rec.salaryEach)} salary + ${gbp(rec.dividendsEach)} dividends each, from ${gbp(profit)} profit</div>
     </div>
     <div class="split">
       <div class="s"><div class="k">Total tax &amp; NI</div><div class="v">${gbp(rec.totalTax)}</div></div>
-      <div class="s"><div class="k">You keep</div><div class="v">${(rec.net / profit * 100).toFixed(1)}%</div></div>
+      <div class="s"><div class="k">You keep</div><div class="v">${(rec.netTotal / profit * 100).toFixed(1)}%</div></div>
     </div>
     <div class="breakdown">
-      <div class="row"><span class="lbl2">Salary</span><span>${gbp(rec.salary)}</span></div>
-      <div class="row"><span class="lbl2">Employer NI</span><span>${gbp(rec.employerNI)}</span></div>
+      <div class="row"><span class="lbl2">Salary${each}</span><span>${gbp(rec.salaryEach)}</span></div>
+      <div class="row"><span class="lbl2">Dividends${each}</span><span>${gbp(rec.dividendsEach)}</span></div>
+      <div class="row"><span class="lbl2">Income tax${each}</span><span>${gbp(rec.incomeTax)}</span></div>
+      <div class="row"><span class="lbl2">Employee NI${each}</span><span>${gbp(rec.employeeNI)}</span></div>
+      <div class="row"><span class="lbl2">Dividend tax${each}</span><span>${gbp(rec.dividendTax)}</span></div>
+      ${N > 1 ? `<div class="row"><span class="lbl2">Net per director</span><span>${gbp(rec.netEach)}</span></div>` : ""}
+      <div class="row"><span class="lbl2">Employer NI (company)</span><span>${gbp(rec.employerNI)}</span></div>
       <div class="row"><span class="lbl2">Corporation Tax</span><span>${gbp(rec.ct)}</span></div>
-      <div class="row"><span class="lbl2">Dividends paid</span><span>${gbp(rec.dividends)}</span></div>
-      <div class="row"><span class="lbl2">Income tax on salary</span><span>${gbp(rec.incomeTax)}</span></div>
-      <div class="row"><span class="lbl2">Employee NI</span><span>${gbp(rec.employeeNI)}</span></div>
-      <div class="row"><span class="lbl2">Dividend tax</span><span>${gbp(rec.dividendTax)}</span></div>
-      <div class="row total"><span>Net take-home</span><span>${gbp(rec.net)}</span></div>
+      <div class="row total"><span>Net ${N > 1 ? "household " : ""}take-home</span><span>${gbp(rec.netTotal)}</span></div>
     </div>
 
-    <h3 class="block-title">Compare salary levels</h3>
+    <h3 class="block-title">Compare salary levels${N > 1 ? " (per director)" : ""}</h3>
     <table class="compare" data-testid="compare-table">
-      <thead><tr><th>Salary strategy</th><th>Dividends</th><th>Total tax</th><th>Take-home</th></tr></thead>
+      <thead><tr><th>Salary${each}</th><th>Dividends${each}</th><th>Total tax</th><th>${N > 1 ? "Household " : ""}take-home</th></tr></thead>
       <tbody>
         ${rows.map(x => {
           const tags = (x.salary === best.salary ? '<span class="tag best">Best</span>' : "") + (x.salary === 12570 ? '<span class="tag rec">Usual</span>' : "");
-          return `<tr class="${x.salary === best.salary ? "best" : ""}"><td>${gbp(x.salary)}${tags}</td><td>${gbp(x.r.dividends)}</td><td>${gbp(x.r.totalTax)}</td><td>${gbp(x.r.net)}</td></tr>`;
+          return `<tr class="${x.salary === best.salary ? "best" : ""}"><td>${gbp(x.salary)}${tags}</td><td>${gbp(x.r.dividendsEach)}</td><td>${gbp(x.r.totalTax)}</td><td>${gbp(x.r.netTotal)}</td></tr>`;
         }).join("")}
       </tbody>
     </table>`;
@@ -327,9 +346,30 @@ function renderResult(profit, ea) {
   document.getElementById("result").classList.remove("hidden");
 }
 
-document.getElementById("sw-ea").addEventListener("click", () => {
-  const b = document.getElementById("sw-ea"); b.setAttribute("aria-checked", b.getAttribute("aria-checked") === "true" ? "false" : "true");
+const swEa = document.getElementById("sw-ea");
+const directorsEl = document.getElementById("directors");
+function numDirectors() { return parseInt(directorsEl.value, 10) || 1; }
+// With 2+ directors each paid over the secondary threshold, the company qualifies for the Employment Allowance.
+function syncEA() {
+  const n = numDirectors();
+  if (n >= 2) {
+    swEa.setAttribute("aria-checked", "true");
+    swEa.setAttribute("aria-disabled", "true");
+    swEa.style.opacity = "0.5"; swEa.style.pointerEvents = "none";
+    document.getElementById("ea-sub").textContent = "Included automatically with 2+ directors";
+  } else {
+    swEa.removeAttribute("aria-disabled");
+    swEa.style.opacity = ""; swEa.style.pointerEvents = "";
+    document.getElementById("ea-sub").textContent = "No if you're the only person on the payroll";
+  }
+}
+function eaEligible() { return numDirectors() >= 2 ? true : swEa.getAttribute("aria-checked") === "true"; }
+swEa.addEventListener("click", () => {
+  if (swEa.getAttribute("aria-disabled") === "true") return;
+  swEa.setAttribute("aria-checked", swEa.getAttribute("aria-checked") === "true" ? "false" : "true");
 });
+directorsEl.addEventListener("change", syncEA);
+syncEA();
 
 // profit field thousands formatting
 const profitEl = document.getElementById("profit");
@@ -342,7 +382,7 @@ document.getElementById("form").addEventListener("submit", (e) => {
   const profit = parseMoney(profitEl.value);
   if (isNaN(profit) || profit <= 0) { showErrors(["Please enter your company profit before pay."]); profitEl.classList.add("invalid"); return; }
   if (profit > 50000000) { showErrors(["That profit looks too large — please check the figure."]); profitEl.classList.add("invalid"); return; }
-  renderResult(profit, document.getElementById("sw-ea").getAttribute("aria-checked") === "true");
+  renderResult(profit, numDirectors(), eaEligible());
 });
 
 /* ===== Director's loan ===== */

@@ -531,6 +531,7 @@ document.getElementById("security-controls").addEventListener("click", (e) => {
   else if (act === "unprotect") removeProtection();
 });
 function lockNow() {
+  clearTimeout(saveTimer);      // cancel any in-flight autosave so it can't write plaintext after lock
   cryptoKey = null;
   store = { version: 2, companies: [], activeId: null };
   document.querySelectorAll("[data-key]").forEach(el => { el.value = ""; });
@@ -540,6 +541,7 @@ function lockNow() {
 }
 async function removeProtection() {
   if (!confirm("Remove passphrase protection? Your records will be stored unencrypted in this browser again.")) return;
+  clearTimeout(saveTimer);      // cancel any in-flight autosave; we write deliberately below
   cryptoKey = null; encSalt = null;
   await persist();              // writes plaintext, removes encrypted blob
   updateSecurityControls();
@@ -549,6 +551,10 @@ function renderSwitcher() {
   const sel = document.getElementById("company-select");
   sel.innerHTML = store.companies.map(c => `<option value="${c.id}">${esc(companyLabel(c))}</option>`).join("");
   sel.value = store.activeId;
+  if (sel.value !== store.activeId) {            // activeId not among options — resync to avoid edits hitting the wrong company
+    store.activeId = store.companies[0].id;
+    sel.value = store.activeId;
+  }
   document.getElementById("delete-company-btn").disabled = store.companies.length <= 1;
 }
 
@@ -581,7 +587,11 @@ document.getElementById("sections").addEventListener("input", (e) => {
   }
   document.getElementById("save-status").textContent = "Saving…";
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => { writeActiveFromForm(); persist(); }, 350);
+  saveTimer = setTimeout(() => {
+    if (!cryptoKey && isProtected()) return;   // locked vault: never overwrite the encrypted blob with plaintext
+    writeActiveFromForm();
+    persist();
+  }, 350);
 });
 
 // Reveal / copy (event delegation)

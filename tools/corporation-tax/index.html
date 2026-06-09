@@ -302,7 +302,7 @@ document.getElementById("form").addEventListener("submit", (e) => {
   if (isNaN(profit)) { errors.push("Please enter your taxable profit."); profitEl.classList.add("invalid"); }
   else if (profit < 0) { errors.push("Profit can't be negative — a loss means no Corporation Tax is due this period."); profitEl.classList.add("invalid"); }
 
-  if (isNaN(assoc) || assoc < 0) { errors.push("Number of associated companies must be 0 or more."); document.getElementById("assoc").classList.add("invalid"); }
+  if (isNaN(assoc) || assoc < 0 || assoc > 99) { errors.push("Number of associated companies must be between 0 and 99."); document.getElementById("assoc").classList.add("invalid"); }
   if (isNaN(days) || days < 1 || days > 731) { errors.push("Accounting period must be between 1 and 731 days."); document.getElementById("days").classList.add("invalid"); }
 
   if (errors.length) { showErrors(errors); return; }

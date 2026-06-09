@@ -703,6 +703,17 @@ function icsStamp() {
   return n.getUTCFullYear()+pad(n.getUTCMonth()+1)+pad(n.getUTCDate())+"T"+pad(n.getUTCHours())+pad(n.getUTCMinutes())+pad(n.getUTCSeconds())+"Z";
 }
 
+// Fold content lines to 75 octets per RFC 5545 (CRLF + single space continuation)
+function icsFold(line) {
+  if (line.length <= 75) return line;
+  let out = line.slice(0, 75);
+  let rest = line.slice(75);
+  while (rest.length > 74) { out += "\r\n " + rest.slice(0, 74); rest = rest.slice(74); }
+  return out + "\r\n " + rest;
+}
+// Stable slug so the same deadline keeps the same UID across exports (calendars update instead of duplicating)
+function icsSlug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+
 function buildICS(deadlines) {
   const stamp = icsStamp();
   let out = [
@@ -712,10 +723,10 @@ function buildICS(deadlines) {
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH"
   ];
-  deadlines.forEach((dl, i) => {
+  deadlines.forEach((dl) => {
     const start = icsDate(dl.date);
     const end = icsDate(addDays(dl.date, 1)); // all-day → DTEND is next day
-    const uid = `ddc-${i}-${start}-${Math.random().toString(36).slice(2,8)}@deadline-copilot`;
+    const uid = `ddc-${icsSlug(dl.name)}-${start}@deadline-copilot`;
     out.push(
       "BEGIN:VEVENT",
       "UID:" + uid,
@@ -734,7 +745,7 @@ function buildICS(deadlines) {
     );
   });
   out.push("END:VCALENDAR");
-  return out.join("\r\n");
+  return out.map(icsFold).join("\r\n");
 }
 
 document.getElementById("export-btn").addEventListener("click", () => {

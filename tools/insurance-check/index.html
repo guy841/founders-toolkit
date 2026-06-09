@@ -217,7 +217,7 @@ const ITEMS = [
     why: "Property cover repairs the premises; this keeps the cash flowing while you recover. Usually added to a property policy.",
     cost: "varies", show: (a) => a.premises },
 
-  { id: "cyber", level: (a) => (a.data && a.online) ? "advised" : "consider", title: "Cyber insurance",
+  { id: "cyber", level: () => "advised", title: "Cyber insurance",
     desc: "Covers data breaches, ransomware, system damage and the costs of putting things right.",
     why: "If you hold customer data or trade online, a breach can be expensive and reportable.",
     cost: "from ~£100/yr", show: (a) => a.data },

@@ -104,6 +104,20 @@
   .note { font-size: 0.82rem; color: var(--text-2); margin-top: 12px; display: flex; gap: 8px; align-items: flex-start; }
   .note svg { width: 15px; height: 15px; flex: none; margin-top: 2px; color: var(--amber-tx); }
 
+  #directors-editor { margin-bottom: 18px; }
+  #directors-editor .ed-title { font-weight: 600; font-size: 0.86rem; margin-bottom: 8px; }
+  .dir-row { display: grid; grid-template-columns: 1fr 92px; gap: 8px; margin-bottom: 8px; }
+  .dir-name { width: 100%; border: 1px solid var(--border); border-radius: 0.6rem; background: var(--input-bg); padding: 10px 12px; font: inherit; font-size: 0.92rem; min-height: 44px; }
+  .dir-name:focus { outline: none; border-color: var(--moss); box-shadow: 0 0 0 3px rgba(79,99,84,.13); }
+  .pct-wrap { position: relative; }
+  .pct-wrap input { width: 100%; border: 1px solid var(--border); border-radius: 0.6rem; background: var(--input-bg); padding: 10px 24px 10px 12px; font: inherit; font-size: 0.92rem; min-height: 44px; -moz-appearance: textfield; }
+  .pct-wrap input:focus { outline: none; border-color: var(--moss); box-shadow: 0 0 0 3px rgba(79,99,84,.13); }
+  .pct-wrap input::-webkit-outer-spin-button, .pct-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .pct-sign { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 600; pointer-events: none; }
+  .pct-total { font-size: 0.8rem; margin-top: 2px; font-weight: 600; }
+  .pct-total.ok { color: var(--green-tx); }
+  .pct-total.bad { color: var(--red-tx); }
+
   .loan-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
   @media (min-width: 560px) { .loan-grid { grid-template-columns: 1fr 1fr; } }
   select { width: 100%; appearance: none; -webkit-appearance: none; border: 1px solid var(--border); border-radius: 0.6rem; background: var(--input-bg) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A8A85' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 12px center; padding: 11px 34px 11px 13px; font: inherit; font-size: 0.95rem; min-height: 46px; cursor: pointer; }
@@ -155,8 +169,10 @@
           <option value="3">3 directors</option>
           <option value="4">4 directors</option>
         </select>
-        <div class="hint">Assumes directors take an equal salary and split the dividends equally.</div>
+        <div class="hint">Each director takes the same salary; dividends are split by the shares below.</div>
       </div>
+
+      <div id="directors-editor" class="hidden" data-testid="directors-editor"></div>
 
       <div class="switch-row">
         <span><span class="lbl">Can you claim the Employment Allowance?</span><span class="sub" id="ea-sub">No if you're the only person on the payroll</span></span>
@@ -164,7 +180,7 @@
       </div>
 
       <button type="submit" class="btn btn-primary" id="calc-btn" data-testid="calculate-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 7c0-5.333-8-5.333-8 0"/><path d="M10 7v14"/><path d="M6 21h12"/><path d="M6 13h10"/></svg>
         Optimise my pay
       </button>
 
@@ -176,7 +192,7 @@
     <!-- RESULT -->
     <section class="card" id="result-card" aria-live="polite">
       <div id="result-empty" class="result-empty" data-testid="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 7c0-5.333-8-5.333-8 0"/><path d="M10 7v14"/><path d="M6 21h12"/><path d="M6 13h10"/></svg>
         <div class="big">Enter your profit to see the most tax-efficient split</div>
       </div>
       <div id="result" class="hidden"></div>
@@ -193,12 +209,8 @@
         <div class="money"><span class="sym">£</span><input type="text" id="loan-amount" data-testid="loan-amount" inputmode="numeric" placeholder="8,000" autocomplete="off" style="padding-left:28px" /></div>
       </div>
       <div class="field" style="margin:0">
-        <label class="lbl" for="loan-rate">Your highest income tax rate</label>
-        <select id="loan-rate" data-testid="loan-rate">
-          <option value="0.20">Basic rate (20%)</option>
-          <option value="0.40" selected>Higher rate (40%)</option>
-          <option value="0.45">Additional rate (45%)</option>
-        </select>
+        <label class="lbl" for="loan-director">Which director is taking the loan?</label>
+        <select id="loan-director" data-testid="loan-director"></select>
       </div>
       <div class="switch-row" style="grid-column:1/-1">
         <span><span class="lbl">Repaid within 9 months &amp; 1 day of your year-end?</span><span class="sub">Repaying in time avoids the s455 charge</span></span>
@@ -258,23 +270,34 @@ function personalTax(salary, dividends) {
   const employeeNI = Math.max(0, Math.min(salary, EE_UEL) - EE_PT) * EE_R1 + Math.max(0, salary - EE_UEL) * EE_R2;
   return { incomeTax, dividendTax, employeeNI };
 }
-// salaryEach is the salary paid to EACH of N directors; dividends are split equally.
-function scenario(profit, salaryEach, N, ea) {
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+// marginal income-tax rate (for a beneficial-loan benefit) given a director's total income
+function marginalIncomeRate(income) {
+  const pa = personalAllowance(income);
+  if (income <= pa) return 0;
+  if (income <= EE_UEL) return 0.20;      // up to £50,270
+  if (income <= ADD_INCOME) return 0.40;  // up to £125,140
+  return 0.45;
+}
+// Each director takes salaryEach; dividends are split by each director's pct (of 100).
+function scenario(profit, salaryEach, directorsArr, ea) {
+  const N = directorsArr.length;
   let employerNI = N * Math.max(0, salaryEach - ER_ST) * ER_RATE;
   if (ea) employerNI = Math.max(0, employerNI - EMP_ALLOW);   // one Employment Allowance per company
   const taxableProfit = profit - salaryEach * N - employerNI;
   if (taxableProfit < 0) return null;
   const ct = computeCT(taxableProfit);
   const totalDividends = Math.max(0, taxableProfit - ct);
-  const dividendsEach = totalDividends / N;
-  const pt = personalTax(salaryEach, dividendsEach);
-  const ptEach = pt.incomeTax + pt.dividendTax + pt.employeeNI;
-  const netEach = salaryEach + dividendsEach - ptEach;
-  return {
-    salaryEach, N, employerNI, ct, totalDividends, dividendsEach,
-    incomeTax: pt.incomeTax, dividendTax: pt.dividendTax, employeeNI: pt.employeeNI,
-    netEach, netTotal: netEach * N, totalTax: employerNI + ct + N * ptEach,
-  };
+  const perDirector = directorsArr.map(d => {
+    const dividends = totalDividends * (d.pct / 100);
+    const pt = personalTax(salaryEach, dividends);
+    const tax = pt.incomeTax + pt.dividendTax + pt.employeeNI;
+    return { name: d.name, pct: d.pct, salary: salaryEach, dividends, income: salaryEach + dividends,
+             incomeTax: pt.incomeTax, employeeNI: pt.employeeNI, dividendTax: pt.dividendTax, tax, net: salaryEach + dividends - tax };
+  });
+  const netTotal = perDirector.reduce((s, x) => s + x.net, 0);
+  const totalTax = employerNI + ct + perDirector.reduce((s, x) => s + x.tax, 0);
+  return { salaryEach, N, employerNI, ct, totalDividends, perDirector, netTotal, totalTax };
 }
 
 const PRESETS = [
@@ -289,45 +312,63 @@ function showErrors(list) {
     `<div class="error-banner" data-testid="error-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div>${list.map(e => `<div>${e}</div>`).join("")}</div></div>`;
 }
 
-function renderResult(profit, N, ea) {
-  const rows = PRESETS.map(p => ({ ...p, r: scenario(profit, p.salary, N, ea) })).filter(x => x.r);
+function renderResult(profit, directorsArr, ea) {
+  const N = directorsArr.length;
+  const rows = PRESETS.map(p => ({ ...p, r: scenario(profit, p.salary, directorsArr, ea) })).filter(x => x.r);
   if (!rows.length) return;
   let best = rows[0]; rows.forEach(x => { if (x.r.netTotal > best.r.netTotal) best = x; });
   const recommended = rows.find(x => x.salary === 12570) || best;
   const rec = recommended.r;
-  const each = N > 1 ? " (each)" : "";
   const dirWord = N > 1 ? `${N} directors` : "1 director";
 
-  // headline = recommended strategy
   let html = `
     <div class="headline">
       <div class="label">${N > 1 ? "Household take-home" : "Take-home pay"}${recommended.salary === 12570 ? " · recommended split" : ""}</div>
       <div class="amount" data-testid="net-takehome">${gbp(rec.netTotal)}</div>
-      <div class="sub">${dirWord} · ${gbp(rec.salaryEach)} salary + ${gbp(rec.dividendsEach)} dividends each, from ${gbp(profit)} profit</div>
+      <div class="sub">${dirWord} · ${gbp(rec.salaryEach)} salary each + ${gbp(rec.totalDividends)} dividends, from ${gbp(profit)} profit</div>
     </div>
     <div class="split">
       <div class="s"><div class="k">Total tax &amp; NI</div><div class="v">${gbp(rec.totalTax)}</div></div>
       <div class="s"><div class="k">You keep</div><div class="v">${(rec.netTotal / profit * 100).toFixed(1)}%</div></div>
-    </div>
+    </div>`;
+
+  if (N === 1) {
+    const d = rec.perDirector[0];
+    html += `
     <div class="breakdown">
-      <div class="row"><span class="lbl2">Salary${each}</span><span>${gbp(rec.salaryEach)}</span></div>
-      <div class="row"><span class="lbl2">Dividends${each}</span><span>${gbp(rec.dividendsEach)}</span></div>
-      <div class="row"><span class="lbl2">Income tax${each}</span><span>${gbp(rec.incomeTax)}</span></div>
-      <div class="row"><span class="lbl2">Employee NI${each}</span><span>${gbp(rec.employeeNI)}</span></div>
-      <div class="row"><span class="lbl2">Dividend tax${each}</span><span>${gbp(rec.dividendTax)}</span></div>
-      ${N > 1 ? `<div class="row"><span class="lbl2">Net per director</span><span>${gbp(rec.netEach)}</span></div>` : ""}
+      <div class="row"><span class="lbl2">Salary</span><span>${gbp(d.salary)}</span></div>
+      <div class="row"><span class="lbl2">Dividends</span><span>${gbp(d.dividends)}</span></div>
+      <div class="row"><span class="lbl2">Income tax on salary</span><span>${gbp(d.incomeTax)}</span></div>
+      <div class="row"><span class="lbl2">Employee NI</span><span>${gbp(d.employeeNI)}</span></div>
+      <div class="row"><span class="lbl2">Dividend tax</span><span>${gbp(d.dividendTax)}</span></div>
       <div class="row"><span class="lbl2">Employer NI (company)</span><span>${gbp(rec.employerNI)}</span></div>
       <div class="row"><span class="lbl2">Corporation Tax</span><span>${gbp(rec.ct)}</span></div>
-      <div class="row total"><span>Net ${N > 1 ? "household " : ""}take-home</span><span>${gbp(rec.netTotal)}</span></div>
+      <div class="row total"><span>Net take-home</span><span>${gbp(rec.netTotal)}</span></div>
+    </div>`;
+  } else {
+    html += `
+    <div class="breakdown">
+      <div class="row"><span class="lbl2">Salary (each)</span><span>${gbp(rec.salaryEach)}</span></div>
+      <div class="row"><span class="lbl2">Total dividends</span><span>${gbp(rec.totalDividends)}</span></div>
+      <div class="row"><span class="lbl2">Employer NI (company)</span><span>${gbp(rec.employerNI)}</span></div>
+      <div class="row"><span class="lbl2">Corporation Tax</span><span>${gbp(rec.ct)}</span></div>
+      <div class="row total"><span>Net household take-home</span><span>${gbp(rec.netTotal)}</span></div>
     </div>
+    <h3 class="block-title">Each director</h3>
+    <table class="compare" data-testid="per-director-table">
+      <thead><tr><th>Director</th><th>Share</th><th>Dividends</th><th>Tax &amp; NI</th><th>Take-home</th></tr></thead>
+      <tbody>${rec.perDirector.map(d => `<tr><td>${esc(d.name)}</td><td>${d.pct}%</td><td>${gbp(d.dividends)}</td><td>${gbp(d.tax)}</td><td>${gbp(d.net)}</td></tr>`).join("")}</tbody>
+    </table>`;
+  }
 
+  html += `
     <h3 class="block-title">Compare salary levels${N > 1 ? " (per director)" : ""}</h3>
     <table class="compare" data-testid="compare-table">
-      <thead><tr><th>Salary${each}</th><th>Dividends${each}</th><th>Total tax</th><th>${N > 1 ? "Household " : ""}take-home</th></tr></thead>
+      <thead><tr><th>Salary${N > 1 ? " (each)" : ""}</th><th>Dividends</th><th>Total tax</th><th>${N > 1 ? "Household " : ""}take-home</th></tr></thead>
       <tbody>
         ${rows.map(x => {
           const tags = (x.salary === best.salary ? '<span class="tag best">Best</span>' : "") + (x.salary === 12570 ? '<span class="tag rec">Usual</span>' : "");
-          return `<tr class="${x.salary === best.salary ? "best" : ""}"><td>${gbp(x.salary)}${tags}</td><td>${gbp(x.r.dividendsEach)}</td><td>${gbp(x.r.totalTax)}</td><td>${gbp(x.r.netTotal)}</td></tr>`;
+          return `<tr class="${x.salary === best.salary ? "best" : ""}"><td>${gbp(x.salary)}${tags}</td><td>${gbp(x.r.totalDividends)}</td><td>${gbp(x.r.totalTax)}</td><td>${gbp(x.r.netTotal)}</td></tr>`;
         }).join("")}
       </tbody>
     </table>`;
@@ -344,36 +385,99 @@ function renderResult(profit, N, ea) {
   document.getElementById("result").innerHTML = html;
   document.getElementById("result-empty").classList.add("hidden");
   document.getElementById("result").classList.remove("hidden");
+  hasResult = true;
 }
 
 const swEa = document.getElementById("sw-ea");
 const directorsEl = document.getElementById("directors");
+const profitEl = document.getElementById("profit");
+let hasResult = false;
+let directorState = [{ name: "Director 1", pct: 100 }];
+
 function numDirectors() { return parseInt(directorsEl.value, 10) || 1; }
+function pctTotal() { return Math.round(directorState.reduce((a, d) => a + (Number(d.pct) || 0), 0) * 100) / 100; }
+function getDirectors() {
+  const n = numDirectors();
+  return directorState.slice(0, n).map((d, i) => ({ name: (d.name || "").trim() || ("Director " + (i + 1)), pct: n === 1 ? 100 : (Number(d.pct) || 0) }));
+}
+function pctValid() { return numDirectors() < 2 || Math.abs(pctTotal() - 100) < 0.01; }
+
+// rebuild the per-director state when the count changes (reset shares to an equal split)
+function rebuildDirectorState() {
+  const n = numDirectors(), prev = directorState;
+  directorState = [];
+  const even = Math.round((100 / n) * 100) / 100;
+  for (let i = 0; i < n; i++) directorState.push({ name: (prev[i] && prev[i].name) || ("Director " + (i + 1)), pct: even });
+  const drift = Math.round((100 - directorState.reduce((a, d) => a + d.pct, 0)) * 100) / 100;
+  directorState[n - 1].pct = Math.round((directorState[n - 1].pct + drift) * 100) / 100;
+}
+function renderDirectorsEditor() {
+  const wrap = document.getElementById("directors-editor");
+  if (numDirectors() < 2) { wrap.innerHTML = ""; wrap.classList.add("hidden"); return; }
+  wrap.classList.remove("hidden");
+  wrap.innerHTML = `<div class="ed-title">Directors &amp; dividend share</div>` +
+    directorState.map((d, i) => `<div class="dir-row">
+      <input type="text" class="dir-name" data-idx="${i}" value="${esc(d.name)}" aria-label="Director ${i + 1} name" />
+      <div class="pct-wrap"><input type="number" class="dir-pct" data-idx="${i}" value="${d.pct}" min="0" max="100" step="1" aria-label="Director ${i + 1} dividend share %" /><span class="pct-sign">%</span></div>
+    </div>`).join("") +
+    `<div class="pct-total" id="pct-total"></div>`;
+  updatePctTotal();
+}
+function updatePctTotal() {
+  const el = document.getElementById("pct-total");
+  if (!el) return;
+  const t = pctTotal(), good = Math.abs(t - 100) < 0.01;
+  el.className = "pct-total " + (good ? "ok" : "bad");
+  el.textContent = `Dividend shares total ${t}%${good ? " ✓" : " — must add up to 100%"}`;
+}
+
 // With 2+ directors each paid over the secondary threshold, the company qualifies for the Employment Allowance.
 function syncEA() {
-  const n = numDirectors();
-  if (n >= 2) {
-    swEa.setAttribute("aria-checked", "true");
-    swEa.setAttribute("aria-disabled", "true");
+  if (numDirectors() >= 2) {
+    swEa.setAttribute("aria-checked", "true"); swEa.setAttribute("aria-disabled", "true");
     swEa.style.opacity = "0.5"; swEa.style.pointerEvents = "none";
     document.getElementById("ea-sub").textContent = "Included automatically with 2+ directors";
   } else {
-    swEa.removeAttribute("aria-disabled");
-    swEa.style.opacity = ""; swEa.style.pointerEvents = "";
+    swEa.removeAttribute("aria-disabled"); swEa.style.opacity = ""; swEa.style.pointerEvents = "";
     document.getElementById("ea-sub").textContent = "No if you're the only person on the payroll";
   }
 }
 function eaEligible() { return numDirectors() >= 2 ? true : swEa.getAttribute("aria-checked") === "true"; }
+
+// recompute the result (only once a result is on screen) and the loan figures
+function liveRecompute() {
+  const profit = parseMoney(profitEl.value);
+  if (hasResult && !isNaN(profit) && profit > 0 && profit <= 50000000 && pctValid()) {
+    renderResult(profit, getDirectors(), eaEligible());
+  }
+  renderLoan();
+}
+
 swEa.addEventListener("click", () => {
   if (swEa.getAttribute("aria-disabled") === "true") return;
   swEa.setAttribute("aria-checked", swEa.getAttribute("aria-checked") === "true" ? "false" : "true");
+  liveRecompute();
 });
-directorsEl.addEventListener("change", syncEA);
-syncEA();
+directorsEl.addEventListener("change", () => {
+  rebuildDirectorState(); syncEA(); renderDirectorsEditor(); refreshLoanDirectorOptions(); liveRecompute();
+});
+document.getElementById("directors-editor").addEventListener("input", (e) => {
+  const idx = +e.target.getAttribute("data-idx");
+  if (e.target.classList.contains("dir-name")) {
+    directorState[idx].name = e.target.value;
+    const opt = document.querySelector('#loan-director option[value="' + idx + '"]');
+    if (opt) opt.textContent = e.target.value.trim() || ("Director " + (idx + 1));
+  } else if (e.target.classList.contains("dir-pct")) {
+    directorState[idx].pct = Number(e.target.value) || 0;
+    updatePctTotal();
+  }
+  liveRecompute();
+});
 
-// profit field thousands formatting
-const profitEl = document.getElementById("profit");
-profitEl.addEventListener("input", () => { const n = profitEl.value.replace(/[^\d]/g, ""); profitEl.value = n ? Number(n).toLocaleString("en-GB") : ""; });
+profitEl.addEventListener("input", () => {
+  const n = profitEl.value.replace(/[^\d]/g, ""); profitEl.value = n ? Number(n).toLocaleString("en-GB") : "";
+  liveRecompute();
+});
 
 document.getElementById("form").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -382,44 +486,79 @@ document.getElementById("form").addEventListener("submit", (e) => {
   const profit = parseMoney(profitEl.value);
   if (isNaN(profit) || profit <= 0) { showErrors(["Please enter your company profit before pay."]); profitEl.classList.add("invalid"); return; }
   if (profit > 50000000) { showErrors(["That profit looks too large — please check the figure."]); profitEl.classList.add("invalid"); return; }
-  renderResult(profit, numDirectors(), eaEligible());
+  if (!pctValid()) { showErrors(["The directors' dividend shares must add up to 100%."]); return; }
+  renderResult(profit, getDirectors(), eaEligible());
 });
 
-/* ===== Director's loan ===== */
+/* ===== Director's loan (specific to one director) ===== */
+const loanDirectorEl = document.getElementById("loan-director");
+function refreshLoanDirectorOptions() {
+  const dirs = getDirectors();
+  const prev = loanDirectorEl.value;
+  loanDirectorEl.innerHTML = dirs.map((d, i) => `<option value="${i}">${esc(d.name)}</option>`).join("");
+  if (prev !== "" && +prev < dirs.length) loanDirectorEl.value = prev;
+}
+// the recommended (£12,570 salary) scenario for the current inputs, or null if not computable
+function currentRecommended() {
+  const profit = parseMoney(profitEl.value);
+  if (isNaN(profit) || profit <= 0 || profit > 50000000 || !pctValid()) return null;
+  const dirs = getDirectors();
+  const list = PRESETS.map(p => scenario(profit, p.salary, dirs, eaEligible())).filter(Boolean);
+  if (!list.length) return null;
+  return list.find(r => r.salaryEach === 12570) || list.reduce((b, r) => r.netTotal > b.netTotal ? r : b);
+}
+
 function renderLoan() {
   const amount = parseMoney(document.getElementById("loan-amount").value);
   const out = document.getElementById("loan-out");
   if (isNaN(amount) || amount <= 0) { out.innerHTML = ""; return; }
-  const rate = parseFloat(document.getElementById("loan-rate").value);
+  const idx = parseInt(loanDirectorEl.value, 10) || 0;
+  const dirs = getDirectors();
+  const dirName = (dirs[idx] && dirs[idx].name) || "the director";
+  const rec = currentRecommended();
+  let rate, rateNote;
+  if (rec && rec.perDirector[idx]) {
+    rate = marginalIncomeRate(rec.perDirector[idx].income);
+    rateNote = `Benefit taxed at ${esc(dirName)}'s marginal income-tax rate (${Math.round(rate * 100)}%), based on the pay above.`;
+  } else {
+    rate = 0.40;
+    rateNote = `Assuming ${esc(dirName)} is a higher-rate (40%) taxpayer — enter your profit above to tailor this exactly.`;
+  }
   const repaid = document.getElementById("sw-repaid").getAttribute("aria-checked") === "true";
   const bikApplies = amount > BIK_THRESHOLD;
   const bik = bikApplies ? amount * OFFICIAL_RATE : 0;
   const bikTax = bik * rate;
   const class1a = bik * CLASS1A;
   const s455 = repaid ? 0 : amount * S455;
-
   const taxFree = !bikApplies && repaid;
+
   let rows = "";
   rows += `<div class="row"><span>Benefit-in-kind charge ${bikApplies ? "(loan over £10,000)" : "(loan £10,000 or under)"}</span><span>${bikApplies ? gbp2(bik) + "/yr" : '<span class="pill good">None</span>'}</span></div>`;
   if (bikApplies) {
-    rows += `<div class="row"><span class="lbl2">— your tax on the benefit (${Math.round(rate*100)}%)</span><span>${gbp2(bikTax)}/yr</span></div>`;
+    rows += `<div class="row"><span class="lbl2">— ${esc(dirName)}'s tax on the benefit (${Math.round(rate * 100)}%)</span><span>${gbp2(bikTax)}/yr</span></div>`;
     rows += `<div class="row"><span class="lbl2">— company Class 1A NIC (15%)</span><span>${gbp2(class1a)}/yr</span></div>`;
   }
   rows += `<div class="row"><span>s455 tax ${repaid ? "(repaid in time)" : "(33.75%, on outstanding balance)"}</span><span>${repaid ? '<span class="pill good">None</span>' : gbp(s455)}</span></div>`;
-  if (!repaid) rows += `<div class="row"><span class="lbl2" style="font-size:0.8rem">s455 is refundable once you repay the loan — but the cash is tied up with HMRC until then.</span><span></span></div>`;
+  if (!repaid) rows += `<div class="row"><span class="lbl2" style="font-size:0.8rem">s455 is refundable once ${esc(dirName)} repays the loan — but the cash is tied up with HMRC until then.</span><span></span></div>`;
   rows += `<div class="row" style="background:${taxFree ? 'var(--green-bg)' : 'var(--amber-bg)'}"><span style="font-weight:700">${taxFree ? "Tax-free — for now" : "Has a tax cost"}</span><span class="pill ${taxFree ? 'good' : 'warn'}">${taxFree ? "£0 tax" : "see above"}</span></div>`;
 
   out.innerHTML = `<div class="loan-out">${rows}</div>
-    <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> A director's loan must be repaid — it isn't a way to take profit out for good. Keep it at £10,000 or under and repay within 9 months and 1 day of your year-end and there's usually no tax. If you can't repay it, taking the money as salary or dividends (above) is normally the cleaner route.</div>`;
+    <div class="note" style="color:var(--text-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--moss)"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> ${rateNote}</div>
+    <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> A director's loan must be repaid — it isn't a way to take profit out for good. Kept at £10,000 or under and repaid within 9 months and 1 day of the year-end, there's usually no tax. If it can't be repaid, taking the money as salary or dividends (above) is normally the cleaner route.</div>`;
 }
-["loan-amount"].forEach(id => document.getElementById(id).addEventListener("input", () => {
+document.getElementById("loan-amount").addEventListener("input", () => {
   const el = document.getElementById("loan-amount"); const n = el.value.replace(/[^\d]/g, ""); el.value = n ? Number(n).toLocaleString("en-GB") : "";
   renderLoan();
-}));
-document.getElementById("loan-rate").addEventListener("change", renderLoan);
+});
+loanDirectorEl.addEventListener("change", renderLoan);
 document.getElementById("sw-repaid").addEventListener("click", () => {
   const b = document.getElementById("sw-repaid"); b.setAttribute("aria-checked", b.getAttribute("aria-checked") === "true" ? "false" : "true"); renderLoan();
 });
+
+/* init */
+syncEA();
+renderDirectorsEditor();
+refreshLoanDirectorOptions();
 </script>
 </body>
 </html>

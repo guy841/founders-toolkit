@@ -23,8 +23,10 @@ founders-toolkit/
     │   └── index.html             # Company Records — private on-device store (live)
     ├── setup-checklist/
     │   └── index.html             # New Company Setup Checklist (live)
-    └── insurance-check/
-        └── index.html             # Insurance Needs Check (live)
+    ├── insurance-check/
+    │   └── index.html             # Insurance Needs Check (live)
+    └── salary-dividends/
+        └── index.html             # Salary vs Dividends Optimiser + director's loan (live)
 ```
 
 ## Tools
@@ -34,7 +36,7 @@ founders-toolkit/
 | **Deadline Copilot** | ✅ Live | Calculates every company filing & payment deadline (accounts, Corporation Tax, confirmation statement, VAT, PAYE, Self Assessment), counted down from today, with `.ics` calendar export. |
 | **Corporation Tax Estimator** | ✅ Live | Profit → tax owed, including 19%/25% bands and marginal relief. |
 | **Company Records** | ✅ Live | A private, on-device store for key company details (CRN, UTR, VAT, PAYE, insurance, bank, advisers) with backup export/import and print. |
-| **Salary vs Dividends Optimiser** | 🚧 Planned | Most tax-efficient director's salary/dividend split. |
+| **Salary vs Dividends Optimiser** | ✅ Live | Most tax-efficient director's salary/dividend split, plus a director's-loan comparison (BIK & s455). |
 | **New Company Setup Checklist** | ✅ Live | Personalised list of registrations, insurances and legal duties, with progress tracking. |
 | **Insurance Needs Check** | ✅ Live | Which cover is legally required vs advised, based on what the business does. |
 | **VAT Registration Checker** | 🚧 Planned | Rolling 12-month turnover vs the £90k threshold. |

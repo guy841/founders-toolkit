@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Salary vs Dividends Optimiser — Founder's Toolkit</title>
+<meta name="description" content="Find the most tax-efficient mix of director's salary and dividends for your UK limited company — and see how a director's loan compares." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #F9F9F7; --card: #FFFFFF; --moss: #4F6354; --moss-dark: #41513F;
+    --text: #1C1C1A; --text-2: #5C5C58; --muted: #8A8A85; --border: #E5E5DF; --input-bg: #F2F2F0;
+    --green-bg: #EAF0EB; --green-bd: #C3D6C8; --green-tx: #2B5332;
+    --amber-bg: #FDF3E1; --amber-bd: #EAD5AE; --amber-tx: #995C14;
+    --red-bg: #F9E8E8; --red-bd: #E6C5C5; --red-tx: #9E2A27;
+    --radius-card: 1rem; --radius-btn: 0.75rem;
+    --shadow: 0 1px 2px rgba(28,28,26,.04), 0 8px 24px rgba(28,28,26,.05);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Manrope", system-ui, sans-serif; font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: "Outfit", sans-serif; letter-spacing: -0.01em; }
+  a { color: var(--moss); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo img { height: 38px; width: auto; display: block; }
+  .logo .wordmark { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 700; color: var(--moss); font-size: 1.05rem; letter-spacing: -0.02em; }
+  .logo .mark { width: 32px; height: 32px; border-radius: 9px; background: var(--moss); color: #fff; display: grid; place-items: center; }
+  .back { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.85rem; text-decoration: none; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+  .back:hover { color: var(--moss); }
+  .back svg { width: 16px; height: 16px; }
+
+  .hero { margin-bottom: 24px; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 700; margin: 0 0 8px; }
+  .hero p { color: var(--text-2); margin: 0; max-width: 680px; }
+
+  .grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  @media (min-width: 880px) { .grid { grid-template-columns: 5fr 7fr; align-items: start; } }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); padding: 22px; }
+
+  .field { margin-bottom: 18px; }
+  .field label.lbl { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 7px; }
+  .field .hint { font-size: 0.78rem; color: var(--muted); margin-top: 5px; }
+  .money { position: relative; }
+  .money .sym { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 600; pointer-events: none; }
+  input[type=text] { width: 100%; border: 1px solid var(--border); border-radius: 0.6rem; background: var(--input-bg); padding: 12px 14px; font: inherit; font-size: 1rem; color: var(--text); min-height: 48px; transition: border-color .15s, box-shadow .15s; }
+  .money input { padding-left: 28px; }
+  input:focus { outline: none; border-color: var(--moss); box-shadow: 0 0 0 3px rgba(79,99,84,.15); }
+  input.invalid { border-color: var(--red-bd); background: var(--red-bg); }
+
+  .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 0; }
+  .switch-row .lbl { font-weight: 600; font-size: 0.9rem; }
+  .switch-row .sub { font-weight: 400; font-size: 0.78rem; color: var(--muted); display: block; margin-top: 1px; }
+  .switch { position: relative; flex: none; width: 46px; height: 26px; border-radius: 999px; background: #D7D7D1; border: none; cursor: pointer; padding: 0; transition: background .18s ease; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .18s ease; }
+  .switch[aria-checked="true"] { background: var(--moss); }
+  .switch[aria-checked="true"]::after { transform: translateX(20px); }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.95rem; border: none; border-radius: var(--radius-btn); cursor: pointer; padding: 13px 20px; min-height: 48px; transition: background .15s, transform .05s; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--moss); color: #fff; width: 100%; margin-top: 4px; }
+  .btn-primary:hover { background: var(--moss-dark); }
+  .btn svg { width: 18px; height: 18px; }
+
+  .error-banner { display: flex; gap: 10px; align-items: flex-start; background: var(--red-bg); border: 1px solid var(--red-bd); color: var(--red-tx); border-radius: 0.6rem; padding: 12px 14px; margin-bottom: 16px; font-size: 0.88rem; }
+  .error-banner svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+
+  .result-empty { border: 1.5px dashed var(--border); border-radius: var(--radius-card); padding: 56px 28px; text-align: center; color: var(--muted); }
+  .result-empty svg { width: 40px; height: 40px; margin-bottom: 14px; color: #C8C8C2; }
+  .result-empty .big { font-family: "Outfit", sans-serif; font-weight: 600; color: var(--text-2); font-size: 1.05rem; }
+
+  .headline { background: var(--green-bg); border: 1px solid var(--green-bd); border-radius: var(--radius-card); padding: 22px; margin-bottom: 18px; }
+  .headline .label { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--green-tx); margin-bottom: 6px; }
+  .headline .amount { font-family: "Outfit", sans-serif; font-weight: 700; font-size: clamp(2rem, 5.5vw, 2.7rem); line-height: 1; color: var(--green-tx); }
+  .headline .sub { color: var(--green-tx); opacity: .9; font-size: 0.9rem; margin-top: 8px; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .split .s { background: var(--input-bg); border-radius: 0.7rem; padding: 13px 15px; }
+  .split .k { font-size: 0.74rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .split .v { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 1.2rem; margin-top: 3px; }
+
+  .breakdown { border: 1px solid var(--border); border-radius: 0.7rem; overflow: hidden; margin-bottom: 18px; }
+  .breakdown .row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 15px; font-size: 0.88rem; border-bottom: 1px solid var(--border); }
+  .breakdown .row:last-child { border-bottom: none; }
+  .breakdown .row.total { font-weight: 700; background: var(--input-bg); font-family: "Outfit", sans-serif; }
+  .breakdown .row .lbl2 { color: var(--text-2); }
+
+  h3.block-title { font-size: 1.05rem; font-weight: 600; margin: 22px 0 10px; }
+  table.compare { width: 100%; border-collapse: collapse; font-size: 0.85rem; border: 1px solid var(--border); border-radius: 0.7rem; overflow: hidden; }
+  table.compare th, table.compare td { padding: 9px 11px; text-align: right; border-bottom: 1px solid var(--border); }
+  table.compare th:first-child, table.compare td:first-child { text-align: left; }
+  table.compare thead th { background: var(--input-bg); font-family: "Outfit", sans-serif; font-weight: 600; color: var(--text-2); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  table.compare tr.best td { background: var(--green-bg); }
+  table.compare .tag { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 999px; margin-left: 6px; }
+  table.compare .tag.best { background: var(--green-bd); color: var(--green-tx); }
+  table.compare .tag.rec { background: rgba(79,99,84,.12); color: var(--moss-dark); }
+
+  .note { font-size: 0.82rem; color: var(--text-2); margin-top: 12px; display: flex; gap: 8px; align-items: flex-start; }
+  .note svg { width: 15px; height: 15px; flex: none; margin-top: 2px; color: var(--amber-tx); }
+
+  .loan-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 560px) { .loan-grid { grid-template-columns: 1fr 1fr; } }
+  select { width: 100%; appearance: none; -webkit-appearance: none; border: 1px solid var(--border); border-radius: 0.6rem; background: var(--input-bg) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A8A85' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 12px center; padding: 11px 34px 11px 13px; font: inherit; font-size: 0.95rem; min-height: 46px; cursor: pointer; }
+  .loan-out { margin-top: 16px; border: 1px solid var(--border); border-radius: 0.7rem; overflow: hidden; }
+  .loan-out .row { display: flex; justify-content: space-between; gap: 12px; padding: 11px 15px; font-size: 0.88rem; border-bottom: 1px solid var(--border); }
+  .loan-out .row:last-child { border-bottom: none; }
+  .loan-out .pill { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; }
+  .pill.good { background: var(--green-bg); color: var(--green-tx); border: 1px solid var(--green-bd); }
+  .pill.warn { background: var(--amber-bg); color: var(--amber-tx); border: 1px solid var(--amber-bd); }
+
+  .disclaimer { margin-top: 18px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 16px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <a class="logo" href="../../index.html" data-testid="logo" aria-label="Founder's Toolkit home">
+      <img id="logo-img" alt="Logo" style="display:none" />
+      <span class="wordmark" id="logo-fallback">
+        <span class="mark" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg></span>
+        Founder's&nbsp;Toolkit
+      </span>
+    </a>
+    <a class="back" href="../../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> All tools</a>
+  </div>
+
+  <header class="hero">
+    <h1>Salary vs Dividends Optimiser</h1>
+    <p>See the most tax-efficient way to pay yourself from your limited company — the right salary, the dividends on top, and how much actually lands in your pocket. Plus how a director's loan compares for short-term cash.</p>
+  </header>
+
+  <div class="grid">
+    <!-- INPUT -->
+    <form class="card" id="form" novalidate>
+      <div id="error-box"></div>
+      <div class="field">
+        <label class="lbl" for="profit">Company profit before paying yourself</label>
+        <div class="money"><span class="sym">£</span><input type="text" id="profit" data-testid="profit" inputmode="numeric" placeholder="80,000" autocomplete="off" /></div>
+        <div class="hint">Profit for the year before any director's salary or Corporation Tax.</div>
+      </div>
+
+      <div class="switch-row">
+        <span><span class="lbl">Can you claim the Employment Allowance?</span><span class="sub">No if you're the only person on the payroll</span></span>
+        <button type="button" class="switch" id="sw-ea" data-testid="toggle-ea" role="switch" aria-checked="false" aria-label="Employment Allowance eligible"></button>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="calc-btn" data-testid="calculate-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Optimise my pay
+      </button>
+
+      <div class="disclaimer">
+        Estimates for the <strong>2025/26</strong> tax year, England, Wales &amp; Northern Ireland (Scottish income tax bands differ). Assumes this is your only income and the company has no other complications. Not personal tax advice — confirm with your accountant.
+      </div>
+    </form>
+
+    <!-- RESULT -->
+    <section class="card" id="result-card" aria-live="polite">
+      <div id="result-empty" class="result-empty" data-testid="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <div class="big">Enter your profit to see the most tax-efficient split</div>
+      </div>
+      <div id="result" class="hidden"></div>
+    </section>
+  </div>
+
+  <!-- DIRECTOR'S LOAN -->
+  <div class="card" style="margin-top:24px">
+    <h3 class="block-title" style="margin-top:0">Thinking about a director's loan instead?</h3>
+    <p style="color:var(--text-2); font-size:0.9rem; margin:0 0 16px; max-width:760px">A director's loan lets you take money out of the company without it being salary or a dividend — but it's <strong>borrowing you have to pay back</strong>, not income. Kept small and repaid promptly it can be tax-free; left outstanding it triggers tax charges. See where you'd stand:</p>
+    <div class="loan-grid">
+      <div class="field" style="margin:0">
+        <label class="lbl" for="loan-amount">Loan amount</label>
+        <div class="money"><span class="sym">£</span><input type="text" id="loan-amount" data-testid="loan-amount" inputmode="numeric" placeholder="8,000" autocomplete="off" style="padding-left:28px" /></div>
+      </div>
+      <div class="field" style="margin:0">
+        <label class="lbl" for="loan-rate">Your highest income tax rate</label>
+        <select id="loan-rate" data-testid="loan-rate">
+          <option value="0.20">Basic rate (20%)</option>
+          <option value="0.40" selected>Higher rate (40%)</option>
+          <option value="0.45">Additional rate (45%)</option>
+        </select>
+      </div>
+      <div class="switch-row" style="grid-column:1/-1">
+        <span><span class="lbl">Repaid within 9 months &amp; 1 day of your year-end?</span><span class="sub">Repaying in time avoids the s455 charge</span></span>
+        <button type="button" class="switch" id="sw-repaid" data-testid="toggle-repaid" role="switch" aria-checked="true" aria-label="Repaid in time"></button>
+      </div>
+    </div>
+    <div id="loan-out"></div>
+  </div>
+
+</div>
+
+<script>
+/* CONFIG — set your own logo */
+const LOGO_URL = "";
+(function(){ if(LOGO_URL){ const i=document.getElementById("logo-img"); i.src=LOGO_URL; i.onload=()=>{i.style.display="block";document.getElementById("logo-fallback").style.display="none";}; i.onerror=()=>{i.style.display="none";document.getElementById("logo-fallback").style.display="flex";}; } })();
+
+/* ===== 2025/26 tax constants (England/Wales/NI) ===== */
+const PA_FULL = 12570, PA_TAPER = 100000;
+const BASIC_W = 37700, ADD_INCOME = 125140, DIV_ALLOW = 500;
+const IT = { basic: 0.20, higher: 0.40, add: 0.45 };
+const DIVR = { basic: 0.0875, higher: 0.3375, add: 0.3935 };
+const EE_PT = 12570, EE_UEL = 50270, EE_R1 = 0.08, EE_R2 = 0.02;
+const ER_ST = 5000, ER_RATE = 0.15, EMP_ALLOW = 10500, LEL = 6396;
+const CT_SMALL = 0.19, CT_MAIN = 0.25, CT_MR = 3 / 200, CT_LOWER = 50000, CT_UPPER = 250000;
+/* director's loan */
+const OFFICIAL_RATE = 0.0375, S455 = 0.3375, BIK_THRESHOLD = 10000, CLASS1A = 0.15;
+
+const gbp = (n) => "£" + Math.round(n).toLocaleString("en-GB");
+const gbp2 = (n) => "£" + n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function parseMoney(s) { if (s == null) return NaN; const c = String(s).replace(/[,£\s]/g, ""); return c === "" ? NaN : Number(c); }
+
+function personalAllowance(total) { return total <= PA_TAPER ? PA_FULL : Math.max(0, PA_FULL - Math.floor((total - PA_TAPER) / 2)); }
+function computeCT(p) { if (p <= 0) return 0; if (p <= CT_LOWER) return p * CT_SMALL; if (p >= CT_UPPER) return p * CT_MAIN; return p * CT_MAIN - CT_MR * (CT_UPPER - p); }
+
+function slab(start, amount, edges, rates) {
+  if (amount <= 0) return 0;
+  let tax = 0, prev = 0;
+  for (let i = 0; i < edges.length; i++) {
+    const lo = Math.max(start, prev), hi = Math.min(start + amount, edges[i]);
+    if (hi > lo) tax += (hi - lo) * rates[i];
+    prev = edges[i];
+    if (start + amount <= edges[i]) break;
+  }
+  return tax;
+}
+function personalTax(salary, dividends) {
+  const total = salary + dividends;
+  const PA = personalAllowance(total);
+  const addStart = Math.max(BASIC_W, ADD_INCOME - PA);
+  const edges = [BASIC_W, addStart, Infinity];
+  const paToSalary = Math.min(salary, PA), remPA = PA - paToSalary;
+  const ndTaxable = Math.max(0, salary - paToSalary);
+  const divAfterPA = Math.max(0, dividends - remPA);
+  const incomeTax = slab(0, ndTaxable, edges, [IT.basic, IT.higher, IT.add]);
+  const divAllow = Math.min(DIV_ALLOW, divAfterPA);
+  const dividendTax = slab(ndTaxable + divAllow, Math.max(0, divAfterPA - divAllow), edges, [DIVR.basic, DIVR.higher, DIVR.add]);
+  const employeeNI = Math.max(0, Math.min(salary, EE_UEL) - EE_PT) * EE_R1 + Math.max(0, salary - EE_UEL) * EE_R2;
+  return { incomeTax, dividendTax, employeeNI };
+}
+function scenario(profit, salary, ea) {
+  let employerNI = Math.max(0, salary - ER_ST) * ER_RATE;
+  if (ea) employerNI = Math.max(0, employerNI - EMP_ALLOW);
+  const taxableProfit = profit - salary - employerNI;
+  if (taxableProfit < 0) return null;
+  const ct = computeCT(taxableProfit);
+  const dividends = Math.max(0, taxableProfit - ct);
+  const pt = personalTax(salary, dividends);
+  const personalTaxTotal = pt.incomeTax + pt.dividendTax + pt.employeeNI;
+  const net = salary + dividends - personalTaxTotal;
+  const totalTax = employerNI + ct + personalTaxTotal;
+  return { salary, employerNI, ct, dividends, incomeTax: pt.incomeTax, dividendTax: pt.dividendTax, employeeNI: pt.employeeNI, net, totalTax };
+}
+
+const PRESETS = [
+  { salary: 0,     name: "No salary (all dividends)" },
+  { salary: 5000,  name: "£5,000 — no employer NI" },
+  { salary: 6396,  name: "£6,396 — protects state pension" },
+  { salary: 12570, name: "£12,570 — full personal allowance" },
+];
+
+function showErrors(list) {
+  document.getElementById("error-box").innerHTML =
+    `<div class="error-banner" data-testid="error-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div>${list.map(e => `<div>${e}</div>`).join("")}</div></div>`;
+}
+
+function renderResult(profit, ea) {
+  const rows = PRESETS.map(p => ({ ...p, r: scenario(profit, p.salary, ea) })).filter(x => x.r);
+  if (!rows.length) return;
+  let best = rows[0]; rows.forEach(x => { if (x.r.net > best.r.net) best = x; });
+  const recommended = rows.find(x => x.salary === 12570) || best;
+  const rec = recommended.r;
+
+  // headline = recommended strategy
+  let html = `
+    <div class="headline">
+      <div class="label">Take-home pay${recommended.salary === 12570 ? " · recommended split" : ""}</div>
+      <div class="amount" data-testid="net-takehome">${gbp(rec.net)}</div>
+      <div class="sub">${gbp(rec.salary)} salary + ${gbp(rec.dividends)} dividends, from ${gbp(profit)} profit</div>
+    </div>
+    <div class="split">
+      <div class="s"><div class="k">Total tax &amp; NI</div><div class="v">${gbp(rec.totalTax)}</div></div>
+      <div class="s"><div class="k">You keep</div><div class="v">${(rec.net / profit * 100).toFixed(1)}%</div></div>
+    </div>
+    <div class="breakdown">
+      <div class="row"><span class="lbl2">Salary</span><span>${gbp(rec.salary)}</span></div>
+      <div class="row"><span class="lbl2">Employer NI</span><span>${gbp(rec.employerNI)}</span></div>
+      <div class="row"><span class="lbl2">Corporation Tax</span><span>${gbp(rec.ct)}</span></div>
+      <div class="row"><span class="lbl2">Dividends paid</span><span>${gbp(rec.dividends)}</span></div>
+      <div class="row"><span class="lbl2">Income tax on salary</span><span>${gbp(rec.incomeTax)}</span></div>
+      <div class="row"><span class="lbl2">Employee NI</span><span>${gbp(rec.employeeNI)}</span></div>
+      <div class="row"><span class="lbl2">Dividend tax</span><span>${gbp(rec.dividendTax)}</span></div>
+      <div class="row total"><span>Net take-home</span><span>${gbp(rec.net)}</span></div>
+    </div>
+
+    <h3 class="block-title">Compare salary levels</h3>
+    <table class="compare" data-testid="compare-table">
+      <thead><tr><th>Salary strategy</th><th>Dividends</th><th>Total tax</th><th>Take-home</th></tr></thead>
+      <tbody>
+        ${rows.map(x => {
+          const tags = (x.salary === best.salary ? '<span class="tag best">Best</span>' : "") + (x.salary === 12570 ? '<span class="tag rec">Usual</span>' : "");
+          return `<tr class="${x.salary === best.salary ? "best" : ""}"><td>${gbp(x.salary)}${tags}</td><td>${gbp(x.r.dividends)}</td><td>${gbp(x.r.totalTax)}</td><td>${gbp(x.r.net)}</td></tr>`;
+        }).join("")}
+      </tbody>
+    </table>`;
+
+  // nuance note
+  if (best.salary !== 12570 && best.salary < LEL) {
+    html += `<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> A £${best.salary.toLocaleString("en-GB")} salary saves a little more tax, but it's below the £6,396 Lower Earnings Limit — so it would <strong>not</strong> count towards your state pension that year. Most directors pay £12,570 for that reason.</div>`;
+  } else if (best.salary !== 12570) {
+    html += `<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> At your profit level a £${best.salary.toLocaleString("en-GB")} salary is marginally more efficient than £12,570 (the personal-allowance taper above £100k changes the maths). The difference is usually small — many still choose £12,570 for simplicity.</div>`;
+  }
+
+  html += `<div class="disclaimer">Figures assume you draw all available profit. Leaving profit in the company, pension contributions, other income, or Scottish residency will change the result. Always confirm with your accountant.</div>`;
+
+  document.getElementById("result").innerHTML = html;
+  document.getElementById("result-empty").classList.add("hidden");
+  document.getElementById("result").classList.remove("hidden");
+}
+
+document.getElementById("sw-ea").addEventListener("click", () => {
+  const b = document.getElementById("sw-ea"); b.setAttribute("aria-checked", b.getAttribute("aria-checked") === "true" ? "false" : "true");
+});
+
+// profit field thousands formatting
+const profitEl = document.getElementById("profit");
+profitEl.addEventListener("input", () => { const n = profitEl.value.replace(/[^\d]/g, ""); profitEl.value = n ? Number(n).toLocaleString("en-GB") : ""; });
+
+document.getElementById("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  document.getElementById("error-box").innerHTML = "";
+  profitEl.classList.remove("invalid");
+  const profit = parseMoney(profitEl.value);
+  if (isNaN(profit) || profit <= 0) { showErrors(["Please enter your company profit before pay."]); profitEl.classList.add("invalid"); return; }
+  if (profit > 50000000) { showErrors(["That profit looks too large — please check the figure."]); profitEl.classList.add("invalid"); return; }
+  renderResult(profit, document.getElementById("sw-ea").getAttribute("aria-checked") === "true");
+});
+
+/* ===== Director's loan ===== */
+function renderLoan() {
+  const amount = parseMoney(document.getElementById("loan-amount").value);
+  const out = document.getElementById("loan-out");
+  if (isNaN(amount) || amount <= 0) { out.innerHTML = ""; return; }
+  const rate = parseFloat(document.getElementById("loan-rate").value);
+  const repaid = document.getElementById("sw-repaid").getAttribute("aria-checked") === "true";
+  const bikApplies = amount > BIK_THRESHOLD;
+  const bik = bikApplies ? amount * OFFICIAL_RATE : 0;
+  const bikTax = bik * rate;
+  const class1a = bik * CLASS1A;
+  const s455 = repaid ? 0 : amount * S455;
+
+  const taxFree = !bikApplies && repaid;
+  let rows = "";
+  rows += `<div class="row"><span>Benefit-in-kind charge ${bikApplies ? "(loan over £10,000)" : "(loan £10,000 or under)"}</span><span>${bikApplies ? gbp2(bik) + "/yr" : '<span class="pill good">None</span>'}</span></div>`;
+  if (bikApplies) {
+    rows += `<div class="row"><span class="lbl2">— your tax on the benefit (${Math.round(rate*100)}%)</span><span>${gbp2(bikTax)}/yr</span></div>`;
+    rows += `<div class="row"><span class="lbl2">— company Class 1A NIC (15%)</span><span>${gbp2(class1a)}/yr</span></div>`;
+  }
+  rows += `<div class="row"><span>s455 tax ${repaid ? "(repaid in time)" : "(33.75%, on outstanding balance)"}</span><span>${repaid ? '<span class="pill good">None</span>' : gbp(s455)}</span></div>`;
+  if (!repaid) rows += `<div class="row"><span class="lbl2" style="font-size:0.8rem">s455 is refundable once you repay the loan — but the cash is tied up with HMRC until then.</span><span></span></div>`;
+  rows += `<div class="row" style="background:${taxFree ? 'var(--green-bg)' : 'var(--amber-bg)'}"><span style="font-weight:700">${taxFree ? "Tax-free — for now" : "Has a tax cost"}</span><span class="pill ${taxFree ? 'good' : 'warn'}">${taxFree ? "£0 tax" : "see above"}</span></div>`;
+
+  out.innerHTML = `<div class="loan-out">${rows}</div>
+    <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> A director's loan must be repaid — it isn't a way to take profit out for good. Keep it at £10,000 or under and repay within 9 months and 1 day of your year-end and there's usually no tax. If you can't repay it, taking the money as salary or dividends (above) is normally the cleaner route.</div>`;
+}
+["loan-amount"].forEach(id => document.getElementById(id).addEventListener("input", () => {
+  const el = document.getElementById("loan-amount"); const n = el.value.replace(/[^\d]/g, ""); el.value = n ? Number(n).toLocaleString("en-GB") : "";
+  renderLoan();
+}));
+document.getElementById("loan-rate").addEventListener("change", renderLoan);
+document.getElementById("sw-repaid").addEventListener("click", () => {
+  const b = document.getElementById("sw-repaid"); b.setAttribute("aria-checked", b.getAttribute("aria-checked") === "true" ? "false" : "true"); renderLoan();
+});
+</script>
+</body>
+</html>

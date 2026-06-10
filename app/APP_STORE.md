@@ -85,6 +85,23 @@ Apple review typically takes **24–48 hours**.
 
 ---
 
+## App Store Connect questionnaires — the answers for Helm
+
+These trip people up; here's how Helm should be answered:
+
+- **Encryption / Export Compliance.** App Store Connect asks "Does your app use encryption?" Helm uses **standard encryption only** — HTTPS, and AES‑256 (via the system's Web Crypto) for the *optional* Company Records passphrase. That is **exempt** encryption (data protection with standard algorithms). To answer it once and avoid the prompt on every upload, add this to `ios/App/App/Info.plist`:
+  ```xml
+  <key>ITSAppUsesNonExemptEncryption</key>
+  <false/>
+  ```
+  In the App Store Connect prompt, choose **"uses exempt encryption."** *(If you're ever unsure for a future version, confirm against Apple's export-compliance docs — but standard AES for local data protection is exempt.)*
+- **App Privacy ("nutrition label").** Select **Data Not Collected** — Helm stores everything on-device, has no accounts, no analytics and no ads.
+- **Age rating.** All "None" → **4+**.
+- **Sign in with Apple.** Not required for v1 — Helm has **no login at all**. (It only becomes required once you add any third-party/email sign-in, i.e. in the accounts fast-follow.)
+- **Content rights.** You own/are licensed for all content.
+
+The full listing copy (name, subtitle, description, keywords) is in **`store-listing.md`** next to this file.
+
 ## Updating the app later
 
 The web app is the single source of truth. After editing anything at the repo root:

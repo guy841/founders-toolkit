@@ -15,7 +15,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-15  # Xcode 16 by default — Capacitor 8 requires Xcode 16+
     defaults:
       run:
         working-directory: app

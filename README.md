@@ -1,6 +1,6 @@
-# Founder's Toolkit
+# Helm
 
-Free, no-login web tools for new UK limited company directors — the deadlines, taxes
+Free, no-login web tools for UK limited company directors — the deadlines, taxes
 and obligations nobody hands you a manual for.
 
 **Live:** https://guy841.github.io/founders-toolkit/

@@ -38,27 +38,12 @@ jobs:
           if [ -f ios/App/Podfile ]; then (cd ios/App && pod install); fi
 
       # ---- Always: unsigned compile to prove the app builds (no Apple account needed) ----
+      # Capacitor 8 = Swift Package Manager, so build App.xcodeproj directly (no workspace).
       - name: Smoke build (simulator, unsigned)
         run: |
-          set -o pipefail
-          WS=$(ls -d ios/App/*.xcworkspace 2>/dev/null | head -1)
-          echo "Using workspace: ${WS:-<none, falling back to project>}"
-          if [ -n "$WS" ]; then
-            xcodebuild -workspace "$WS" -scheme App -configuration Debug \
-              -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-              CODE_SIGNING_ALLOWED=NO build | tee build.log
-          else
-            xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
-              -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-              CODE_SIGNING_ALLOWED=NO build | tee build.log
-          fi
-
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-build-log
-          path: app/build.log
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build
 
       # ---- Release: signed archive + TestFlight upload (needs secrets; enable after enrolment) ----
       # Requires repo secrets (see app/APP_STORE.md ▸ "Cloud build"):

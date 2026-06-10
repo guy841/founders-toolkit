@@ -11,9 +11,9 @@
 <meta name="description" content="Calculate your UK limited company filing and tax deadlines — accounts, Corporation Tax, confirmation statement, VAT, Self Assessment and PAYE." />
 
 <!-- Fonts: Outfit (headings) + Manrope (body) -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="manifest" href="../../manifest.webmanifest" />
+<link rel="apple-touch-icon" href="../../icons/apple-touch-icon.png" />
+<link rel="stylesheet" href="../../fonts/fonts.css" />
 
 <style>
   :root {
@@ -76,7 +76,10 @@
   /* ---- Layout ---- */
   .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 64px; }
   .hero { margin-bottom: 28px; }
-  .logo { margin-bottom: 28px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .back { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.85rem; text-decoration: none; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+  .back:hover { color: var(--brand); }
+  .back svg { width: 16px; height: 16px; }
   .hero h1 {
     font-size: clamp(2rem, 5vw, 3rem); /* text-4xl sm:text-5xl */
     font-weight: 700; margin: 0 0 8px;
@@ -256,6 +259,7 @@
 </a> -->
 
 <div class="wrap">
+  <div class="topbar">
   <a class="logo" href="../../index.html" data-testid="logo" aria-label="Helm home">
     <img id="logo-img" alt="Logo" style="display:none" />
     <span class="wordmark" id="logo-fallback">
@@ -265,6 +269,8 @@
       Helm
     </span>
   </a>
+    <a class="back" href="../../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> All tools</a>
+  </div>
 
   <header class="hero">
     <h1>Director's Deadline Copilot</h1>

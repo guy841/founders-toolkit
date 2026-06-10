@@ -1,0 +1,15 @@
+{
+  "name": "Helm — UK company director tools",
+  "short_name": "Helm",
+  "description": "Tools for UK company directors: deadlines, Corporation Tax, salary vs dividends, VAT and company records.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#F9F9F7",
+  "theme_color": "#34577C",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

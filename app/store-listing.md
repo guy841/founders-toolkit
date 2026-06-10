@@ -9,9 +9,9 @@
 - **Category:** Primary **Finance**, Secondary **Business**
 - **Price:** Free
 - **Availability:** United Kingdom (it's UK-specific; widen later if you like)
-- **Support URL:** `https://guy841.github.io/founders-toolkit/`
-- **Marketing URL:** `https://guy841.github.io/founders-toolkit/`
-- **Privacy Policy URL:** `https://guy841.github.io/founders-toolkit/privacy.html`
+- **Support URL:** `https://helm.treetop.capital/`
+- **Marketing URL:** `https://helm.treetop.capital/`
+- **Privacy Policy URL:** `https://helm.treetop.capital/privacy.html`
 
 ## Promotional text (170 — editable any time without review)
 ```

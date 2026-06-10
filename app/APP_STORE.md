@@ -66,8 +66,8 @@ At [appstoreconnect.apple.com](https://appstoreconnect.apple.com) ▸ **Apps ▸
 - **Primary language:** English (U.K.)
 - **Bundle ID:** `capital.treetop.helm`
 - **Category:** Finance (or Business)
-- **Privacy Policy URL:** `https://guy841.github.io/founders-toolkit/privacy.html`
-- **Support URL:** `https://guy841.github.io/founders-toolkit/`
+- **Privacy Policy URL:** `https://helm.treetop.capital/privacy.html`
+- **Support URL:** `https://helm.treetop.capital/`
 - **App Privacy:** choose **"Data Not Collected"** — Helm stores everything on-device. (No tracking, no analytics.)
 - **Screenshots:** required for 6.7" and 6.5" iPhones. Easiest: run the app in the Xcode Simulator (iPhone 15 Pro Max), take screenshots of 3–5 tools (`Cmd+S` in Simulator).
 - **Description / keywords:** sell the tools — deadlines, Corporation Tax, salary vs dividends, VAT, company records. Keywords like *UK, limited company, director, corporation tax, VAT, dividends, deadlines*.
@@ -113,6 +113,29 @@ npm run open:ios       # archive a new build (bump Build number) and upload
 ```
 
 The website (GitHub Pages) updates automatically on `git push`; the app updates when you ship a new build.
+
+## Custom domain — helm.treetop.capital
+
+To serve Helm from your own domain (and use it for the App Store support/privacy URLs):
+
+1. **Add one DNS record** at your `treetop.capital` registrar:
+   ```
+   Type: CNAME    Name: helm    Value: guy841.github.io    TTL: default
+   ```
+   *(Use a different `Name` if you'd rather have e.g. `tools.treetop.capital`.)*
+2. **Wait for it to resolve** — check with `dig +short helm.treetop.capital` until it
+   returns `guy841.github.io`.
+3. **Flip it on** — add a `CNAME` file at the repo root containing `helm.treetop.capital`
+   and push (this points GitHub Pages at the domain). Then in the repo **Settings ▸ Pages**,
+   tick **Enforce HTTPS** once the certificate is issued (a few minutes).
+
+> Order matters: add the DNS record **first**. If the `CNAME` file is committed before the
+> record resolves, the current `guy841.github.io/founders-toolkit` URL redirects to a domain
+> that isn't live yet and the site looks down. (That's why I've staged everything but left the
+> `CNAME` commit until your DNS record is in — say the word and I'll push it + verify.)
+
+Once live, the site is served at `https://helm.treetop.capital/` (root), and every relative
+path — tools, fonts, icons, the service worker, the manifest — works unchanged.
 
 ## Cloud build — publish without installing Xcode locally
 

@@ -1,0 +1,8 @@
+{
+  "appId": "capital.treetop.helm",
+  "appName": "Helm",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always"
+  }
+}

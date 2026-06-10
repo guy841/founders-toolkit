@@ -1,0 +1,23 @@
+// Copies the Helm web app (index.html + tools/) into app/www so Capacitor can
+// bundle it into the native app. The web assets stay at the repo root (which is
+// also what GitHub Pages serves), so there's a single source of truth.
+import { cpSync, rmSync, mkdirSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const appRoot = join(here, "..");
+const repoRoot = join(appRoot, "..");
+const www = join(appRoot, "www");
+
+rmSync(www, { recursive: true, force: true });
+mkdirSync(www, { recursive: true });
+
+cpSync(join(repoRoot, "index.html"), join(www, "index.html"));
+cpSync(join(repoRoot, "tools"), join(www, "tools"), { recursive: true });
+
+if (!existsSync(join(www, "index.html"))) {
+  console.error("sync-web: failed to copy index.html");
+  process.exit(1);
+}
+console.log("sync-web: copied index.html + tools/ into app/www");

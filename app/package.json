@@ -1,0 +1,21 @@
+{
+  "name": "helm-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Helm — native iOS (and later Android) wrapper around the Helm web app",
+  "scripts": {
+    "sync:web": "node scripts/sync-web.mjs",
+    "build": "npm run sync:web && cap sync",
+    "add:ios": "npm run sync:web && cap add ios",
+    "open:ios": "npm run build && cap open ios",
+    "icons": "capacitor-assets generate --ios"
+  },
+  "dependencies": {
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/ios": "^8.4.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
+  }
+}

@@ -100,18 +100,6 @@
   a.tile:hover .tile-cta svg { transform: translateX(3px); }
   .tile.soon .tile-cta { color: var(--muted); }
 
-  /* CTA band */
-  .cta-band {
-    margin-top: 44px; background: var(--brand); color: #fff;
-    border-radius: var(--radius-card); padding: 34px 30px;
-    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px;
-  }
-  .cta-band h2 { font-size: clamp(1.4rem, 3vw, 1.75rem); font-weight: 700; margin: 0 0 6px; color: #fff; }
-  .cta-band p { margin: 0; color: rgba(255,255,255,.82); max-width: 460px; }
-  .cta-btn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--brand); font-family: "Outfit", sans-serif; font-weight: 600; text-decoration: none; padding: 13px 22px; border-radius: var(--radius-btn); min-height: 48px; transition: transform .05s, box-shadow .14s; }
-  .cta-btn:hover { box-shadow: 0 8px 20px rgba(0,0,0,.18); }
-  .cta-btn:active { transform: translateY(1px); }
-
   /* Footer */
   footer { margin-top: 52px; padding-top: 22px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); }
   footer p { margin: 0 0 6px; }
@@ -216,18 +204,6 @@
 
   </div>
 
-  <!-- Lead-gen CTA — point the link at your booking page / contact form -->
-  <div class="cta-band">
-    <div>
-      <h2>Want a human to check it properly?</h2>
-      <p>These tools give you a fast, accurate starting point. When you'd like it confirmed for your exact situation, we're here to help.</p>
-    </div>
-    <a class="cta-btn" href="#" id="cta-link" data-testid="cta-book">
-      Book a free call
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-    </a>
-  </div>
-
   <footer>
     <p>These tools provide general estimates based on standard UK rules and are not a substitute for professional advice. Always confirm your exact obligations with HMRC, Companies House or a qualified adviser.</p>
     <p>© <span id="year"></span> Helm. A Tree Top Capital product. <em>Stay on top of your UK company.</em> · <a href="privacy.html">Privacy</a></p>
@@ -239,10 +215,8 @@
 /* =========================================================
    CONFIG
    - LOGO_URL: your brand image (leave "" for the placeholder)
-   - BOOKING_URL: where the "Book a free call" button points
    ========================================================= */
 const LOGO_URL = "";
-const BOOKING_URL = ""; // e.g. "https://blincoe.example/book"
 
 (function init(){
   if (LOGO_URL) {
@@ -251,7 +225,6 @@ const BOOKING_URL = ""; // e.g. "https://blincoe.example/book"
     img.onload = () => { img.style.display = "block"; document.getElementById("logo-fallback").style.display = "none"; };
     img.onerror = () => { img.style.display = "none"; document.getElementById("logo-fallback").style.display = "flex"; };
   }
-  if (BOOKING_URL) document.getElementById("cta-link").href = BOOKING_URL;
   // current year without Date.now-style helpers issues
   document.getElementById("year").textContent = new Date().getFullYear();
 })();

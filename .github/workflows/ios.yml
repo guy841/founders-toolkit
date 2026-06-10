@@ -32,19 +32,26 @@ jobs:
           npm run sync:web
           npx cap add ios
           npx cap sync ios
+          echo "==== pod install ===="
+          (cd ios/App && pod install)
+          echo "==== ios/App contents ===="
+          ls -la ios/App
 
       # ---- Always: unsigned compile to prove the app builds (no Apple account needed) ----
       - name: Smoke build (simulator, unsigned)
         run: |
           set -o pipefail
-          xcodebuild \
-            -workspace ios/App/App.xcworkspace \
-            -scheme App \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO \
-            build | tee build.log
+          WS=$(ls -d ios/App/*.xcworkspace 2>/dev/null | head -1)
+          echo "Using workspace: ${WS:-<none, falling back to project>}"
+          if [ -n "$WS" ]; then
+            xcodebuild -workspace "$WS" -scheme App -configuration Debug \
+              -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+              CODE_SIGNING_ALLOWED=NO build | tee build.log
+          else
+            xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+              -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+              CODE_SIGNING_ALLOWED=NO build | tee build.log
+          fi
 
       - name: Upload build log
         if: always()

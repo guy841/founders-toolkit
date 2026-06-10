@@ -32,10 +32,10 @@ jobs:
           npm run sync:web
           npx cap add ios
           npx cap sync ios
-          echo "==== pod install ===="
-          (cd ios/App && pod install)
           echo "==== ios/App contents ===="
-          ls -la ios/App
+          ls -la ios/App || true
+          # Capacitor 8 uses Swift Package Manager by default (no Podfile). Only run pods if present.
+          if [ -f ios/App/Podfile ]; then (cd ios/App && pod install); fi
 
       # ---- Always: unsigned compile to prove the app builds (no Apple account needed) ----
       - name: Smoke build (simulator, unsigned)

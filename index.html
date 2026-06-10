@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#4F6354" />
+<meta name="theme-color" content="#34577C" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="Helm" />
@@ -18,8 +18,8 @@
   :root {
     --bg: #F9F9F7;
     --card: #FFFFFF;
-    --moss: #4F6354;
-    --moss-dark: #41513F;
+    --brand: #34577C;
+    --brand-dark: #2A4763;
     --text: #1C1C1A;
     --text-2: #5C5C58;
     --muted: #8A8A85;
@@ -39,20 +39,20 @@
     font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, .font-head { font-family: "Outfit", system-ui, sans-serif; letter-spacing: -0.01em; }
-  a { color: var(--moss); }
+  a { color: var(--brand); }
 
   .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 72px; }
 
   /* Logo */
   .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: 40px; }
   .logo img { height: 40px; width: auto; display: block; }
-  .logo .wordmark { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 700; color: var(--moss); font-size: 1.1rem; letter-spacing: -0.02em; }
-  .logo .mark { width: 34px; height: 34px; border-radius: 9px; background: var(--moss); color: #fff; display: grid; place-items: center; }
+  .logo .wordmark { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 700; color: var(--brand); font-size: 1.1rem; letter-spacing: -0.02em; }
+  .logo .mark { width: 34px; height: 34px; border-radius: 9px; background: var(--brand); color: #fff; display: grid; place-items: center; }
   @media (max-width: 640px) { .logo img { height: 30px; } .logo .wordmark { font-size: 0.95rem; } .logo .mark { width: 28px; height: 28px; } }
 
   /* Hero */
   .hero { max-width: 720px; margin-bottom: 44px; }
-  .eyebrow { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--moss); margin-bottom: 12px; }
+  .eyebrow { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--brand); margin-bottom: 12px; }
   .hero h1 { font-size: clamp(2.1rem, 5.5vw, 3.25rem); font-weight: 700; margin: 0 0 14px; line-height: 1.08; }
   .hero p { color: var(--text-2); font-size: 1.08rem; margin: 0; }
 
@@ -75,7 +75,7 @@
   .tile.soon { cursor: default; }
   .tile.soon:hover { transform: none; }
 
-  .tile-icon { width: 44px; height: 44px; border-radius: 11px; background: var(--input-bg); color: var(--moss); display: grid; place-items: center; margin-bottom: 16px; }
+  .tile-icon { width: 44px; height: 44px; border-radius: 11px; background: var(--input-bg); color: var(--brand); display: grid; place-items: center; margin-bottom: 16px; }
   .tile-icon svg { width: 22px; height: 22px; }
   .tile h3 { font-size: 1.18rem; font-weight: 600; margin: 0 0 7px; }
   .tile p { font-size: 0.9rem; color: var(--text-2); margin: 0 0 16px; flex: 1; }
@@ -84,20 +84,20 @@
   .badge.live { background: var(--green-bg); color: var(--green-tx); border: 1px solid var(--green-bd); }
   .badge.soon { background: var(--amber-bg); color: var(--amber-tx); border: 1px solid var(--amber-bd); }
 
-  .tile-cta { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.9rem; color: var(--moss); display: inline-flex; align-items: center; gap: 6px; }
+  .tile-cta { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.9rem; color: var(--brand); display: inline-flex; align-items: center; gap: 6px; }
   .tile-cta svg { width: 16px; height: 16px; transition: transform .14s ease; }
   a.tile:hover .tile-cta svg { transform: translateX(3px); }
   .tile.soon .tile-cta { color: var(--muted); }
 
   /* CTA band */
   .cta-band {
-    margin-top: 44px; background: var(--moss); color: #fff;
+    margin-top: 44px; background: var(--brand); color: #fff;
     border-radius: var(--radius-card); padding: 34px 30px;
     display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px;
   }
   .cta-band h2 { font-size: clamp(1.4rem, 3vw, 1.75rem); font-weight: 700; margin: 0 0 6px; color: #fff; }
   .cta-band p { margin: 0; color: rgba(255,255,255,.82); max-width: 460px; }
-  .cta-btn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--moss); font-family: "Outfit", sans-serif; font-weight: 600; text-decoration: none; padding: 13px 22px; border-radius: var(--radius-btn); min-height: 48px; transition: transform .05s, box-shadow .14s; }
+  .cta-btn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--brand); font-family: "Outfit", sans-serif; font-weight: 600; text-decoration: none; padding: 13px 22px; border-radius: var(--radius-btn); min-height: 48px; transition: transform .05s, box-shadow .14s; }
   .cta-btn:hover { box-shadow: 0 8px 20px rgba(0,0,0,.18); }
   .cta-btn:active { transform: translateY(1px); }
 

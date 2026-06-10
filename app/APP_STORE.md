@@ -114,6 +114,33 @@ npm run open:ios       # archive a new build (bump Build number) and upload
 
 The website (GitHub Pages) updates automatically on `git push`; the app updates when you ship a new build.
 
+## Cloud build — publish without installing Xcode locally
+
+If you don't want the ~12 GB local Xcode, build on a hosted macOS machine instead. A
+workflow is already in the repo: **`.github/workflows/ios.yml`** (manual trigger only,
+so it never eats your Actions minutes by surprise).
+
+- **Smoke build (works today, no Apple account):** GitHub ▸ **Actions** ▸ "iOS build" ▸
+  **Run workflow** ▸ mode `smoke`. It generates the iOS project and compiles it unsigned
+  on a macOS runner — a quick way to confirm the app builds. *(macOS minutes count ~10×,
+  so a run is ~5–10 min of your monthly allowance.)*
+- **Release (signed + TestFlight):** once Apple enrolment is done, add these **repo
+  secrets** (Settings ▸ Secrets ▸ Actions), then run the workflow with mode `release`:
+  - `APPSTORE_ISSUER_ID`, `APPSTORE_KEY_ID`, `APPSTORE_PRIVATE_KEY` — an **App Store
+    Connect API key** (App Store Connect ▸ Users and Access ▸ Integrations ▸ App Store
+    Connect API ▸ generate a key; download the `.p8`). No Xcode needed to make this.
+  - `BUILD_CERT_P12_BASE64`, `BUILD_CERT_PASSWORD`, `PROVISION_PROFILE_BASE64` — your
+    **iOS Distribution certificate** and **provisioning profile**. Easiest way to create
+    these without Xcode is `fastlane match` or the Apple Developer portal.
+
+A starter **fastlane** lane is in `app/fastlane/Fastfile` (`beta` = build + upload to
+TestFlight using the API key). When your secrets are in place, swap the placeholder
+"Archive + upload" step in the workflow for `cd app && bundle exec fastlane beta`.
+
+> Alternative: **Codemagic** has a Capacitor template with a UI that manages signing for
+> you — often the least-fuss way to ship from a non-Mac-Xcode setup. Same Apple account
+> and API key required.
+
 ## Adding Android later
 
 ```bash

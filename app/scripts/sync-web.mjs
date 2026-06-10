@@ -16,6 +16,7 @@ mkdirSync(www, { recursive: true });
 cpSync(join(repoRoot, "index.html"), join(www, "index.html"));
 cpSync(join(repoRoot, "privacy.html"), join(www, "privacy.html"));
 cpSync(join(repoRoot, "manifest.webmanifest"), join(www, "manifest.webmanifest"));
+cpSync(join(repoRoot, "sw.js"), join(www, "sw.js"));
 cpSync(join(repoRoot, "tools"), join(www, "tools"), { recursive: true });
 cpSync(join(repoRoot, "fonts"), join(www, "fonts"), { recursive: true });
 cpSync(join(repoRoot, "icons"), join(www, "icons"), { recursive: true });

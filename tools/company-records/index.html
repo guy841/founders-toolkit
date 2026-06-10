@@ -705,5 +705,6 @@ window.addEventListener("beforeprint", () => {
 });
 window.addEventListener("afterprint", () => { _revealedForPrint.forEach(inp => inp.type = "password"); _revealedForPrint = []; });
 </script>
+<script>if("serviceWorker"in navigator&&location.protocol.startsWith("http")){addEventListener("load",()=>navigator.serviceWorker.register("../../sw.js").catch(()=>{}))}</script>
 </body>
 </html>

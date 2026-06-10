@@ -59,6 +59,17 @@
   /* Section label */
   .section-label { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 8px 0 16px; }
 
+  /* Install (PWA) */
+  .install-row { margin-top: 20px; display: none; }
+  .install-row.show { display: block; }
+  .install-btn { display: inline-flex; align-items: center; gap: 8px; font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.9rem; color: var(--brand); background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-btn); padding: 11px 16px; min-height: 44px; cursor: pointer; transition: background .14s, border-color .14s; }
+  .install-btn:hover { background: var(--input-bg); border-color: #D7D7CF; }
+  .install-btn svg { width: 17px; height: 17px; }
+  .ios-tip { margin-top: 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 14px 16px; max-width: 440px; font-size: 0.86rem; color: var(--text-2); box-shadow: var(--shadow); }
+  .ios-tip.hidden { display: none; }
+  .ios-tip b { color: var(--text); }
+  .ios-tip svg { width: 15px; height: 15px; vertical-align: -3px; }
+
   /* Tile grid */
   .grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
   @media (min-width: 640px) { .grid { grid-template-columns: 1fr 1fr; } }
@@ -124,6 +135,17 @@
     <div class="eyebrow">Free · No account needed · Your data stays on your device</div>
     <h1>Everything a UK company director needs to stay on top of.</h1>
     <p>Simple, accurate tools for the deadlines, taxes and duties of running a limited company — whether you incorporated last week or have been at the helm for years.</p>
+    <div class="install-row" id="install-row">
+      <button type="button" class="install-btn" id="install-btn" data-testid="install-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Install Helm
+      </button>
+      <div class="ios-tip hidden" id="ios-tip">
+        Add Helm to your home screen: tap the
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        <b>Share</b> button in Safari, then choose <b>Add to Home Screen</b>.
+      </div>
+    </div>
   </header>
 
   <div class="section-label">The tools</div>
@@ -233,6 +255,33 @@ const BOOKING_URL = ""; // e.g. "https://blincoe.example/book"
   // current year without Date.now-style helpers issues
   document.getElementById("year").textContent = new Date().getFullYear();
 })();
+
+/* PWA: install button (Android/desktop prompt + iOS add-to-home-screen hint) */
+(function pwaInstall(){
+  const row = document.getElementById("install-row");
+  const btn = document.getElementById("install-btn");
+  const tip = document.getElementById("ios-tip");
+  if (!row || !btn) return;
+  const mm = window.matchMedia ? window.matchMedia("(display-mode: standalone)") : null;
+  const standalone = (mm && mm.matches) || window.navigator.standalone === true;
+  if (standalone) return; // already installed
+  const ua = navigator.userAgent || "";
+  const isiOS = /iphone|ipad|ipod/i.test(ua);
+  const isSafari = /safari/i.test(ua) && !/crios|fxios|edgios/i.test(ua);
+  let deferred = null;
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferred = e; row.classList.add("show"); });
+  if (isiOS && isSafari) row.classList.add("show");   // iOS can't prompt — show the hint button
+  btn.addEventListener("click", async () => {
+    if (deferred) { deferred.prompt(); const r = await deferred.userChoice; deferred = null; if (r && r.outcome === "accepted") row.classList.remove("show"); }
+    else if (tip) tip.classList.toggle("hidden");     // iOS / no-prompt browsers: reveal instructions
+  });
+  window.addEventListener("appinstalled", () => row.classList.remove("show"));
+})();
+
+/* PWA: register the service worker (web only — skipped inside the native app) */
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
 </script>
 </body>
 </html>

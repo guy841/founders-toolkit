@@ -1,0 +1,66 @@
+name: iOS build
+
+# Manual only — macOS runner minutes are limited, so nothing runs automatically.
+# Run it from the Actions tab. "smoke" compiles the app unsigned (no Apple account
+# needed) to catch build breakage. "release" archives + uploads to TestFlight and
+# needs the secrets listed in app/APP_STORE.md (add them once Apple enrolment lands).
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "smoke (compile only) or release (signed + TestFlight)"
+        type: choice
+        options: [smoke, release]
+        default: smoke
+
+jobs:
+  build:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps + generate iOS project
+        run: |
+          npm ci --omit=dev
+          npm run sync:web
+          npx cap add ios
+          npx cap sync ios
+
+      # ---- Always: unsigned compile to prove the app builds (no Apple account needed) ----
+      - name: Smoke build (simulator, unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tee build.log
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-log
+          path: app/build.log
+
+      # ---- Release: signed archive + TestFlight upload (needs secrets; enable after enrolment) ----
+      # Requires repo secrets (see app/APP_STORE.md ▸ "Cloud build"):
+      #   APPSTORE_ISSUER_ID, APPSTORE_KEY_ID, APPSTORE_PRIVATE_KEY  (App Store Connect API key)
+      #   BUILD_CERT_P12_BASE64, BUILD_CERT_PASSWORD, PROVISION_PROFILE_BASE64  (signing)
+      - name: Archive + upload to TestFlight
+        if: ${{ github.event.inputs.mode == 'release' }}
+        run: |
+          echo "Release path is scaffolded. Add the signing/API-key secrets listed in"
+          echo "app/APP_STORE.md, then replace this step with the fastlane 'beta' lane:"
+          echo "  cd app && bundle exec fastlane beta"
+          echo "Skipping for now so the workflow doesn't fail without secrets."

@@ -1,9 +1,8 @@
 name: iOS build
 
 # Manual only — macOS runner minutes are limited, so nothing runs automatically.
-# Run it from the Actions tab. "smoke" compiles the app unsigned (no Apple account
-# needed) to catch build breakage. "release" archives + uploads to TestFlight and
-# needs the secrets listed in app/APP_STORE.md (add them once Apple enrolment lands).
+# "smoke"   = compile unsigned (no Apple account needed) to catch build breakage.
+# "release" = brand the app, sign with the App Store Connect API key, upload to TestFlight.
 on:
   workflow_dispatch:
     inputs:
@@ -15,7 +14,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15  # Xcode 16 by default — Capacitor 8 requires Xcode 16+
+    runs-on: macos-15  # Xcode 16 — Capacitor 8 requires Xcode 16+
     defaults:
       run:
         working-directory: app
@@ -28,31 +27,37 @@ jobs:
 
       - name: Install deps + generate iOS project
         run: |
-          npm ci --omit=dev
+          npm ci
           npm run sync:web
           npx cap add ios
           npx cap sync ios
-          echo "==== ios/App contents ===="
-          ls -la ios/App || true
-          # Capacitor 8 uses Swift Package Manager by default (no Podfile). Only run pods if present.
+          # Capacitor 8 uses Swift Package Manager (no Podfile); run pods only if one exists.
           if [ -f ios/App/Podfile ]; then (cd ios/App && pod install); fi
 
-      # ---- Always: unsigned compile to prove the app builds (no Apple account needed) ----
-      # Capacitor 8 = Swift Package Manager, so build App.xcodeproj directly (no workspace).
+      # ---------- smoke ----------
       - name: Smoke build (simulator, unsigned)
+        if: ${{ github.event.inputs.mode == 'smoke' }}
         run: |
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO build
 
-      # ---- Release: signed archive + TestFlight upload (needs secrets; enable after enrolment) ----
-      # Requires repo secrets (see app/APP_STORE.md ▸ "Cloud build"):
-      #   APPSTORE_ISSUER_ID, APPSTORE_KEY_ID, APPSTORE_PRIVATE_KEY  (App Store Connect API key)
-      #   BUILD_CERT_P12_BASE64, BUILD_CERT_PASSWORD, PROVISION_PROFILE_BASE64  (signing)
-      - name: Archive + upload to TestFlight
+      # ---------- release ----------
+      - name: Brand + compliance (icon, splash, encryption flag)
         if: ${{ github.event.inputs.mode == 'release' }}
         run: |
-          echo "Release path is scaffolded. Add the signing/API-key secrets listed in"
-          echo "app/APP_STORE.md, then replace this step with the fastlane 'beta' lane:"
-          echo "  cd app && bundle exec fastlane beta"
-          echo "Skipping for now so the workflow doesn't fail without secrets."
+          npx capacitor-assets generate --ios
+          PLIST=ios/App/App/Info.plist
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" \
+            || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+
+      - name: Build + upload to TestFlight
+        if: ${{ github.event.inputs.mode == 'release' }}
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          bundle install
+          bundle exec fastlane beta

@@ -147,22 +147,24 @@ so it never eats your Actions minutes by surprise).
   **Run workflow** ▸ mode `smoke`. It generates the iOS project and compiles it unsigned
   on a macOS runner — a quick way to confirm the app builds. *(macOS minutes count ~10×,
   so a run is ~5–10 min of your monthly allowance.)*
-- **Release (signed + TestFlight):** once Apple enrolment is done, add these **repo
-  secrets** (Settings ▸ Secrets ▸ Actions), then run the workflow with mode `release`:
-  - `APPSTORE_ISSUER_ID`, `APPSTORE_KEY_ID`, `APPSTORE_PRIVATE_KEY` — an **App Store
-    Connect API key** (App Store Connect ▸ Users and Access ▸ Integrations ▸ App Store
-    Connect API ▸ generate a key; download the `.p8`). No Xcode needed to make this.
-  - `BUILD_CERT_P12_BASE64`, `BUILD_CERT_PASSWORD`, `PROVISION_PROFILE_BASE64` — your
-    **iOS Distribution certificate** and **provisioning profile**. Easiest way to create
-    these without Xcode is `fastlane match` or the Apple Developer portal.
+- **Release (signed + TestFlight):** add these **4 repo secrets** (Settings ▸ Secrets and
+  variables ▸ Actions ▸ New repository secret), then run the workflow with mode `release`.
+  The workflow brands the app (helm icon + splash), sets the export-compliance flag, and
+  signs **automatically** via the API key — no manual certificate or provisioning profile
+  to create:
+  - `APPSTORE_KEY_ID` — the Key ID of your App Store Connect API key.
+  - `APPSTORE_ISSUER_ID` — the Issuer ID shown above the keys list.
+  - `APPSTORE_PRIVATE_KEY` — the **contents of the `.p8` file** (open it in a text editor,
+    paste the whole thing including the `-----BEGIN/END PRIVATE KEY-----` lines).
+  - `APPLE_TEAM_ID` — your 10-character Team ID (Developer portal ▸ Membership).
 
-A starter **fastlane** lane is in `app/fastlane/Fastfile` (`beta` = build + upload to
-TestFlight using the API key). When your secrets are in place, swap the placeholder
-"Archive + upload" step in the workflow for `cd app && bundle exec fastlane beta`.
+  Generate the API key at **App Store Connect ▸ Users and Access ▸ Integrations ▸ App Store
+  Connect API ▸ +**, with the **App Manager** role. You can only download the `.p8` once.
+
+The lane that does the work is `app/fastlane/Fastfile` (`beta`); the workflow runs it.
 
 > Alternative: **Codemagic** has a Capacitor template with a UI that manages signing for
-> you — often the least-fuss way to ship from a non-Mac-Xcode setup. Same Apple account
-> and API key required.
+> you. Same Apple account + API key required.
 
 ## Adding Android later
 

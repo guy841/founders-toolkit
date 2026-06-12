@@ -154,8 +154,8 @@ so it never eats your Actions minutes by surprise).
   to create:
   - `APPSTORE_KEY_ID` — the Key ID of your App Store Connect API key.
   - `APPSTORE_ISSUER_ID` — the Issuer ID shown above the keys list.
-  - `APPSTORE_PRIVATE_KEY` — the **contents of the `.p8` file** (open it in a text editor,
-    paste the whole thing including the `-----BEGIN/END PRIVATE KEY-----` lines).
+  - `APPSTORE_PRIVATE_KEY` — the **`.p8` file, base64-encoded** (avoids newline mangling).
+    On your Mac: `base64 -i ~/Downloads/AuthKey_XXXXXX.p8 | tr -d '\n' | pbcopy`, then paste.
   - `APPLE_TEAM_ID` — your 10-character Team ID (Developer portal ▸ Membership).
 
   Generate the API key at **App Store Connect ▸ Users and Access ▸ Integrations ▸ App Store

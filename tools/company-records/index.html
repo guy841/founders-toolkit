@@ -357,19 +357,31 @@ function render() {
     </details>`).join("");
 }
 
-/* ---------- State + persistence (multi-company) ---------- */
+/* ---------- State + persistence ----------
+   The company LIST, active selection and name are owned by the shared registry
+   (HelmCompany); Company Records stores only the detailed fields, keyed by the
+   registry company id, in `recs`. The optional passphrase encrypts `recs`. */
 function uid() { try { return crypto.randomUUID(); } catch (e) { return "c-" + Date.now() + "-" + Math.floor(Math.random() * 1e6); } }
+function HC() { return window.HelmCompany; }
 
-let store = { version: 2, companies: [], activeId: null };
+let recs = {};   // { companyId: { field: value, ... } }
 
 function collectForm() {
   const data = {};
   document.querySelectorAll("[data-key]").forEach(el => { if (el.value.trim()) data[el.getAttribute("data-key")] = el.value; });
   return data;
 }
-function activeCompany() { return store.companies.find(c => c.id === store.activeId) || store.companies[0]; }
-function companyLabel(c) { return (c && c.data && c.data.companyName && c.data.companyName.trim()) || "Untitled company"; }
-function writeActiveFromForm() { const c = activeCompany(); if (c) c.data = collectForm(); }
+function activeId() { return HC() ? HC().activeId() : null; }
+function activeData() { const id = activeId(); return (id && recs[id]) ? recs[id] : {}; }
+function companyLabelById(id) { const c = HC() && HC().list().find(x => x.id === id); return (c && c.name && c.name.trim()) || "Untitled company"; }
+function writeActiveFromForm() {
+  const id = activeId(); if (!id) return;
+  recs[id] = collectForm();
+  // keep the registry name in sync with the companyName field
+  if (HC()) HC().rename(id, recs[id].companyName || "");
+}
+// Add a registry company (preserving id) for a record we're importing/migrating.
+function ensureRegistry(id, name) { if (HC()) HC().ensure(id, name || ""); }
 
 /* Encryption (optional passphrase protection via Web Crypto) */
 const ENC_KEY = STORAGE_KEY + ":enc";
@@ -385,11 +397,12 @@ async function deriveKey(passphrase, salt, iter) {
   const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(passphrase), "PBKDF2", false, ["deriveKey"]);
   return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: iter, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
 }
+let savedAt = null;
 async function encryptStore() {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const pt = new TextEncoder().encode(JSON.stringify({ companies: store.companies, activeId: store.activeId }));
+  const pt = new TextEncoder().encode(JSON.stringify({ recs }));
   const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, cryptoKey, pt);
-  return { v: 1, kdf: "PBKDF2-SHA256", iter: KDF_ITER, salt: b64(encSalt), iv: b64(iv), ct: b64(ct), savedAt: store.savedAt };
+  return { v: 2, kdf: "PBKDF2-SHA256", iter: KDF_ITER, salt: b64(encSalt), iv: b64(iv), ct: b64(ct), savedAt };
 }
 async function decryptBlob(blob, key) {
   const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(blob.iv) }, key, unb64(blob.ct));
@@ -398,26 +411,37 @@ async function decryptBlob(blob, key) {
 
 async function persist() {
   try {
-    store.savedAt = new Date().toISOString();
+    savedAt = new Date().toISOString();
     if (cryptoKey) {
       localStorage.setItem(ENC_KEY, JSON.stringify(await encryptStore()));
-      localStorage.removeItem(STORAGE_KEY);      // never leave plaintext behind
+      localStorage.removeItem(STORAGE_KEY);      // never leave plaintext detail behind
     } else {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 3, recs, savedAt }));
       localStorage.removeItem(ENC_KEY);
     }
-    showSaved(store.savedAt);
+    showSaved(savedAt);
   } catch (e) { document.getElementById("save-status").textContent = "Couldn't save (storage blocked)"; }
 }
 
-function normaliseCompanies(arr) {
-  return arr.filter(c => c && typeof c === "object").map(c => ({ id: c.id || uid(), data: (c.data && typeof c.data === "object") ? c.data : {} }));
+// Take any decoded shape (v3 {recs}, v2 {companies}, v1 {data}) -> recs map,
+// registering each company in the shared registry (preserving ids).
+function applyLoaded(obj) {
+  recs = {};
+  if (obj && obj.recs && typeof obj.recs === "object") {
+    Object.keys(obj.recs).forEach(id => { recs[id] = obj.recs[id] || {}; ensureRegistry(id, recs[id].companyName); });
+  } else if (obj && Array.isArray(obj.companies)) {                       // v2
+    obj.companies.forEach(c => { if (c && c.id) { recs[c.id] = (c.data && typeof c.data === "object") ? c.data : {}; ensureRegistry(c.id, recs[c.id].companyName); } });
+    if (obj.activeId && HC() && HC().list().some(x => x.id === obj.activeId)) HC().setActive(obj.activeId);
+  } else if (obj && obj.data && typeof obj.data === "object") {           // v1
+    const id = uid(); recs[id] = obj.data; ensureRegistry(id, obj.data.companyName); if (HC()) HC().setActive(id);
+  }
+  savedAt = (obj && obj.savedAt) || savedAt;
+  ensureOneCompany();
 }
 
-function ensureValidStore() {
-  store.companies = normaliseCompanies(store.companies || []);
-  if (!store.companies.length) store.companies.push({ id: uid(), data: {} });
-  if (!store.activeId || !store.companies.some(c => c.id === store.activeId)) store.activeId = store.companies[0].id;
+// Make sure there is at least one company to edit (matches the old behaviour).
+function ensureOneCompany() {
+  if (HC() && HC().list().length === 0) HC().create("Untitled company");
 }
 
 function isProtected() { return !!localStorage.getItem(ENC_KEY); }
@@ -425,26 +449,19 @@ function isProtected() { return !!localStorage.getItem(ENC_KEY); }
 function loadPlain() {
   let parsed = null;
   try { parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch (e) {}
-  if (parsed && Array.isArray(parsed.companies)) {
-    store = { version: 2, companies: parsed.companies, activeId: parsed.activeId, savedAt: parsed.savedAt };
-  } else if (parsed && parsed.data && typeof parsed.data === "object") {
-    store = { version: 2, companies: [{ id: uid(), data: parsed.data }], savedAt: parsed.savedAt }; // migrate v1
-  } else {
-    store = { version: 2, companies: [] };
-  }
-  ensureValidStore();
+  applyLoaded(parsed);
 }
 
 function finishLoad() {
   renderSwitcher();
   renderForm();
-  if (store.savedAt) showSaved(store.savedAt);
+  if (savedAt) showSaved(savedAt);
   updateSecurityControls();
 }
 
 function bootstrap() {
   if (isProtected()) {
-    showLock();                 // wait for passphrase before revealing anything
+    showLock();                 // wait for passphrase before revealing the detail fields
   } else {
     loadPlain();
     finishLoad();
@@ -469,8 +486,8 @@ document.getElementById("unlock-form").addEventListener("submit", async (e) => {
     const key = await deriveKey(document.getElementById("unlock-pass").value, salt, blob.iter || KDF_ITER);
     const dec = await decryptBlob(blob, key);
     cryptoKey = key; encSalt = salt;
-    store = { version: 2, companies: dec.companies || [], activeId: dec.activeId, savedAt: blob.savedAt };
-    ensureValidStore();
+    savedAt = blob.savedAt;
+    applyLoaded(dec);            // handles new {recs} and legacy {companies} blobs
     document.getElementById("unlock-pass").value = "";
     document.getElementById("lock-screen").classList.add("hidden");
     finishLoad();
@@ -486,7 +503,7 @@ function showSetup(mode) {
   document.getElementById("setup-title").textContent = mode === "change" ? "Change your passphrase" : "Protect with a passphrase";
   document.getElementById("setup-desc").textContent = mode === "change"
     ? "Choose a new passphrase. You'll need it the next time you open this on this device."
-    : "Your records will be encrypted on this device. Without the passphrase the data can't be read, so don't lose it.";
+    : "Your detailed records will be encrypted on this device. Without the passphrase they can't be read, so don't lose it. (Company names stay visible so the tools can show which company is active.)";
   document.getElementById("setup-pass").value = "";
   document.getElementById("setup-pass2").value = "";
   document.getElementById("setup-err").textContent = "";
@@ -537,7 +554,7 @@ document.getElementById("security-controls").addEventListener("click", (e) => {
 function lockNow() {
   clearTimeout(saveTimer);      // cancel any in-flight autosave so it can't write plaintext after lock
   cryptoKey = null;
-  store = { version: 2, companies: [], activeId: null };
+  recs = {};                    // drop decrypted detail from memory
   document.querySelectorAll("[data-key]").forEach(el => { el.value = ""; });
   document.getElementById("save-status").innerHTML = "";
   updateSecurityControls();
@@ -553,17 +570,16 @@ async function removeProtection() {
 
 function renderSwitcher() {
   const sel = document.getElementById("company-select");
-  sel.innerHTML = store.companies.map(c => `<option value="${c.id}">${esc(companyLabel(c))}</option>`).join("");
-  sel.value = store.activeId;
-  if (sel.value !== store.activeId) {            // activeId not among options — resync to avoid edits hitting the wrong company
-    store.activeId = store.companies[0].id;
-    sel.value = store.activeId;
-  }
-  document.getElementById("delete-company-btn").disabled = store.companies.length <= 1;
+  const list = HC() ? HC().list() : [];
+  sel.innerHTML = list.map(c => `<option value="${c.id}">${esc(c.name || "Untitled company")}</option>`).join("");
+  let id = activeId();
+  if (!id || !list.some(c => c.id === id)) { id = list.length ? list[0].id : null; if (id && HC()) HC().setActive(id); }
+  if (id) sel.value = id;
+  document.getElementById("delete-company-btn").disabled = list.length <= 1;
 }
 
 function renderForm() {
-  const data = (activeCompany() && activeCompany().data) || {};
+  const data = activeData() || {};
   document.querySelectorAll("[data-key]").forEach(el => { el.value = data[el.getAttribute("data-key")] || ""; });
 }
 
@@ -580,13 +596,27 @@ function showSaved(iso) {
 
 /* ---------- Wire up ---------- */
 render();
-bootstrap();
+// Defer data init until the shared company registry (helm-company.js) is loaded
+// — it's included just after this script.
+let renderedId = null;
+function onExternalCompanyChange() {
+  if (!cryptoKey && isProtected()) return;        // locked vault: ignore registry events
+  renderSwitcher();                               // names/list may have changed
+  const id = activeId();
+  if (id !== renderedId) { renderedId = id; renderForm(); if (savedAt) showSaved(savedAt); }   // only reload form on a real switch
+}
+(function start() {
+  if (!window.HelmCompany) { setTimeout(start, 20); return; }
+  HelmCompany.onChange(onExternalCompanyChange);
+  bootstrap();
+  renderedId = activeId();
+})();
 
 let saveTimer = null;
 document.getElementById("sections").addEventListener("input", (e) => {
   // keep the switcher label in sync as the company name is typed
   if (e.target.getAttribute && e.target.getAttribute("data-key") === "companyName") {
-    const opt = document.querySelector('#company-select option[value="' + store.activeId + '"]');
+    const opt = document.querySelector('#company-select option[value="' + activeId() + '"]');
     if (opt) opt.textContent = e.target.value.trim() || "Untitled company";
   }
   document.getElementById("save-status").textContent = "Saving…";
@@ -620,30 +650,34 @@ document.getElementById("sections").addEventListener("click", async (e) => {
   }
 });
 
-/* ---------- Company switcher actions ---------- */
+/* ---------- Company switcher actions (backed by the shared registry) ---------- */
 document.getElementById("company-select").addEventListener("change", (e) => {
-  writeActiveFromForm();
-  store.activeId = e.target.value;
+  const newId = e.target.value;    // capture first — writeActiveFromForm()'s rename can re-render the select
+  writeActiveFromForm();           // save the company we're leaving
+  renderedId = newId;              // set before setActive so the onChange event is a no-op reload
+  HC().setActive(newId);
   renderForm();
   persist();
 });
 
 document.getElementById("add-company-btn").addEventListener("click", () => {
   writeActiveFromForm();
-  const c = { id: uid(), data: {} };
-  store.companies.push(c);
-  store.activeId = c.id;
+  const c = HC().create("Untitled company");   // registry sets it active
+  recs[c.id] = {};
+  renderedId = c.id;
   renderSwitcher(); renderForm(); persist();
   const nameEl = document.getElementById("fld-companyName");
   if (nameEl) { const det = nameEl.closest("details"); if (det) det.open = true; nameEl.focus(); }
 });
 
 document.getElementById("delete-company-btn").addEventListener("click", () => {
-  if (store.companies.length <= 1) return;
-  const c = activeCompany();
-  if (!confirm('Delete "' + companyLabel(c) + '" and all its details? Export a backup first if you might need them.')) return;
-  store.companies = store.companies.filter(x => x.id !== store.activeId);
-  store.activeId = store.companies[0].id;
+  const list = HC() ? HC().list() : [];
+  if (list.length <= 1) return;
+  const id = activeId();
+  if (!confirm('Delete "' + companyLabelById(id) + '" and all its details? Export a backup first if you might need them.')) return;
+  delete recs[id];
+  HC().remove(id);                 // registry reassigns the active company
+  renderedId = activeId();
   renderSwitcher(); renderForm(); persist();
 });
 
@@ -652,11 +686,13 @@ function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").re
 
 document.getElementById("export-btn").addEventListener("click", () => {
   writeActiveFromForm();
-  const payload = { version: 2, savedAt: new Date().toISOString(), activeId: store.activeId, companies: store.companies };
+  const list = HC() ? HC().list() : [];
+  const companies = list.map(c => ({ id: c.id, name: c.name, profile: c.profile || {}, data: recs[c.id] || {} }));
+  const payload = { version: 3, savedAt: new Date().toISOString(), activeId: activeId(), companies };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const base = store.companies.length === 1 ? (slug(companyLabel(store.companies[0])) || "company") : "all-companies";
+  const base = companies.length === 1 ? (slug(companies[0].name) || "company") : "all-companies";
   a.href = url; a.download = base + "-records-backup.json";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -670,15 +706,28 @@ document.getElementById("import-file").addEventListener("change", (e) => {
   reader.onload = () => {
     try {
       const parsed = JSON.parse(reader.result);
+      // Normalise any backup shape to a list of {id, name, profile, data}.
       let companies;
-      if (parsed && Array.isArray(parsed.companies)) companies = normaliseCompanies(parsed.companies);
-      else if (parsed && parsed.data && typeof parsed.data === "object") companies = [{ id: uid(), data: parsed.data }];
-      else if (parsed && typeof parsed === "object") companies = [{ id: uid(), data: parsed }];
-      else throw new Error("bad");
+      if (parsed && Array.isArray(parsed.companies)) {
+        companies = parsed.companies.filter(c => c && typeof c === "object").map(c => ({
+          id: c.id || uid(), name: c.name || (c.data && c.data.companyName) || "",
+          profile: (c.profile && typeof c.profile === "object") ? c.profile : {},
+          data: (c.data && typeof c.data === "object") ? c.data : {},
+        }));
+      } else if (parsed && parsed.data && typeof parsed.data === "object") {
+        companies = [{ id: uid(), name: parsed.data.companyName || "", profile: {}, data: parsed.data }];
+      } else if (parsed && typeof parsed === "object") {
+        companies = [{ id: uid(), name: parsed.companyName || "", profile: {}, data: parsed }];
+      } else throw new Error("bad");
       if (!companies.length) throw new Error("empty");
-      if (!confirm("Import will replace ALL companies currently stored in this browser. Continue?")) return;
-      store.companies = companies;
-      store.activeId = (parsed.activeId && companies.some(c => c.id === parsed.activeId)) ? parsed.activeId : companies[0].id;
+      if (!confirm("Import " + companies.length + " compan" + (companies.length === 1 ? "y" : "ies") + " into your list? Existing companies are kept; any with a matching id are updated.")) return;
+      companies.forEach(c => {
+        recs[c.id] = c.data;
+        HC().ensure(c.id, c.name);
+        if (Object.keys(c.profile).length) { HC().setActive(c.id); HC().setProfile(c.profile); }
+      });
+      HC().setActive(companies[0].id);
+      renderedId = activeId();
       renderSwitcher(); renderForm(); persist();
     } catch (err) {
       alert("That file didn't look like a valid records backup.");
@@ -691,9 +740,9 @@ document.getElementById("import-file").addEventListener("change", (e) => {
 document.getElementById("print-btn").addEventListener("click", () => { writeActiveFromForm(); window.print(); });
 
 document.getElementById("clear-btn").addEventListener("click", () => {
-  const c = activeCompany();
-  if (!confirm('Clear all details for "' + companyLabel(c) + '"? The company stays in your list, but its fields are emptied.')) return;
-  c.data = {};
+  const id = activeId();
+  if (!confirm('Clear all details for "' + companyLabelById(id) + '"? The company stays in your list, but its fields are emptied.')) return;
+  recs[id] = {};
   renderForm(); renderSwitcher(); persist();
 });
 

@@ -58,6 +58,15 @@
       var s = read(); var c = { id: uid(), name: (name || "Untitled company").trim() || "Untitled company", profile: {} };
       s.companies.push(c); s.activeId = c.id; write(s); return c;
     },
+    // Add a company with a SPECIFIC id if it doesn't exist yet (used to migrate
+    // Company Records' existing companies into the registry without changing ids).
+    ensure: function (id, name) {
+      if (!id) return null;
+      var s = read(); var c = s.companies.find(function (x) { return x.id === id; });
+      if (!c) { c = { id: id, name: (name || "Untitled company").trim() || "Untitled company", profile: {} }; s.companies.push(c); if (!s.activeId) s.activeId = id; write(s); }
+      else if (name && (!c.name || c.name === "Untitled company")) { c.name = name.trim() || c.name; write(s); }
+      return c;
+    },
     rename: function (id, name) { var s = read(); var c = s.companies.find(function (x) { return x.id === id; }); if (c) { c.name = (name || "").trim() || c.name; write(s); } },
     remove: function (id) {
       var s = read(); s.companies = s.companies.filter(function (c) { return c.id !== id; });

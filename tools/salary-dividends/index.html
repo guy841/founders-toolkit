@@ -155,6 +155,8 @@
     <p>See the most tax-efficient way to pay yourself from your limited company — the right salary, the dividends on top, and how much actually lands in your pocket. Plus how a director's loan compares for short-term cash.</p>
   </header>
 
+  <div id="hc-banner"></div>
+
   <div class="grid">
     <!-- INPUT -->
     <form class="card" id="form" novalidate>
@@ -568,5 +570,16 @@ refreshLoanDirectorOptions();
 <script src="../../helm-config.js"></script>
 <script src="../../helm-sync.js"></script>
 <script src="../../helm-company.js"></script>
+<script>
+(function () {
+  if (!window.HelmCompany) return;
+  HelmCompany.mountBanner(document.getElementById("hc-banner"), { hubHref: "../../index.html" });
+  var p = HelmCompany.getProfile() || {};
+  if (p.directors) {
+    var sel = document.getElementById("directors");
+    if (sel) { sel.value = String(Math.min(Math.max(parseInt(p.directors, 10) || 1, 1), 4)); sel.dispatchEvent(new Event("change", { bubbles: true })); }
+  }
+})();
+</script>
 </body>
 </html>

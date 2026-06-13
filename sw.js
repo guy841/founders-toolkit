@@ -1,6 +1,6 @@
 /* Helm service worker — makes the web app installable and fully offline.
    Cache-first for the app shell; network fallback; runtime-cache other GETs. */
-const CACHE = "helm-v7";
+const CACHE = "helm-v8";
 const CORE = [
   "./", "./index.html", "./privacy.html", "./manifest.webmanifest",
   "./helm-config.js", "./helm-sync.js", "./helm-company.js",

@@ -144,6 +144,8 @@
     <p>Check your VAT-taxable turnover against the £90,000 registration threshold — both the rolling 12-month test and the next-30-days test — and weigh up registering voluntarily.</p>
   </header>
 
+  <div id="hc-banner"></div>
+
   <div class="grid">
     <!-- INPUT -->
     <form class="card" id="form" novalidate>
@@ -308,5 +310,8 @@ document.getElementById("form").addEventListener("submit", (e) => {
 <script src="../../helm-config.js"></script>
 <script src="../../helm-sync.js"></script>
 <script src="../../helm-company.js"></script>
+<script>
+(function () { if (window.HelmCompany) HelmCompany.mountBanner(document.getElementById("hc-banner"), { hubHref: "../../index.html" }); })();
+</script>
 </body>
 </html>

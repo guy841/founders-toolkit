@@ -131,6 +131,8 @@
     <p>Tell us a little about your company and we'll build a tailored list of what to register, insure and put in place — flagging what's required by law versus simply good practice. Your progress is saved on this device, and syncs across your devices if you sign in.</p>
   </header>
 
+  <div id="hc-banner"></div>
+
   <div class="card q-card">
     <p class="q-title">Tell us about your business</p>
     <div class="q-grid" id="questions"></div>
@@ -381,5 +383,22 @@ renderChecklist();
 <script src="../../helm-config.js"></script>
 <script src="../../helm-sync.js"></script>
 <script src="../../helm-company.js"></script>
+<script>
+/* Banner + seed the questions from the active company's key facts (only the
+   ones the user hasn't already answered here). */
+(function () {
+  if (!window.HelmCompany) return;
+  HelmCompany.mountBanner(document.getElementById("hc-banner"), { hubHref: "../../index.html" });
+  var p = HelmCompany.getProfile() || {};
+  var saved = {}; try { saved = (JSON.parse(localStorage.getItem("founders-toolkit:setup-checklist:v1") || "{}").answers) || {}; } catch (e) {}
+  var map = { employees: "employsStaff", publicFacing: "publicFacing", advice: "advice", products: "products", data: "handlesData", online: "online", multiOwner: "multiOwner", highTurnover: "vatRegistered", construction: "construction", importExport: "importExport" };
+  Object.keys(map).forEach(function (qk) {
+    if (Object.prototype.hasOwnProperty.call(saved, qk)) return;
+    if (!p[map[qk]]) return;
+    var sw = document.querySelector('[data-q="' + qk + '"]');
+    if (sw && sw.getAttribute("aria-checked") !== "true") sw.click();
+  });
+})();
+</script>
 </body>
 </html>

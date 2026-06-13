@@ -277,6 +277,8 @@
     <p>Enter your UK limited company details to see every filing and payment deadline, counted down from today. No sign-up required — the details you enter stay on your device.</p>
   </header>
 
+  <div id="hc-banner"></div>
+
   <div class="grid">
     <!-- ================= FORM ================= -->
     <form class="card" id="form" novalidate>
@@ -796,5 +798,34 @@ document.getElementById("form").addEventListener("submit", (e) => {
 <script src="../../helm-config.js"></script>
 <script src="../../helm-sync.js"></script>
 <script src="../../helm-company.js"></script>
+<script>
+/* Show the active-company banner and pre-fill from its key facts. */
+(function () {
+  if (!window.HelmCompany) return;
+  HelmCompany.mountBanner(document.getElementById("hc-banner"), { hubHref: "../../index.html" });
+  var p = HelmCompany.getProfile();
+  if (!p) return;
+  function setSel(id, val) { var el = document.getElementById(id); if (el && val != null && val !== "") { el.value = String(val); } }
+  // Incorporation date (YYYY-MM-DD).
+  if (p.incorporationDate) {
+    var d = p.incorporationDate.split("-");
+    if (d.length === 3) { setSel("inc-year", +d[0]); setSel("inc-month", +d[1]); setSel("inc-day", +d[2]); }
+  }
+  // Financial year-end: pick the most recent year-end on or before today.
+  if (p.yearEndDay && p.yearEndMonth) {
+    var now = new Date(), y = now.getFullYear();
+    var thisYr = new Date(y, p.yearEndMonth - 1, p.yearEndDay);
+    if (thisYr > now) y -= 1;            // the year-end this year hasn't happened yet
+    setSel("ye-day", p.yearEndDay); setSel("ye-month", p.yearEndMonth); setSel("ye-year", y);
+  }
+  // PAYE — safe on/off, no extra required fields. (VAT needs a quarter date we
+  // don't hold, so leave that toggle to the user; the banner shows VAT status.)
+  function ensureSwitch(id, on) {
+    var b = document.getElementById(id);
+    if (b && on && b.getAttribute("aria-checked") !== "true") b.click();
+  }
+  ensureSwitch("sw-paye", !!p.employsStaff);
+})();
+</script>
 </body>
 </html>

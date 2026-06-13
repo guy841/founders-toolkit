@@ -130,6 +130,8 @@
     <p>Answer a few questions about your business and see which cover is required by law, which your clients or regulator will expect, and which is simply worth considering — starting with employers' liability, the one that's a legal duty.</p>
   </header>
 
+  <div id="hc-banner"></div>
+
   <div class="card q-card">
     <p class="q-title">Tell us about your business</p>
     <div class="q-grid" id="questions"></div>
@@ -330,5 +332,22 @@ renderResults();
 <script src="../../helm-config.js"></script>
 <script src="../../helm-sync.js"></script>
 <script src="../../helm-company.js"></script>
+<script>
+/* Banner + seed the questions from the active company's key facts (only the
+   ones the user hasn't already answered here). */
+(function () {
+  if (!window.HelmCompany) return;
+  HelmCompany.mountBanner(document.getElementById("hc-banner"), { hubHref: "../../index.html" });
+  var p = HelmCompany.getProfile() || {};
+  var saved = {}; try { saved = (JSON.parse(localStorage.getItem("founders-toolkit:insurance-check:v1") || "{}").answers) || {}; } catch (e) {}
+  var map = { employees: "employsStaff", advice: "advice", products: "products", publicFacing: "publicFacing", data: "handlesData" };
+  Object.keys(map).forEach(function (qk) {
+    if (Object.prototype.hasOwnProperty.call(saved, qk)) return;   // respect an existing answer
+    if (!p[map[qk]]) return;                                       // profile doesn't assert it
+    var sw = document.querySelector('[data-q="' + qk + '"]');
+    if (sw && sw.getAttribute("aria-checked") !== "true") sw.click();
+  });
+})();
+</script>
 </body>
 </html>

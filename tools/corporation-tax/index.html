@@ -133,6 +133,8 @@
     <p>Estimate the Corporation Tax your company owes — including the small profits rate, the main rate, and the marginal relief in between that trips most people up.</p>
   </header>
 
+  <div id="hc-banner"></div>
+
   <div class="grid">
     <!-- INPUT -->
     <form class="card" id="form" novalidate>
@@ -318,5 +320,8 @@ document.getElementById("form").addEventListener("submit", (e) => {
 <script src="../../helm-config.js"></script>
 <script src="../../helm-sync.js"></script>
 <script src="../../helm-company.js"></script>
+<script>
+(function () { if (window.HelmCompany) HelmCompany.mountBanner(document.getElementById("hc-banner"), { hubHref: "../../index.html" }); })();
+</script>
 </body>
 </html>

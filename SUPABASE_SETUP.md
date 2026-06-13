@@ -65,10 +65,22 @@ locally) to **Redirect URLs**.
 
 ## 4. Email delivery (only if "Confirm email" is ON)
 
-Supabase's built-in email sender is rate-limited and meant for testing. For real
-use, add an SMTP provider under **Authentication → Emails → SMTP Settings**
-(e.g. Resend, Postmark, SES, or your Google Workspace SMTP). Set the "from"
-address to something like `hello@treetop.capital`.
+Supabase's built-in email sender is rate-limited (a few/hour) and sends from a
+`supabase.co` address — fine for testing, not for real use. For production, add an
+SMTP provider under **Authentication → Emails → SMTP Settings** (Resend is easy:
+verify `treetop.capital` via DNS, then SMTP host `smtp.resend.com`, port `465`,
+user `resend`, password = API key). Set **Sender email** `hello@treetop.capital`
+and **Sender name** `Helm: Director's Toolkit`.
+
+Then brand the email itself: **Authentication → Email Templates → Confirm signup**,
+paste the contents of [`supabase/email-templates/confirm-signup.html`](supabase/email-templates/confirm-signup.html),
+and set the subject to `Confirm your email · Helm: Director's Toolkit`.
+
+> **Quick-start shortcut:** to go live before doing the SMTP/DNS setup, just turn
+> **Confirm email OFF** (sign-up becomes instant, no email needed). Re-enable it
+> with the SMTP + template above before promoting the site publicly. Either way,
+> set the **Site URL** first (section 3) — a wrong Site URL is what makes the
+> confirmation link error.
 
 ## 5. Wire up Helm
 

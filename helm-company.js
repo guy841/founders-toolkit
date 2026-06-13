@@ -212,10 +212,15 @@
         });
       });
     }
+    var mountedId = api.activeId();
     render();
-    // Re-render when the active company changes (e.g. via the switcher), but not
-    // on every keystroke-driven setProfile from within this editor.
-    api.onChange(function () { render(); });
+    // Re-render only when the ACTIVE COMPANY changes (e.g. via the switcher) —
+    // never on a setProfile from editing a field here, which would rebuild the
+    // inputs mid-entry (e.g. you couldn't finish typing a 4-digit year).
+    api.onChange(function () {
+      var id = api.activeId();
+      if (id !== mountedId) { mountedId = id; render(); }
+    });
   };
 
   // ---- UI: context banner (for tool pages) ----------------------------------

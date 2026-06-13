@@ -498,7 +498,8 @@
         '<p class="sub">' + (up
           ? 'Your details are encrypted with your password before they leave this device — we can’t read them, and we can’t reset your password.'
           : 'Sync your saved company details securely across your devices.') + '</p>' +
-        '<div class="helm-err" id="helm-err"></div>' +
+        (ctx.note ? '<div class="helm-ok">' + esc(ctx.note) + '</div>' : '') +
+        '<div class="helm-err" id="helm-err">' + (ctx.error ? esc(ctx.error) : '') + '</div>' +
         '<form id="helm-form">' +
           '<div class="helm-field"><label>Email</label><input id="helm-email" type="email" autocomplete="username" required></div>' +
           '<div class="helm-field"><label>Password</label><input id="helm-pw" type="password" autocomplete="' + (up ? 'new-password' : 'current-password') + '" required minlength="8"></div>' +
@@ -693,6 +694,33 @@
     });
   }
 
+  // When the user returns from an email-confirmation link, Supabase appends auth
+  // params (success tokens or an error) to the URL. Acknowledge it and open the
+  // sign-in panel — they still need their password to derive the encryption key,
+  // so we can't silently auto-sign-in, but we shouldn't dump them on a blank page.
+  function handleAuthRedirect() {
+    var raw = (location.hash ? location.hash.substring(1) : "") || (location.search ? location.search.substring(1) : "");
+    if (!raw) return false;
+    var p;
+    try { p = new URLSearchParams(raw); } catch (e) { return false; }
+    var err = p.get("error_description") || p.get("error");
+    var confirmed = p.get("access_token") || p.get("type") === "signup" || p.get("type") === "magiclink";
+    if (!err && !confirmed) return false;
+    // Strip the auth params so a refresh doesn't re-trigger this.
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+    if (state.session) return true;   // already signed in elsewhere; nothing to prompt
+    if (err) {
+      var msg = /expired|invalid/i.test(err)
+        ? "That confirmation link has expired or was already used. Sign in, or create your account again."
+        : decodeURIComponent(String(err).replace(/\+/g, " "));
+      renderSheet("signin", { error: msg });
+    } else {
+      renderSheet("signin", { note: "✓ Email confirmed — sign in to continue." });
+    }
+    els.modal.classList.add("show");
+    return true;
+  }
+
   // ---- boot -----------------------------------------------------------------
   function boot() {
     // Dormant until a backend is configured: no UI, no footprint, tools unchanged.
@@ -703,6 +731,7 @@
     if (!CRYPTO_OK) return;   // configured but insecure context (e.g. http): show pill, explain
     hookStorage();
     resume().catch(function (e) { setStatus("error", e.message); });
+    handleAuthRedirect();
   }
 
   // Expose a tiny hook so tools could trigger an immediate sync if they want.

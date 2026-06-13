@@ -64,5 +64,8 @@ jobs:
           echo "  ISSUER_ID length=${#APPSTORE_ISSUER_ID} (expect 36, UUID with hyphens)"
           echo "  TEAM_ID   length=${#APPLE_TEAM_ID}   (expect 10)"
           echo "  P8_BASE64 length=${#APPSTORE_PRIVATE_KEY}"
+          # Decode the API key to a file so xcodebuild can use it for automatic signing
+          echo "$APPSTORE_PRIVATE_KEY" | base64 --decode > "$RUNNER_TEMP/AuthKey.p8"
+          export ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
           bundle install
           bundle exec fastlane beta

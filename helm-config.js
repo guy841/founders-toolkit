@@ -8,6 +8,6 @@
    Project URL and the anon/public key below. Until both are filled in, Helm
    runs exactly as before — fully offline, on-device only, no accounts. */
 window.HELM_CONFIG = {
-  SUPABASE_URL: "",       // e.g. "https://abcdefgh.supabase.co"
-  SUPABASE_ANON_KEY: "",  // the "anon"/"public" API key from Project Settings → API
+  SUPABASE_URL: "https://kwcowblxeyoqfviirpoo.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_Ge5UQhkHkkYPAjnbcLYOOQ_f7DQoqvH",  // public, RLS-gated publishable key
 };

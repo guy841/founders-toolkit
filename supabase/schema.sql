@@ -48,6 +48,14 @@ drop policy if exists "vaults_delete_own" on public.vaults;
 create policy "vaults_delete_own" on public.vaults
   for delete using (auth.uid() = user_id);
 
+-- Table-level privileges for the Data API. Only the "authenticated" role gets
+-- access (RLS above still restricts every row to its owner); "anon" gets nothing,
+-- since only signed-in users sync. These explicit grants are REQUIRED when the
+-- project's "Automatically expose new tables" setting is OFF (the recommended,
+-- more secure posture) — with them, you can safely leave that setting disabled.
+grant select, insert, update, delete on public.vaults to authenticated;
+revoke all on public.vaults from anon;
+
 -- Optional: let a signed-in user delete their own auth account (and, via the
 -- cascade above, their vault) entirely from the client. Safe because it only
 -- ever deletes the caller's own account.

@@ -25,8 +25,20 @@ crypto details.
 1. Left sidebar → **SQL Editor** → **New query**.
 2. Paste the entire contents of [`supabase/schema.sql`](supabase/schema.sql) and
    click **Run**. You should see "Success". This creates the `vaults` table,
-   turns on Row-Level Security with owner-only policies, and adds a
-   `delete_my_account()` function.
+   turns on Row-Level Security with owner-only policies, grants table access to
+   the `authenticated` role only, and adds a `delete_my_account()` function.
+
+## 2b. Data API security settings
+
+Under **Project Settings → Data API** (or **API → Settings**):
+
+- **Enable Data API: ON** — required; Helm talks to the REST endpoints directly.
+- **Automatically expose new tables: OFF** (recommended, more secure). The schema
+  grants the `vaults` table to `authenticated` explicitly, so it stays reachable
+  with this disabled. Re-run `schema.sql` if you toggle this after creating the
+  table.
+- **Enable automatic RLS: ON** — a safety net; the schema also enables RLS on
+  `vaults` explicitly, so the two don't conflict.
 
 ## 3. Auth settings
 

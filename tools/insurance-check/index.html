@@ -240,8 +240,27 @@ const ITEMS = [
 ];
 
 let state = { answers: {}, got: {} };
-(function load(){ try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); if (s) state = { answers: s.answers || {}, got: s.got || {} }; } catch(e){} })();
-function save(){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){} }
+/* Per-company storage: answers/ticks are partitioned by the active company id so
+   switching company shows that company's own answers. Falls back to "_default"
+   when no company is selected (or the registry isn't present). */
+function companyKey(){ return (window.HelmCompany && HelmCompany.activeId()) || "_default"; }
+function readAll(){
+  let all = null; try { all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch(e){}
+  if (!all || typeof all !== "object") all = {};
+  if (!all.companies) {                                   // migrate legacy flat {answers,got}
+    const legacy = (all.answers || all.got) ? { answers: all.answers || {}, got: all.got || {} } : null;
+    all = { version: 2, companies: {} };
+    if (legacy) all._legacy = legacy;                     // adopted by the first company opened
+  }
+  return all;
+}
+function loadState(){
+  const all = readAll(); const key = companyKey();
+  let c = all.companies[key];
+  if (!c && all._legacy) { c = all._legacy; all.companies[key] = c; delete all._legacy; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); } catch(e){} }
+  state = { answers: (c && c.answers) || {}, got: (c && c.got) || {} };
+}
+function save(){ const all = readAll(); all.companies[companyKey()] = { answers: state.answers, got: state.got }; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); } catch(e){} }
 function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 function renderQuestions(){
@@ -325,29 +344,34 @@ document.getElementById("reset-btn").addEventListener("click", () => {
   renderResults();
 });
 
-renderQuestions();
-renderResults();
+/* Init runs from the company orchestrator below (after helm-company.js loads),
+   so the active company's answers are loaded before first render. */
 </script>
 <script>if("serviceWorker"in navigator&&location.protocol.startsWith("http")){addEventListener("load",()=>navigator.serviceWorker.register("../../sw.js").catch(()=>{}))}</script>
 <script src="../../helm-config.js"></script>
 <script src="../../helm-sync.js"></script>
 <script src="../../helm-company.js"></script>
 <script>
-/* Banner + seed the questions from the active company's key facts (only the
-   ones the user hasn't already answered here). */
-(function () {
+/* Company orchestrator: load THIS company's answers, render, mount the banner,
+   then seed any unanswered questions from the company's key facts. */
+(function init(retries) {
+  if (!window.HelmCompany && retries > 0) { setTimeout(function () { init(retries - 1); }, 20); return; }
+  loadState();
+  renderQuestions();
+  renderResults();
   if (!window.HelmCompany) return;
   HelmCompany.mountBanner(document.getElementById("hc-banner"), { hubHref: "../../index.html" });
-  var p = HelmCompany.getProfile() || {};
-  var saved = {}; try { saved = (JSON.parse(localStorage.getItem("founders-toolkit:insurance-check:v1") || "{}").answers) || {}; } catch (e) {}
+  var aid = HelmCompany.activeId(); var p = HelmCompany.getProfile() || {};
+  if (!aid) return;
   var map = { employees: "employsStaff", advice: "advice", products: "products", publicFacing: "publicFacing", data: "handlesData" };
+  var seeded = false;
   Object.keys(map).forEach(function (qk) {
-    if (Object.prototype.hasOwnProperty.call(saved, qk)) return;   // respect an existing answer
-    if (!p[map[qk]]) return;                                       // profile doesn't assert it
-    var sw = document.querySelector('[data-q="' + qk + '"]');
-    if (sw && sw.getAttribute("aria-checked") !== "true") sw.click();
+    if (Object.prototype.hasOwnProperty.call(state.answers, qk)) return;  // already answered for this company
+    if (!p[map[qk]]) return;                                              // profile doesn't assert it
+    state.answers[qk] = true; seeded = true;
   });
-})();
+  if (seeded) { save(); renderQuestions(); renderResults(); }
+})(25);
 </script>
 </body>
 </html>

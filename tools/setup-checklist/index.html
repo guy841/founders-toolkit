@@ -285,11 +285,28 @@ const ITEMS = [
 
 /* ---------- State ---------- */
 let state = { answers: {}, done: {} };
-(function loadState(){
-  try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); if (s) state = { answers: s.answers || {}, done: s.done || {} }; } catch(e){}
-  QUESTIONS.forEach(q => { if (state.answers[q.key] === undefined && q.def) state.answers[q.key] = true; });
-})();
-function saveState(){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){} }
+/* Per-company storage: answers/ticks are partitioned by the active company id, so
+   switching company shows that company's own progress. Falls back to "_default"
+   when no company is selected (or the registry isn't present). */
+function companyKey(){ return (window.HelmCompany && HelmCompany.activeId()) || "_default"; }
+function readAll(){
+  let all = null; try { all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch(e){}
+  if (!all || typeof all !== "object") all = {};
+  if (!all.companies) {                                   // migrate legacy flat {answers,done}
+    const legacy = (all.answers || all.done) ? { answers: all.answers || {}, done: all.done || {} } : null;
+    all = { version: 2, companies: {} };
+    if (legacy) all._legacy = legacy;
+  }
+  return all;
+}
+function loadState(){
+  const all = readAll(); const key = companyKey();
+  let c = all.companies[key];
+  if (!c && all._legacy) { c = all._legacy; all.companies[key] = c; delete all._legacy; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); } catch(e){} }
+  state = { answers: (c && c.answers) || {}, done: (c && c.done) || {} };
+  QUESTIONS.forEach(q => { if (state.answers[q.key] === undefined && q.def) state.answers[q.key] = true; });  // helpful defaults
+}
+function saveState(){ const all = readAll(); all.companies[companyKey()] = { answers: state.answers, done: state.done }; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); } catch(e){} }
 
 function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 const extLink = (href) => /^https?:/.test(href);
@@ -376,29 +393,34 @@ document.getElementById("reset-btn").addEventListener("click", () => {
   renderChecklist();
 });
 
-renderQuestions();
-renderChecklist();
+/* Init runs from the company orchestrator below (after helm-company.js loads),
+   so the active company's answers are loaded before first render. */
 </script>
 <script>if("serviceWorker"in navigator&&location.protocol.startsWith("http")){addEventListener("load",()=>navigator.serviceWorker.register("../../sw.js").catch(()=>{}))}</script>
 <script src="../../helm-config.js"></script>
 <script src="../../helm-sync.js"></script>
 <script src="../../helm-company.js"></script>
 <script>
-/* Banner + seed the questions from the active company's key facts (only the
-   ones the user hasn't already answered here). */
-(function () {
+/* Company orchestrator: load THIS company's answers, render, mount the banner,
+   then seed any unanswered questions from the company's key facts. */
+(function init(retries) {
+  if (!window.HelmCompany && retries > 0) { setTimeout(function () { init(retries - 1); }, 20); return; }
+  loadState();
+  renderQuestions();
+  renderChecklist();
   if (!window.HelmCompany) return;
   HelmCompany.mountBanner(document.getElementById("hc-banner"), { hubHref: "../../index.html" });
-  var p = HelmCompany.getProfile() || {};
-  var saved = {}; try { saved = (JSON.parse(localStorage.getItem("founders-toolkit:setup-checklist:v1") || "{}").answers) || {}; } catch (e) {}
+  var aid = HelmCompany.activeId(); var p = HelmCompany.getProfile() || {};
+  if (!aid) return;
   var map = { employees: "employsStaff", publicFacing: "publicFacing", advice: "advice", products: "products", data: "handlesData", online: "online", multiOwner: "multiOwner", highTurnover: "vatRegistered", construction: "construction", importExport: "importExport" };
+  var seeded = false;
   Object.keys(map).forEach(function (qk) {
-    if (Object.prototype.hasOwnProperty.call(saved, qk)) return;
+    if (Object.prototype.hasOwnProperty.call(state.answers, qk)) return;  // already answered/defaulted for this company
     if (!p[map[qk]]) return;
-    var sw = document.querySelector('[data-q="' + qk + '"]');
-    if (sw && sw.getAttribute("aria-checked") !== "true") sw.click();
+    state.answers[qk] = true; seeded = true;
   });
-})();
+  if (seeded) { saveState(); renderQuestions(); renderChecklist(); }
+})(25);
 </script>
 </body>
 </html>

@@ -29,6 +29,12 @@ founders-toolkit/
     │   └── index.html             # Salary vs Dividends Optimiser + director's loan (live)
     └── vat-checker/
         └── index.html             # VAT Registration Checker (live)
+
+founders-toolkit/
+├── helm-config.js                 # Public Supabase URL + anon key (accounts/sync)
+├── helm-sync.js                   # Accounts + end-to-end encrypted cross-device sync
+├── supabase/schema.sql            # Table + Row-Level Security for the sync backend
+└── SUPABASE_SETUP.md              # One-time backend setup guide
 ```
 
 ## Tools
@@ -53,11 +59,42 @@ Each HTML file has a `CONFIG` block near the bottom of its `<script>`:
 Colours and fonts live in the CSS `:root` variables at the top of each file — change
 `--moss` etc. in one place to recolour everything.
 
+## Accounts & cross-device sync (optional)
+
+By default Helm is 100% on-device. Optionally, users can create an account to sync
+their saved details across devices — and it's **end-to-end encrypted**, so the
+"we can't see your data" promise survives:
+
+- The login password derives 64 bytes via PBKDF2-SHA256 (600k iterations). The
+  first 32 bytes become an *auth secret* (the only thing the server ever sees as a
+  password); the last 32 bytes are an AES-GCM key that **never leaves the browser**.
+- Every `localStorage` key under `founders-toolkit:` is snapshotted, encrypted, and
+  stored as one opaque blob per user. The server only ever holds ciphertext.
+- Sign-in/sync is added by two scripts included on every page: `helm-config.js`
+  (public keys) and `helm-sync.js` (auth + crypto + sync + the account UI, which
+  injects a "Sign in" pill top-right). No build step, still dependency-free.
+
+It is **fail-safe**: until you fill in `helm-config.js`, the pill explains accounts
+aren't enabled and every tool keeps working exactly as before.
+
+**Backend:** [Supabase](https://supabase.com) (hosted Postgres + auth). One-time
+setup — create a project, run [`supabase/schema.sql`](supabase/schema.sql), and
+paste the Project URL + anon key into `helm-config.js`. Full walkthrough in
+[`SUPABASE_SETUP.md`](SUPABASE_SETUP.md).
+
+> **No password recovery, by design.** The password is the encryption key. Users
+> rotate it from **Account → Change password** (which re-encrypts their data); a
+> forgotten password means unrecoverable data. This is the cost of true E2E.
+
 ## Hosting
 
 Because every file is static, you can publish the whole folder with **GitHub Pages**,
 Netlify, Cloudflare Pages, S3, or any static host. With GitHub Pages enabled, the hub
 is served at the repo's Pages URL and each tool at `/tools/<name>/`.
+
+Sync talks only to your Supabase project (a different origin), so it works on any
+static host and is never touched by the offline service-worker cache. After editing
+`helm-config.js` or `helm-sync.js`, bump `const CACHE` in `sw.js` so clients update.
 
 ## Disclaimer
 

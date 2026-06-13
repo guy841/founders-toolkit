@@ -1,0 +1,623 @@
+/* =============================================================================
+   Helm — accounts + end-to-end encrypted cross-device sync
+   -----------------------------------------------------------------------------
+   Drop-in, dependency-free. Include AFTER helm-config.js on every page:
+
+       <script src="helm-config.js"></script>     (adjust relative path)
+       <script src="helm-sync.js"></script>
+
+   How it stays private (end-to-end, single password):
+     • From your password we derive 64 bytes with PBKDF2-SHA256 (600k iters):
+         - bytes 0..31  -> "auth secret": the only thing the server ever sees as
+            your password (it bcrypts it). It reveals nothing about the key.
+         - bytes 32..63 -> AES-GCM 256 key: NEVER sent anywhere. It encrypts your
+            data in the browser. The server only ever stores ciphertext.
+     • The two halves are independent PBKDF2 blocks, so the server's knowledge of
+       the auth secret tells it nothing about the encryption key.
+     • Salts are derived from your email + a fixed app pepper so any device can
+       recompute them from just (email, password) — no pre-login round-trip.
+
+   What syncs: every localStorage key beginning "founders-toolkit:" — the data
+   the tools already save on-device — snapshotted, encrypted, and stored as one
+   opaque blob per user. Tool-agnostic, so new tools are covered automatically.
+
+   Reset/recovery: there is none, by design. The password is the key. Change it
+   only while signed in (we re-encrypt + re-key for you). Lose it = data is gone.
+   ============================================================================= */
+(function () {
+  "use strict";
+
+  var CFG = window.HELM_CONFIG || {};
+  var URL_BASE = (CFG.SUPABASE_URL || "").replace(/\/+$/, "");
+  var ANON = CFG.SUPABASE_ANON_KEY || "";
+  var CONFIGURED = !!(URL_BASE && ANON);
+
+  // Web Crypto needs a secure context (https or localhost).
+  var CRYPTO_OK = !!(window.crypto && window.crypto.subtle && window.isSecureContext);
+
+  var PEPPER = "helm.treetop.capital/v1";     // fixed app-wide salt component
+  var PBKDF2_ITER = 600000;                   // OWASP 2023 floor for PBKDF2-SHA256
+  var KEY_PREFIX = "founders-toolkit:";       // localStorage keys we mirror
+  var PUSH_DEBOUNCE_MS = 1500;
+
+  // Persisted across page loads (same origin) — never holds secrets:
+  var LS_SESSION = "helm:auth:session";       // Supabase tokens + user (JWT)
+  var LS_META = "helm:sync:meta";             // { updated_at, hash } of last sync
+  // Per-tab only, cleared when the tab closes — holds the raw AES key so you can
+  // navigate between tool pages without re-entering your password each time:
+  var SS_KEY = "helm:enc:key";
+
+  // ---- tiny utils -----------------------------------------------------------
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function b64(buf) { var b = new Uint8Array(buf), s = "", i; for (i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
+  function unb64(str) { var bin = atob(str), a = new Uint8Array(bin.length), i; for (i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; }
+  function enc(s) { return new TextEncoder().encode(s); }
+  function nowISO() { return new Date().toISOString(); }
+  function readJSON(store, k) { try { return JSON.parse(store.getItem(k) || "null"); } catch (e) { return null; } }
+  function writeJSON(store, k, v) { try { store.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  // Canonical (sorted-key) JSON so local vs remote comparisons are order-stable —
+  // otherwise localStorage iteration order vs a decrypted object could differ and
+  // make the snapshots look "changed" forever (reload loop / endless pushes).
+  function canon(obj) { var keys = Object.keys(obj).sort(), o = {}, i; for (i = 0; i < keys.length; i++) o[keys[i]] = obj[keys[i]]; return JSON.stringify(o); }
+
+  // FNV-1a — cheap change-detection hash over the snapshot (not security).
+  function hashStr(s) { var h = 0x811c9dc5, i; for (i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; } return ("0000000" + h.toString(16)).slice(-8); }
+
+  // ---- key derivation -------------------------------------------------------
+  // One PBKDF2 pass -> 64 bytes -> [authSecret(32) | aesKey(32)].
+  async function deriveSecrets(email, password) {
+    var salt = enc("helm:" + String(email).trim().toLowerCase() + ":" + PEPPER);
+    var base = await crypto.subtle.importKey("raw", enc(password), "PBKDF2", false, ["deriveBits"]);
+    var bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: salt, iterations: PBKDF2_ITER, hash: "SHA-256" }, base, 512);
+    var bytes = new Uint8Array(bits);
+    var authBytes = bytes.slice(0, 32);
+    var keyBytes = bytes.slice(32, 64);
+    var authSecret = b64(authBytes);          // used as the Supabase "password"
+    return { authSecret: authSecret, keyBytes: keyBytes };
+  }
+  async function importAesKey(rawBytes) {
+    return crypto.subtle.importKey("raw", rawBytes, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]);
+  }
+  async function encryptSnapshot(key, obj) {
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc(JSON.stringify(obj)));
+    return { iv: b64(iv), ciphertext: b64(ct) };
+  }
+  async function decryptBlob(key, ivB64, ctB64) {
+    var pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(ivB64) }, key, unb64(ctB64));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+
+  // ---- Supabase HTTP (no SDK) ----------------------------------------------
+  function authHeaders(extra) {
+    var h = { "apikey": ANON, "Content-Type": "application/json" };
+    if (state.session && state.session.access_token) h["Authorization"] = "Bearer " + state.session.access_token;
+    if (extra) for (var k in extra) h[k] = extra[k];
+    return h;
+  }
+  async function api(path, opts) {
+    opts = opts || {};
+    var res = await fetch(URL_BASE + path, {
+      method: opts.method || "GET",
+      headers: authHeaders(opts.headers),
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    var text = await res.text();
+    var data = text ? (function () { try { return JSON.parse(text); } catch (e) { return text; } })() : null;
+    if (!res.ok) {
+      var msg = (data && (data.msg || data.error_description || data.message || data.error)) || ("Request failed (" + res.status + ")");
+      var err = new Error(msg); err.status = res.status; err.data = data; throw err;
+    }
+    return data;
+  }
+
+  async function gotrueSignup(email, authSecret) {
+    return api("/auth/v1/signup", { method: "POST", body: { email: email, password: authSecret } });
+  }
+  async function gotruePassword(email, authSecret) {
+    return api("/auth/v1/token?grant_type=password", { method: "POST", body: { email: email, password: authSecret } });
+  }
+  async function gotrueRefresh(refresh_token) {
+    return api("/auth/v1/token?grant_type=refresh_token", { method: "POST", body: { refresh_token: refresh_token } });
+  }
+  async function gotrueUpdatePassword(authSecret) {
+    return api("/auth/v1/user", { method: "PUT", body: { password: authSecret } });
+  }
+  async function vaultGet() {
+    var uid = state.session && state.session.user && state.session.user.id;
+    if (!uid) return null;
+    var rows = await api("/rest/v1/vaults?select=ciphertext,iv,updated_at&user_id=eq." + encodeURIComponent(uid));
+    return (rows && rows[0]) || null;
+  }
+  async function vaultUpsert(ivB64, ctB64, updatedAt) {
+    var uid = state.session.user.id;
+    return api("/rest/v1/vaults?on_conflict=user_id", {
+      method: "POST",
+      headers: { "Prefer": "resolution=merge-duplicates,return=minimal" },
+      body: { user_id: uid, iv: ivB64, ciphertext: ctB64, updated_at: updatedAt },
+    });
+  }
+
+  // ---- local snapshot of all founders-toolkit:* keys ------------------------
+  function snapshot() {
+    var out = {}, i, k;
+    for (i = 0; i < localStorage.length; i++) {
+      k = localStorage.key(i);
+      if (k && k.indexOf(KEY_PREFIX) === 0) out[k] = localStorage.getItem(k);
+    }
+    return out;
+  }
+  function applySnapshot(obj) {
+    // Replace the founders-toolkit:* namespace wholesale with the remote one.
+    var i, k, existing = [];
+    for (i = 0; i < localStorage.length; i++) { k = localStorage.key(i); if (k && k.indexOf(KEY_PREFIX) === 0) existing.push(k); }
+    existing.forEach(function (key) { if (!Object.prototype.hasOwnProperty.call(obj, key)) localStorage.removeItem(key); });
+    Object.keys(obj).forEach(function (key) { localStorage.setItem(key, obj[key]); });
+  }
+
+  // ---- in-memory state ------------------------------------------------------
+  var state = {
+    session: null,     // { access_token, refresh_token, expires_at, user }
+    aesKey: null,      // CryptoKey (in memory; raw bytes cached per-tab)
+    status: "idle",    // idle | syncing | synced | error | offline
+    lastError: "",
+    pushTimer: null,
+  };
+
+  function loadPersisted() {
+    state.session = readJSON(localStorage, LS_SESSION);
+    if (state.session && state.session.expires_in && !state.session.expires_at) {
+      state.session.expires_at = 0; // force refresh path for older shape
+    }
+  }
+  function persistSession(sess) {
+    // Normalise GoTrue token response into our stored shape.
+    if (!sess) { state.session = null; localStorage.removeItem(LS_SESSION); return; }
+    var expires_at = sess.expires_at || (sess.expires_in ? Math.floor(Date.now() / 1000) + sess.expires_in : 0);
+    state.session = {
+      access_token: sess.access_token,
+      refresh_token: sess.refresh_token,
+      expires_at: expires_at,
+      user: sess.user || (state.session && state.session.user) || null,
+    };
+    writeJSON(localStorage, LS_SESSION, state.session);
+  }
+  function cacheKeyBytes(keyBytes) {
+    try { sessionStorage.setItem(SS_KEY, b64(keyBytes)); } catch (e) {}
+  }
+  function clearKeyCache() { try { sessionStorage.removeItem(SS_KEY); } catch (e) {} }
+
+  async function ensureFreshSession() {
+    if (!state.session) return false;
+    var skewed = Math.floor(Date.now() / 1000) + 60;
+    if (state.session.expires_at && state.session.expires_at > skewed) return true;
+    if (!state.session.refresh_token) return false;
+    try {
+      var refreshed = await gotrueRefresh(state.session.refresh_token);
+      persistSession(refreshed);
+      return true;
+    } catch (e) {
+      if (e.status === 400 || e.status === 401) { signOutLocal(); }
+      return false;
+    }
+  }
+
+  // ---- core sync ------------------------------------------------------------
+  function setStatus(s, err) { state.status = s; state.lastError = err || ""; renderWidget(); }
+
+  async function pull(opts) {
+    opts = opts || {};
+    if (!state.session || !state.aesKey) return;
+    var row = await vaultGet();
+    var meta = readJSON(localStorage, LS_META) || {};
+    if (!row) {
+      // No server copy yet — push whatever this device has (if anything).
+      if (Object.keys(snapshot()).length) await push(true);
+      return;
+    }
+    var remoteObj;
+    try { remoteObj = await decryptBlob(state.aesKey, row.iv, row.ciphertext); }
+    catch (e) { throw new Error("Could not decrypt your data — wrong password?"); }
+
+    var localSnap = snapshot();
+    var localStr = canon(localSnap);
+    var localHash = hashStr(localStr);
+    var localChangedSinceSync = meta.hash && meta.hash !== localHash;
+    var remoteNewer = !meta.updated_at || row.updated_at > meta.updated_at;
+
+    if (localChangedSinceSync && remoteNewer && !opts.force) {
+      // Genuine conflict: both sides moved. Prefer remote but keep a local backup.
+      try { localStorage.setItem("helm:sync:conflict-backup", localStr); } catch (e) {}
+    }
+    var remoteStr = canon(remoteObj);
+    if (remoteStr !== localStr) {
+      applySnapshot(remoteObj);
+      writeJSON(localStorage, LS_META, { updated_at: row.updated_at, hash: hashStr(remoteStr) });
+      if (opts.reloadOnChange) { location.reload(); return; }
+    } else {
+      writeJSON(localStorage, LS_META, { updated_at: row.updated_at, hash: localHash });
+    }
+  }
+
+  async function push(force) {
+    if (!state.session || !state.aesKey) return;
+    var snap = snapshot();
+    var snapStr = canon(snap);
+    var meta = readJSON(localStorage, LS_META) || {};
+    var h = hashStr(snapStr);
+    if (!force && meta.hash === h) return;       // nothing changed
+    setStatus("syncing");
+    var blob = await encryptSnapshot(state.aesKey, snap);
+    var updated_at = nowISO();
+    await vaultUpsert(blob.iv, blob.ciphertext, updated_at);
+    writeJSON(localStorage, LS_META, { updated_at: updated_at, hash: h });
+    setStatus("synced");
+  }
+
+  function schedulePush() {
+    if (!state.session || !state.aesKey) return;
+    if (state.pushTimer) clearTimeout(state.pushTimer);
+    state.pushTimer = setTimeout(function () {
+      push(false).catch(function (e) { setStatus("error", e.message); });
+    }, PUSH_DEBOUNCE_MS);
+  }
+
+  // ---- auth flows -----------------------------------------------------------
+  async function signIn(email, password) {
+    email = email.trim().toLowerCase();
+    var sec = await deriveSecrets(email, password);
+    var tok = await gotruePassword(email, sec.authSecret);   // throws on bad creds / unconfirmed
+    persistSession(tok);
+    state.aesKey = await importAesKey(sec.keyBytes);
+    cacheKeyBytes(sec.keyBytes);
+    setStatus("syncing");
+    await pull({ reloadOnChange: true });
+    setStatus("synced");
+  }
+
+  async function signUp(email, password) {
+    email = email.trim().toLowerCase();
+    var sec = await deriveSecrets(email, password);
+    var res = await gotrueSignup(email, sec.authSecret);
+    // If email confirmation is OFF, signup returns a session -> sign straight in.
+    if (res && res.access_token) {
+      persistSession(res);
+      state.aesKey = await importAesKey(sec.keyBytes);
+      cacheKeyBytes(sec.keyBytes);
+      setStatus("syncing");
+      await push(true);          // seed the vault with this device's current data
+      setStatus("synced");
+      return { needsConfirmation: false };
+    }
+    // Email confirmation ON: no session until they confirm. Stash nothing secret.
+    return { needsConfirmation: true };
+  }
+
+  async function changePassword(currentPw, newPw) {
+    if (!state.session) throw new Error("Sign in first.");
+    var email = state.session.user.email;
+    // Re-derive current key (verify) then re-key everything to the new password.
+    var curSec = await deriveSecrets(email, currentPw);
+    // Verify current password is right by refreshing a token with it.
+    await gotruePassword(email, curSec.authSecret);
+    var newSec = await deriveSecrets(email, newPw);
+    // 1) snapshot current data, 2) change server password to new auth secret,
+    // 3) re-encrypt with the new key and push.
+    var snap = snapshot();
+    await ensureFreshSession();
+    await gotrueUpdatePassword(newSec.authSecret);
+    state.aesKey = await importAesKey(newSec.keyBytes);
+    cacheKeyBytes(newSec.keyBytes);
+    var blob = await encryptSnapshot(state.aesKey, snap);
+    var updated_at = nowISO();
+    await vaultUpsert(blob.iv, blob.ciphertext, updated_at);
+    writeJSON(localStorage, LS_META, { updated_at: updated_at, hash: hashStr(canon(snap)) });
+    setStatus("synced");
+  }
+
+  function signOutLocal() {
+    state.session = null; state.aesKey = null;
+    localStorage.removeItem(LS_SESSION);
+    localStorage.removeItem(LS_META);
+    clearKeyCache();
+    setStatus("idle");
+  }
+  async function signOut() {
+    try { if (state.session) await api("/auth/v1/logout", { method: "POST" }); } catch (e) {}
+    signOutLocal();
+  }
+
+  // Restore an existing session + per-tab key on page load, then sync.
+  async function resume() {
+    loadPersisted();
+    if (!state.session) { setStatus("idle"); return; }
+    var ok = await ensureFreshSession();
+    if (!ok) { setStatus("idle"); return; }
+    var cached = sessionStorage.getItem(SS_KEY);
+    if (cached) {
+      try {
+        state.aesKey = await importAesKey(unb64(cached));
+        setStatus("syncing");
+        await pull({ reloadOnChange: true });
+        setStatus("synced");
+        return;
+      } catch (e) { clearKeyCache(); state.aesKey = null; }
+    }
+    // Signed in but key not in this tab — needs password to unlock sync.
+    setStatus("locked");
+  }
+
+  // =========================================================================
+  //  UI — a fixed account pill (top-right) + a modal. All injected from here.
+  // =========================================================================
+  var els = {};
+  function injectStyles() {
+    var css = '' +
+      '.helm-acct{position:fixed;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:9000;font-family:"Outfit",system-ui,sans-serif}' +
+      '.helm-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border,#E5E5DF);background:var(--card,#fff);color:var(--text,#1C1C1A);font:600 13px/1 "Outfit",system-ui,sans-serif;padding:9px 13px;border-radius:999px;cursor:pointer;box-shadow:0 1px 2px rgba(28,28,26,.05),0 6px 18px rgba(28,28,26,.06)}' +
+      '.helm-pill:hover{border-color:#cfcfc8}' +
+      '.helm-dot{width:8px;height:8px;border-radius:50%;background:#8A8A85;flex:0 0 auto}' +
+      '.helm-dot.ok{background:#3f9d57}.helm-dot.busy{background:#d9a23b}.helm-dot.err{background:#c0532e}.helm-dot.lock{background:#34577C}' +
+      '.helm-ava{width:22px;height:22px;border-radius:50%;background:var(--brand,#34577C);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 "Outfit",system-ui,sans-serif}' +
+      '.helm-modal{position:fixed;inset:0;z-index:9001;display:none;align-items:flex-start;justify-content:center;background:rgba(20,20,18,.42);backdrop-filter:blur(2px);padding:24px 16px;overflow:auto}' +
+      '.helm-modal.show{display:flex}' +
+      '.helm-sheet{background:var(--card,#fff);color:var(--text,#1C1C1A);border:1px solid var(--border,#E5E5DF);border-radius:18px;max-width:400px;width:100%;margin-top:6vh;padding:22px 22px 20px;box-shadow:0 24px 60px rgba(20,20,18,.28);font-family:"Manrope",system-ui,sans-serif}' +
+      '.helm-sheet h2{font-family:"Outfit",sans-serif;font-size:1.25rem;margin:2px 0 4px;letter-spacing:-.01em}' +
+      '.helm-sheet p.sub{color:var(--text-2,#5C5C58);font-size:.9rem;margin:0 0 16px;line-height:1.5}' +
+      '.helm-field{margin:0 0 12px}' +
+      '.helm-field label{display:block;font:600 12px/1 "Outfit",sans-serif;color:var(--text-2,#5C5C58);margin:0 0 5px}' +
+      '.helm-field input{width:100%;box-sizing:border-box;border:1px solid var(--border,#E5E5DF);background:var(--input-bg,#F2F2F0);border-radius:10px;padding:11px 12px;font:500 15px/1.2 "Manrope",system-ui,sans-serif;color:var(--text,#1C1C1A)}' +
+      '.helm-field input:focus{outline:2px solid var(--brand,#34577C);outline-offset:1px;border-color:transparent}' +
+      '.helm-btn{width:100%;border:0;background:var(--brand,#34577C);color:#fff;font:600 15px/1 "Outfit",sans-serif;padding:13px;border-radius:11px;cursor:pointer;margin-top:4px}' +
+      '.helm-btn:hover{background:var(--brand-dark,#2A4763)}.helm-btn[disabled]{opacity:.6;cursor:default}' +
+      '.helm-btn.ghost{background:transparent;color:var(--text-2,#5C5C58);border:1px solid var(--border,#E5E5DF)}' +
+      '.helm-btn.ghost:hover{background:#f4f4f1}' +
+      '.helm-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}' +
+      '.helm-link{background:none;border:0;color:var(--brand,#34577C);font:600 13px/1 "Outfit",sans-serif;cursor:pointer;padding:6px 2px}' +
+      '.helm-err{color:#c0532e;font-size:.85rem;margin:2px 0 10px;min-height:1px}' +
+      '.helm-ok{color:#2B5332;font-size:.85rem;margin:2px 0 10px}' +
+      '.helm-note{font-size:.8rem;color:var(--muted,#8A8A85);line-height:1.5;margin:14px 0 0;border-top:1px solid var(--border,#E5E5DF);padding-top:12px}' +
+      '.helm-x{position:absolute;top:14px;right:16px;background:none;border:0;font-size:22px;line-height:1;color:var(--muted,#8A8A85);cursor:pointer}' +
+      '.helm-sheet{position:relative}' +
+      '.helm-status-line{font-size:.82rem;color:var(--text-2,#5C5C58);margin:0 0 14px}' +
+      '@media (max-width:480px){.helm-pill span.lbl{display:none}}';
+    var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
+  }
+
+  function buildDOM() {
+    var wrap = document.createElement("div");
+    wrap.className = "helm-acct";
+    wrap.innerHTML =
+      '<button class="helm-pill" id="helm-pill" type="button" aria-haspopup="dialog">' +
+        '<span class="helm-dot" id="helm-dot"></span>' +
+        '<span class="lbl" id="helm-pill-lbl">Sign in</span>' +
+      '</button>';
+    document.body.appendChild(wrap);
+
+    var modal = document.createElement("div");
+    modal.className = "helm-modal";
+    modal.id = "helm-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.innerHTML = '<div class="helm-sheet" id="helm-sheet"></div>';
+    document.body.appendChild(modal);
+
+    els.pill = $("#helm-pill");
+    els.dot = $("#helm-dot");
+    els.lbl = $("#helm-pill-lbl");
+    els.modal = $("#helm-modal");
+    els.sheet = $("#helm-sheet");
+
+    els.pill.addEventListener("click", openModal);
+    els.modal.addEventListener("click", function (e) { if (e.target === els.modal) closeModal(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
+  }
+
+  function openModal() {
+    if (!CONFIGURED) { renderSheet("unconfigured"); }
+    else if (!CRYPTO_OK) { renderSheet("insecure"); }
+    else if (state.status === "locked") { renderSheet("unlock"); }
+    else if (state.session) { renderSheet("account"); }
+    else { renderSheet("signin"); }
+    els.modal.classList.add("show");
+  }
+  function closeModal() { els.modal.classList.remove("show"); }
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+
+  function renderSheet(view, ctx) {
+    ctx = ctx || {};
+    var h = '<button class="helm-x" id="helm-close" aria-label="Close">×</button>';
+    if (view === "unconfigured") {
+      h += '<h2>Accounts aren’t switched on yet</h2>' +
+        '<p class="sub">Cross-device sync needs a one-time backend setup. Until then, Helm works fully on this device — nothing is lost.</p>' +
+        '<p class="helm-note">Developer: add your Supabase URL + anon key in <code>helm-config.js</code> (see SUPABASE_SETUP.md).</p>';
+    } else if (view === "insecure") {
+      h += '<h2>Secure connection needed</h2>' +
+        '<p class="sub">Accounts and encryption need an <b>https</b> page. This works on the live site (helm.treetop.capital); it’s just disabled on insecure/local pages.</p>';
+    } else if (view === "signin" || view === "signup") {
+      var up = view === "signup";
+      h += '<h2>' + (up ? 'Create your Helm account' : 'Sign in to Helm') + '</h2>' +
+        '<p class="sub">' + (up
+          ? 'Your details are encrypted with your password before they leave this device — we can’t read them, and we can’t reset your password.'
+          : 'Sync your saved company details securely across your devices.') + '</p>' +
+        '<div class="helm-err" id="helm-err"></div>' +
+        '<form id="helm-form">' +
+          '<div class="helm-field"><label>Email</label><input id="helm-email" type="email" autocomplete="username" required></div>' +
+          '<div class="helm-field"><label>Password</label><input id="helm-pw" type="password" autocomplete="' + (up ? 'new-password' : 'current-password') + '" required minlength="8"></div>' +
+          (up ? '<div class="helm-field"><label>Confirm password</label><input id="helm-pw2" type="password" autocomplete="new-password" required minlength="8"></div>' : '') +
+          '<button class="helm-btn" id="helm-submit" type="submit">' + (up ? 'Create account' : 'Sign in') + '</button>' +
+        '</form>' +
+        '<div class="helm-row"><span></span>' +
+          '<button class="helm-link" id="helm-toggle" type="button">' + (up ? 'Have an account? Sign in' : 'New here? Create an account') + '</button>' +
+        '</div>' +
+        (up ? '<p class="helm-note">Keep your password safe. It is the key to your encrypted data — if you lose it, the data can’t be recovered, by anyone.</p>' : '');
+    } else if (view === "confirm") {
+      h += '<h2>Check your email</h2>' +
+        '<p class="sub">We’ve sent a confirmation link to <b>' + esc(ctx.email) + '</b>. Click it, then come back and sign in.</p>' +
+        '<button class="helm-btn" id="helm-toconfirm-signin" type="button">Back to sign in</button>';
+    } else if (view === "unlock") {
+      h += '<h2>Unlock sync</h2>' +
+        '<p class="sub">You’re signed in as <b>' + esc(state.session.user.email) + '</b>. Enter your password to decrypt your data on this tab.</p>' +
+        '<div class="helm-err" id="helm-err"></div>' +
+        '<form id="helm-form">' +
+          '<div class="helm-field"><label>Password</label><input id="helm-pw" type="password" autocomplete="current-password" required></div>' +
+          '<button class="helm-btn" id="helm-submit" type="submit">Unlock</button>' +
+        '</form>' +
+        '<div class="helm-row"><span></span><button class="helm-link" id="helm-signout" type="button">Sign out</button></div>';
+    } else if (view === "account") {
+      var email = state.session.user.email;
+      var meta = readJSON(localStorage, LS_META) || {};
+      var when = meta.updated_at ? new Date(meta.updated_at).toLocaleString() : "—";
+      var statusTxt = ({ syncing: "Syncing…", synced: "All changes synced", error: "Sync error: " + state.lastError, locked: "Locked on this tab" })[state.status] || "Connected";
+      h += '<h2>Your account</h2>' +
+        '<p class="sub">' + esc(email) + '</p>' +
+        '<p class="helm-status-line"><b>' + esc(statusTxt) + '</b><br>Last synced: ' + esc(when) + '</p>' +
+        (state.changeOpen ? (
+          '<div class="helm-err" id="helm-err"></div>' +
+          '<form id="helm-cpw-form">' +
+            '<div class="helm-field"><label>Current password</label><input id="helm-cur" type="password" autocomplete="current-password" required></div>' +
+            '<div class="helm-field"><label>New password</label><input id="helm-new" type="password" autocomplete="new-password" required minlength="8"></div>' +
+            '<button class="helm-btn" id="helm-cpw-submit" type="submit">Change password &amp; re-encrypt</button>' +
+          '</form>'
+        ) : (
+          '<button class="helm-btn ghost" id="helm-sync-now" type="button">Sync now</button>' +
+          '<div class="helm-row"><button class="helm-link" id="helm-change" type="button">Change password</button>' +
+          '<button class="helm-link" id="helm-signout" type="button">Sign out</button></div>'
+        )) +
+        '<p class="helm-note">Your data is end-to-end encrypted with your password before it leaves this device. We store only ciphertext and can’t read it or reset your password.</p>';
+    }
+    els.sheet.innerHTML = h;
+    wireSheet(view, ctx);
+  }
+
+  function busy(btn, on, label) { if (!btn) return; btn.disabled = on; if (label != null) btn.textContent = label; }
+  function showErr(msg) { var e = $("#helm-err"); if (e) e.textContent = msg || ""; }
+
+  function wireSheet(view, ctx) {
+    var close = $("#helm-close"); if (close) close.addEventListener("click", closeModal);
+
+    if (view === "signin" || view === "signup") {
+      var up = view === "signup";
+      $("#helm-toggle").addEventListener("click", function () { renderSheet(up ? "signin" : "signup"); });
+      $("#helm-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        showErr("");
+        var email = $("#helm-email").value, pw = $("#helm-pw").value;
+        if (up && pw !== $("#helm-pw2").value) { showErr("Passwords don’t match."); return; }
+        if (pw.length < 8) { showErr("Use at least 8 characters."); return; }
+        var btn = $("#helm-submit"); busy(btn, true, up ? "Creating…" : "Signing in…");
+        try {
+          if (up) {
+            var r = await signUp(email, pw);
+            if (r.needsConfirmation) { renderSheet("confirm", { email: email }); return; }
+          } else {
+            await signIn(email, pw);
+          }
+          closeModal();
+        } catch (err) {
+          showErr(friendly(err));
+          busy(btn, false, up ? "Create account" : "Sign in");
+        }
+      });
+    } else if (view === "confirm") {
+      $("#helm-toconfirm-signin").addEventListener("click", function () { renderSheet("signin"); });
+    } else if (view === "unlock") {
+      $("#helm-signout").addEventListener("click", async function () { await signOut(); closeModal(); });
+      $("#helm-form").addEventListener("submit", async function (e) {
+        e.preventDefault(); showErr("");
+        var pw = $("#helm-pw").value, btn = $("#helm-submit"); busy(btn, true, "Unlocking…");
+        try {
+          var email = state.session.user.email;
+          var sec = await deriveSecrets(email, pw);
+          state.aesKey = await importAesKey(sec.keyBytes);
+          await pull({ reloadOnChange: true });   // throws if wrong password
+          cacheKeyBytes(sec.keyBytes);
+          setStatus("synced"); closeModal();
+        } catch (err) {
+          state.aesKey = null;
+          showErr("That password didn’t unlock your data. Try again.");
+          busy(btn, false, "Unlock");
+        }
+      });
+    } else if (view === "account") {
+      var so = $("#helm-signout"); if (so) so.addEventListener("click", async function () { await signOut(); closeModal(); });
+      var sn = $("#helm-sync-now"); if (sn) sn.addEventListener("click", async function () {
+        busy(sn, true, "Syncing…");
+        try { await pull({}); await push(true); renderSheet("account"); } catch (e) { showErr && showErr(e.message); busy(sn, false, "Sync now"); }
+      });
+      var ch = $("#helm-change"); if (ch) ch.addEventListener("click", function () { state.changeOpen = true; renderSheet("account"); });
+      var cf = $("#helm-cpw-form"); if (cf) cf.addEventListener("submit", async function (e) {
+        e.preventDefault(); showErr("");
+        var btn = $("#helm-cpw-submit"); busy(btn, true, "Re-encrypting…");
+        try {
+          await changePassword($("#helm-cur").value, $("#helm-new").value);
+          state.changeOpen = false; renderSheet("account");
+        } catch (err) { showErr(friendly(err)); busy(btn, false, "Change password & re-encrypt"); }
+      });
+    }
+  }
+
+  function friendly(err) {
+    var m = (err && err.message) || "Something went wrong.";
+    if (/invalid login credentials/i.test(m)) return "Wrong email or password.";
+    if (/email not confirmed/i.test(m)) return "Please confirm your email first (check your inbox), then sign in.";
+    if (/already registered|already been registered|user already/i.test(m)) return "That email already has an account — sign in instead.";
+    if (/decrypt/i.test(m)) return "Wrong password — couldn’t decrypt your data.";
+    if (/failed to fetch|networkerror/i.test(m)) return "Couldn’t reach the server. Check your connection.";
+    return m;
+  }
+
+  // ---- widget (pill) rendering ---------------------------------------------
+  function renderWidget() {
+    if (!els.pill) return;
+    var dotCls = "helm-dot", lbl = "Sign in", title = "Sign in to sync";
+    if (!CONFIGURED || !CRYPTO_OK) { dotCls += ""; lbl = "Sign in"; }
+    else if (state.status === "locked") { dotCls += " lock"; lbl = "Unlock"; title = "Signed in — unlock sync"; }
+    else if (state.session) {
+      var initial = (state.session.user.email || "?").charAt(0).toUpperCase();
+      els.pill.innerHTML = '<span class="helm-dot ' + (state.status === "syncing" ? "busy" : state.status === "error" ? "err" : "ok") + '"></span>' +
+        '<span class="helm-ava">' + esc(initial) + '</span><span class="lbl">' +
+        (state.status === "syncing" ? "Syncing…" : state.status === "error" ? "Sync error" : "Synced") + '</span>';
+      els.pill.title = state.session.user.email;
+      return;
+    }
+    els.pill.innerHTML = '<span class="' + dotCls + '"></span><span class="lbl">' + lbl + '</span>';
+    els.pill.title = title;
+  }
+
+  // ---- wire localStorage changes -> debounced push --------------------------
+  function hookStorage() {
+    // Same-tab writes: monkey-patch setItem/removeItem to notice founders-toolkit:* changes.
+    var origSet = localStorage.setItem.bind(localStorage);
+    var origRemove = localStorage.removeItem.bind(localStorage);
+    localStorage.setItem = function (k, v) { origSet(k, v); if (k && k.indexOf(KEY_PREFIX) === 0) schedulePush(); };
+    localStorage.removeItem = function (k) { origRemove(k); if (k && k.indexOf(KEY_PREFIX) === 0) schedulePush(); };
+    // Other tabs:
+    window.addEventListener("storage", function (e) { if (e.key && e.key.indexOf(KEY_PREFIX) === 0) schedulePush(); });
+    // Flush before leaving:
+    window.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") { if (state.pushTimer) { clearTimeout(state.pushTimer); push(false).catch(function () {}); } } });
+  }
+
+  // ---- boot -----------------------------------------------------------------
+  function boot() {
+    // Dormant until a backend is configured: no UI, no footprint, tools unchanged.
+    if (!CONFIGURED) return;
+    injectStyles();
+    buildDOM();
+    renderWidget();
+    if (!CRYPTO_OK) return;   // configured but insecure context (e.g. http): show pill, explain
+    hookStorage();
+    resume().catch(function (e) { setStatus("error", e.message); });
+  }
+
+  // Expose a tiny hook so tools could trigger an immediate sync if they want.
+  window.HelmSync = {
+    syncNow: function () { return push(true); },
+    isSignedIn: function () { return !!state.session; },
+    status: function () { return state.status; },
+  };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();

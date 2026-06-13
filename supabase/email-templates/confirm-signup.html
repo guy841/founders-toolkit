@@ -1,0 +1,49 @@
+<!--
+  Helm: Director's Toolkit — "Confirm signup" email template.
+  Paste into Supabase → Authentication → Email Templates → Confirm signup.
+  Suggested subject line:  Confirm your email · Helm: Director's Toolkit
+  Supabase variables: {{ .ConfirmationURL }} {{ .Email }} {{ .SiteURL }}
+  (Email clients need inline styles — keep them inline.)
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F9F9F7;margin:0;padding:24px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#FFFFFF;border:1px solid #E5E5DF;border-radius:16px;overflow:hidden;">
+        <tr>
+          <td style="padding:28px 32px 8px;">
+            <img src="https://helm.treetop.capital/icons/icon-192.png" width="40" height="40" alt="Helm" style="border-radius:9px;display:block;" />
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 32px 0;">
+            <h1 style="margin:0 0 6px;font-size:20px;line-height:1.3;color:#1C1C1A;font-weight:700;">Confirm your email</h1>
+            <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#5C5C58;">
+              Thanks for creating a Helm account. Confirm <strong style="color:#1C1C1A;">{{ .Email }}</strong> to start syncing your company details securely across your devices.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 32px 8px;">
+            <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#34577C;color:#FFFFFF;text-decoration:none;font-size:15px;font-weight:600;padding:13px 22px;border-radius:11px;">Confirm my email</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 32px 0;">
+            <p style="margin:0 0 6px;font-size:13px;line-height:1.6;color:#8A8A85;">Or paste this link into your browser:</p>
+            <p style="margin:0;font-size:12px;line-height:1.5;word-break:break-all;"><a href="{{ .ConfirmationURL }}" style="color:#34577C;">{{ .ConfirmationURL }}</a></p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 32px 28px;">
+            <p style="margin:0;font-size:12px;line-height:1.6;color:#8A8A85;border-top:1px solid #E5E5DF;padding-top:16px;">
+              Your saved details are end-to-end encrypted with your password before they leave your device — we can't read them. If you didn't create this account, you can safely ignore this email.
+            </p>
+          </td>
+        </tr>
+      </table>
+      <p style="max-width:480px;margin:16px auto 0;font-size:11px;line-height:1.5;color:#A8A8A3;text-align:center;">
+        Helm: Director's Toolkit — a Tree Top Capital product
+      </p>
+    </td>
+  </tr>
+</table>

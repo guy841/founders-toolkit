@@ -1,11 +1,15 @@
 # Helm — fastlane lane for iOS release via CI (no local Xcode needed).
-# Run by .github/workflows/ios.yml in "release" mode. Needs these env vars (GitHub secrets):
-#   APPSTORE_KEY_ID, APPSTORE_ISSUER_ID, APPSTORE_PRIVATE_KEY  (App Store Connect API key .p8 contents)
-#   APPLE_TEAM_ID                                              (your 10-char Developer Team ID)
+# Run by .github/workflows/ios.yml in "release" mode. Needs these GitHub secrets:
+#   APPSTORE_KEY_ID, APPSTORE_ISSUER_ID, APPSTORE_PRIVATE_KEY  (App Store Connect API key; key is base64)
+#   APPLE_TEAM_ID                                              (10-char Developer Team ID)
+#   MATCH_PASSWORD, MATCH_GIT_URL, MATCH_GIT_TOKEN             (signing storage via fastlane match)
+
+require "base64"
 
 default_platform(:ios)
 
 APP_ID = "capital.treetop.helm"
+PROFILE = "match AppStore #{APP_ID}"
 
 platform :ios do
   desc "Build and upload to TestFlight"
@@ -17,6 +21,17 @@ platform :ios do
       is_key_content_base64: true
     )
 
+    # Create/fetch the distribution certificate + App Store profile (no devices needed),
+    # stored encrypted in the private MATCH_GIT_URL repo. First run creates them.
+    match(
+      type: "appstore",
+      app_identifier: APP_ID,
+      api_key: api_key,
+      readonly: false,
+      git_url: ENV["MATCH_GIT_URL"],
+      git_basic_authorization: Base64.strict_encode64("x-access-token:#{ENV['MATCH_GIT_TOKEN']}")
+    )
+
     # Next build number = one above the latest already on TestFlight
     next_build = latest_testflight_build_number(
       api_key: api_key,
@@ -25,21 +40,26 @@ platform :ios do
     ) + 1
     increment_build_number(xcodeproj: "ios/App/App.xcodeproj", build_number: next_build)
 
-    # Pass the App Store Connect API key straight to xcodebuild so -allowProvisioningUpdates
-    # can create/download the distribution cert + App Store profile headlessly.
-    auth = "-authenticationKeyPath #{ENV['ASC_KEY_PATH']} " \
-           "-authenticationKeyID #{ENV['APPSTORE_KEY_ID']} " \
-           "-authenticationKeyIssuerID #{ENV['APPSTORE_ISSUER_ID']}"
+    # Point the project at the match profile (manual signing — distribution needs no device)
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "ios/App/App.xcodeproj",
+      team_id: ENV["APPLE_TEAM_ID"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: PROFILE,
+      bundle_identifier: APP_ID
+    )
+
     build_app(
       project: "ios/App/App.xcodeproj",
       scheme: "App",
       configuration: "Release",
       export_method: "app-store",
-      xcargs: "-allowProvisioningUpdates #{auth} DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']} CODE_SIGN_STYLE=Automatic",
-      export_xcargs: "-allowProvisioningUpdates #{auth}",
       export_options: {
-        signingStyle: "automatic",
-        teamID: ENV["APPLE_TEAM_ID"]
+        method: "app-store",
+        signingStyle: "manual",
+        teamID: ENV["APPLE_TEAM_ID"],
+        provisioningProfiles: { APP_ID => PROFILE }
       }
     )
 

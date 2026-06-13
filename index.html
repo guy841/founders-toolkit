@@ -136,6 +136,13 @@
     </div>
   </header>
 
+  <section id="company-bar" style="margin-bottom:34px;">
+    <div class="section-label">Your company</div>
+    <p style="color:var(--text-2);font-size:0.92rem;margin:0 0 14px;max-width:60ch;">Add your company and set a few key facts once — every tool below picks them up automatically. Manage more than one and switch between them anytime.</p>
+    <div id="company-switcher"></div>
+    <div id="company-keyfacts"></div>
+  </section>
+
   <div class="section-label">The tools</div>
   <div class="grid" id="tiles">
 
@@ -258,5 +265,14 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
 </script>
 <script src="helm-config.js"></script>
 <script src="helm-sync.js"></script>
+<script src="helm-company.js"></script>
+<script>
+  /* Mount the company switcher + Key facts editor on the hub. */
+  (function () {
+    if (!window.HelmCompany) return;
+    HelmCompany.mountSwitcher(document.getElementById("company-switcher"));
+    HelmCompany.mountKeyFacts(document.getElementById("company-keyfacts"));
+  })();
+</script>
 </body>
 </html>

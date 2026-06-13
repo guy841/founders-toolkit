@@ -13,6 +13,22 @@ create table if not exists public.vaults (
   updated_at timestamptz not null default now()
 );
 
+-- Keep updated_at server-authoritative: default now() on insert, and bump it on
+-- every update (the client never sends a timestamp, so clocks can't be trusted
+-- or spoofed, and last-write-wins comparisons stay consistent).
+create or replace function public.vaults_touch_updated_at()
+  returns trigger language plpgsql as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+drop trigger if exists vaults_set_updated_at on public.vaults;
+create trigger vaults_set_updated_at
+  before update on public.vaults
+  for each row execute function public.vaults_touch_updated_at();
+
 alter table public.vaults enable row level security;
 
 -- Owner-only access. auth.uid() is the id of the currently signed-in user.

@@ -93,6 +93,10 @@ On the live site (or any https host):
 - **Per-tab unlock:** the encryption key is cached in `sessionStorage` so you can
   move between tool pages in one tab without re-entering your password; opening a
   brand-new tab asks you to unlock once. It is never written to disk.
+- **Shared browsers:** local data is tagged with the owning account. Signing in
+  or signing up evicts any other account's leftover data, signing out wipes this
+  device's copy, and no plaintext backup is left behind — so one person's details
+  can't surface in the next person's session.
 - **Recovery:** none, by design. A forgotten password means unrecoverable data.
   This is the price of true end-to-end encryption and is stated clearly in the UI.
 - **Cost:** comfortably within Supabase's free tier for this workload (one small

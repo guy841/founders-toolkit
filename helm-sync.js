@@ -43,6 +43,8 @@
   // Persisted across page loads (same origin) — never holds secrets:
   var LS_SESSION = "helm:auth:session";       // Supabase tokens + user (JWT)
   var LS_META = "helm:sync:meta";             // { updated_at, hash } of last sync
+  var LS_OWNER = "helm:owner";                // account id that owns the local data
+  var LS_CONFLICT = "helm:sync:conflict-backup"; // same-user backup when both sides moved
   // Per-tab only, cleared when the tab closes — holds the raw AES key so you can
   // navigate between tool pages without re-entering your password each time:
   var SS_KEY = "helm:enc:key";
@@ -53,6 +55,9 @@
   function unb64(str) { var bin = atob(str), a = new Uint8Array(bin.length), i; for (i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; }
   function enc(s) { return new TextEncoder().encode(s); }
   function nowISO() { return new Date().toISOString(); }
+  // Parse a timestamp (JS or Postgres format) to millis for robust comparison —
+  // never string-compare a server timestamptz against a client ISO string.
+  function tms(s) { var t = Date.parse(s); return isNaN(t) ? 0 : t; }
   function readJSON(store, k) { try { return JSON.parse(store.getItem(k) || "null"); } catch (e) { return null; } }
   function writeJSON(store, k, v) { try { store.setItem(k, JSON.stringify(v)); } catch (e) {} }
   // Canonical (sorted-key) JSON so local vs remote comparisons are order-stable —
@@ -129,13 +134,42 @@
     var rows = await api("/rest/v1/vaults?select=ciphertext,iv,updated_at&user_id=eq." + encodeURIComponent(uid));
     return (rows && rows[0]) || null;
   }
-  async function vaultUpsert(ivB64, ctB64, updatedAt) {
+  async function vaultUpsert(ivB64, ctB64) {
     var uid = state.session.user.id;
-    return api("/rest/v1/vaults?on_conflict=user_id", {
+    // updated_at is set server-side (default now() on insert, trigger on update)
+    // and returned to us, so timestamps are always server-authoritative.
+    var rows = await api("/rest/v1/vaults?on_conflict=user_id", {
       method: "POST",
-      headers: { "Prefer": "resolution=merge-duplicates,return=minimal" },
-      body: { user_id: uid, iv: ivB64, ciphertext: ctB64, updated_at: updatedAt },
+      headers: { "Prefer": "resolution=merge-duplicates,return=representation" },
+      body: { user_id: uid, iv: ivB64, ciphertext: ctB64 },
     });
+    return (rows && rows[0]) || null;
+  }
+  async function deleteAccount() {
+    // Calls a security-definer function that deletes only the caller's own row
+    // in auth.users; the vault row is removed via on-delete cascade.
+    return api("/rest/v1/rpc/delete_my_account", { method: "POST", body: {} });
+  }
+  function clearLocalSynced() {
+    var keys = [], i, k;
+    for (i = 0; i < localStorage.length; i++) { k = localStorage.key(i); if (k && k.indexOf(KEY_PREFIX) === 0) keys.push(k); }
+    keys.forEach(function (x) { try { localStorage.removeItem(x); } catch (e) {} });
+  }
+  // Full local wipe used on sign-out / delete / foreign eviction: the synced data
+  // PLUS the owner stamp, conflict backup and meta. Crucially we leave NO plaintext
+  // copy behind, so on a shared browser profile the next user can't read it.
+  function wipeLocalAll() {
+    clearLocalSynced();
+    [LS_OWNER, LS_CONFLICT, LS_META].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+  }
+  function localOwner() { try { return localStorage.getItem(LS_OWNER); } catch (e) { return null; } }
+  function stampOwner(uid) { try { if (uid) localStorage.setItem(LS_OWNER, uid); } catch (e) {} }
+  // If the data on this device belongs to a DIFFERENT account, evict it entirely
+  // (it's safe in that account's cloud vault) before we touch the current account.
+  // Unowned/anonymous data (no stamp) is left alone — it's claimable by this user.
+  function evictForeign(uid) {
+    var o = localOwner();
+    if (o && o !== uid) wipeLocalAll();
   }
 
   // ---- local snapshot of all founders-toolkit:* keys ------------------------
@@ -211,8 +245,10 @@
     var row = await vaultGet();
     var meta = readJSON(localStorage, LS_META) || {};
     if (!row) {
-      // No server copy yet — push whatever this device has (if anything).
-      if (Object.keys(snapshot()).length) await push(true);
+      // Account has no cloud copy yet. Foreign data was already evicted before we
+      // got here (see evictForeign in signIn/signUp), so whatever remains belongs
+      // to this user — seed the vault with it.
+      await push(true);
       return;
     }
     var remoteObj;
@@ -223,11 +259,12 @@
     var localStr = canon(localSnap);
     var localHash = hashStr(localStr);
     var localChangedSinceSync = meta.hash && meta.hash !== localHash;
-    var remoteNewer = !meta.updated_at || row.updated_at > meta.updated_at;
+    var remoteNewer = !meta.updated_at || tms(row.updated_at) > tms(meta.updated_at);
 
     if (localChangedSinceSync && remoteNewer && !opts.force) {
-      // Genuine conflict: both sides moved. Prefer remote but keep a local backup.
-      try { localStorage.setItem("helm:sync:conflict-backup", localStr); } catch (e) {}
+      // Genuine conflict: both sides moved. Prefer remote but keep a same-user
+      // backup (cleared on sign-out, so it never lingers for another user).
+      try { localStorage.setItem(LS_CONFLICT, localStr); } catch (e) {}
     }
     var remoteStr = canon(remoteObj);
     if (remoteStr !== localStr) {
@@ -248,9 +285,8 @@
     if (!force && meta.hash === h) return;       // nothing changed
     setStatus("syncing");
     var blob = await encryptSnapshot(state.aesKey, snap);
-    var updated_at = nowISO();
-    await vaultUpsert(blob.iv, blob.ciphertext, updated_at);
-    writeJSON(localStorage, LS_META, { updated_at: updated_at, hash: h });
+    var row = await vaultUpsert(blob.iv, blob.ciphertext);
+    writeJSON(localStorage, LS_META, { updated_at: (row && row.updated_at) || nowISO(), hash: h });
     setStatus("synced");
   }
 
@@ -268,6 +304,9 @@
     var sec = await deriveSecrets(email, password);
     var tok = await gotruePassword(email, sec.authSecret);   // throws on bad creds / unconfirmed
     persistSession(tok);
+    var uid = state.session.user.id;
+    evictForeign(uid);                 // remove any other account's data on this browser
+    stampOwner(uid);                   // claim local data for this account (survives reload)
     state.aesKey = await importAesKey(sec.keyBytes);
     cacheKeyBytes(sec.keyBytes);
     setStatus("syncing");
@@ -282,10 +321,13 @@
     // If email confirmation is OFF, signup returns a session -> sign straight in.
     if (res && res.access_token) {
       persistSession(res);
+      var uid = state.session.user.id;
+      evictForeign(uid);         // never seed a previous account's leftover data
+      stampOwner(uid);
       state.aesKey = await importAesKey(sec.keyBytes);
       cacheKeyBytes(sec.keyBytes);
       setStatus("syncing");
-      await push(true);          // seed the vault with this device's current data
+      await push(true);          // seed the vault with this device's (own/anonymous) data
       setStatus("synced");
       return { needsConfirmation: false };
     }
@@ -309,9 +351,8 @@
     state.aesKey = await importAesKey(newSec.keyBytes);
     cacheKeyBytes(newSec.keyBytes);
     var blob = await encryptSnapshot(state.aesKey, snap);
-    var updated_at = nowISO();
-    await vaultUpsert(blob.iv, blob.ciphertext, updated_at);
-    writeJSON(localStorage, LS_META, { updated_at: updated_at, hash: hashStr(canon(snap)) });
+    var row = await vaultUpsert(blob.iv, blob.ciphertext);
+    writeJSON(localStorage, LS_META, { updated_at: (row && row.updated_at) || nowISO(), hash: hashStr(canon(snap)) });
     setStatus("synced");
   }
 
@@ -323,8 +364,22 @@
     setStatus("idle");
   }
   async function signOut() {
+    // Flush any pending changes to the cloud first (best effort) — the data is
+    // safely E2E-encrypted there and returns on next sign-in.
+    try { if (state.aesKey) await push(true); } catch (e) {}
     try { if (state.session) await api("/auth/v1/logout", { method: "POST" }); } catch (e) {}
     signOutLocal();
+    wipeLocalAll();   // leave nothing behind for the next person on this browser
+    try { location.reload(); } catch (e) {}
+  }
+  async function deleteMyAccount() {
+    if (!state.session) throw new Error("Sign in first.");
+    await ensureFreshSession();
+    await deleteAccount();                 // removes auth user + vault (cascade)
+    try { if (state.session) await api("/auth/v1/logout", { method: "POST" }); } catch (e) {}
+    signOutLocal();
+    wipeLocalAll();                        // wipe this device's copy too
+    try { location.reload(); } catch (e) {}
   }
 
   // Restore an existing session + per-tab key on page load, then sync.
@@ -337,6 +392,7 @@
     if (cached) {
       try {
         state.aesKey = await importAesKey(unb64(cached));
+        stampOwner(state.session.user.id);   // keep ownership current across reloads
         setStatus("syncing");
         await pull({ reloadOnChange: true });
         setStatus("synced");
@@ -414,6 +470,7 @@
   }
 
   function openModal() {
+    state.changeOpen = false; state.deleteOpen = false;   // always open to the default view
     if (!CONFIGURED) { renderSheet("unconfigured"); }
     else if (!CRYPTO_OK) { renderSheet("insecure"); }
     else if (state.status === "locked") { renderSheet("unlock"); }
@@ -479,11 +536,18 @@
             '<div class="helm-field"><label>Current password</label><input id="helm-cur" type="password" autocomplete="current-password" required></div>' +
             '<div class="helm-field"><label>New password</label><input id="helm-new" type="password" autocomplete="new-password" required minlength="8"></div>' +
             '<button class="helm-btn" id="helm-cpw-submit" type="submit">Change password &amp; re-encrypt</button>' +
-          '</form>'
+          '</form>' +
+          '<div class="helm-row"><span></span><button class="helm-link" id="helm-change-cancel" type="button">Cancel</button></div>'
+        ) : state.deleteOpen ? (
+          '<div class="helm-err" id="helm-err"></div>' +
+          '<p class="sub" style="color:#c0532e"><b>Delete your account permanently?</b> This removes your account and all data synced to it. It cannot be undone, and because your data is end-to-end encrypted we cannot recover it afterwards.</p>' +
+          '<button class="helm-btn" id="helm-del-confirm" type="button" style="background:#c0532e">Permanently delete my account</button>' +
+          '<div class="helm-row"><span></span><button class="helm-link" id="helm-del-cancel" type="button">Cancel</button></div>'
         ) : (
           '<button class="helm-btn ghost" id="helm-sync-now" type="button">Sync now</button>' +
           '<div class="helm-row"><button class="helm-link" id="helm-change" type="button">Change password</button>' +
-          '<button class="helm-link" id="helm-signout" type="button">Sign out</button></div>'
+          '<button class="helm-link" id="helm-signout" type="button">Sign out</button></div>' +
+          '<div class="helm-row"><span></span><button class="helm-link" id="helm-delete" type="button" style="color:#c0532e">Delete account</button></div>'
         )) +
         '<p class="helm-note">Your data is end-to-end encrypted with your password before it leaves this device. We store only ciphertext and can’t read it or reset your password.</p>';
     }
@@ -531,9 +595,10 @@
           var email = state.session.user.email;
           var sec = await deriveSecrets(email, pw);
           state.aesKey = await importAesKey(sec.keyBytes);
-          await pull({ reloadOnChange: true });   // throws if wrong password
-          cacheKeyBytes(sec.keyBytes);
+          await pull({});                 // verifies the key (throws if wrong); no reload yet
+          cacheKeyBytes(sec.keyBytes);     // cache only AFTER the key is proven correct
           setStatus("synced"); closeModal();
+          try { location.reload(); } catch (e) {}   // reflect any pulled data in the tool UI
         } catch (err) {
           state.aesKey = null;
           showErr("That password didn’t unlock your data. Try again.");
@@ -547,6 +612,7 @@
         try { await pull({}); await push(true); renderSheet("account"); } catch (e) { showErr && showErr(e.message); busy(sn, false, "Sync now"); }
       });
       var ch = $("#helm-change"); if (ch) ch.addEventListener("click", function () { state.changeOpen = true; renderSheet("account"); });
+      var chc = $("#helm-change-cancel"); if (chc) chc.addEventListener("click", function () { state.changeOpen = false; renderSheet("account"); });
       var cf = $("#helm-cpw-form"); if (cf) cf.addEventListener("submit", async function (e) {
         e.preventDefault(); showErr("");
         var btn = $("#helm-cpw-submit"); busy(btn, true, "Re-encrypting…");
@@ -554,6 +620,12 @@
           await changePassword($("#helm-cur").value, $("#helm-new").value);
           state.changeOpen = false; renderSheet("account");
         } catch (err) { showErr(friendly(err)); busy(btn, false, "Change password & re-encrypt"); }
+      });
+      var dl = $("#helm-delete"); if (dl) dl.addEventListener("click", function () { state.deleteOpen = true; renderSheet("account"); });
+      var dlc = $("#helm-del-cancel"); if (dlc) dlc.addEventListener("click", function () { state.deleteOpen = false; renderSheet("account"); });
+      var dlcf = $("#helm-del-confirm"); if (dlcf) dlcf.addEventListener("click", async function () {
+        busy(dlcf, true, "Deleting…");
+        try { await deleteMyAccount(); } catch (err) { showErr(friendly(err)); busy(dlcf, false, "Permanently delete my account"); }
       });
     }
   }
@@ -588,15 +660,37 @@
 
   // ---- wire localStorage changes -> debounced push --------------------------
   function hookStorage() {
-    // Same-tab writes: monkey-patch setItem/removeItem to notice founders-toolkit:* changes.
-    var origSet = localStorage.setItem.bind(localStorage);
-    var origRemove = localStorage.removeItem.bind(localStorage);
-    localStorage.setItem = function (k, v) { origSet(k, v); if (k && k.indexOf(KEY_PREFIX) === 0) schedulePush(); };
-    localStorage.removeItem = function (k) { origRemove(k); if (k && k.indexOf(KEY_PREFIX) === 0) schedulePush(); };
-    // Other tabs:
-    window.addEventListener("storage", function (e) { if (e.key && e.key.indexOf(KEY_PREFIX) === 0) schedulePush(); });
-    // Flush before leaving:
-    window.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") { if (state.pushTimer) { clearTimeout(state.pushTimer); push(false).catch(function () {}); } } });
+    // Same-tab writes: patch Storage.PROTOTYPE (not the instance — assigning
+    // localStorage.setItem on the real Storage object can create a "setItem"
+    // storage entry instead of overriding the method). Guard against double-patch.
+    try {
+      var proto = window.Storage && window.Storage.prototype;
+      if (proto && !proto.__helmPatched) {
+        var oSet = proto.setItem, oRem = proto.removeItem;
+        proto.setItem = function (k, v) { oSet.call(this, k, v); if (this === window.localStorage && k && k.indexOf(KEY_PREFIX) === 0) schedulePush(); };
+        proto.removeItem = function (k) { oRem.call(this, k); if (this === window.localStorage && k && k.indexOf(KEY_PREFIX) === 0) schedulePush(); };
+        proto.__helmPatched = true;
+      }
+    } catch (e) { /* fall back to the poll below */ }
+    // Other tabs writing the same origin:
+    window.addEventListener("storage", function (e) {
+      if (e.storageArea && e.storageArea !== localStorage) return;
+      if (e.key && e.key.indexOf(KEY_PREFIX) === 0) schedulePush();
+    });
+    // Backstop: catch anything the patch/event missed (and changes made before
+    // sync was unlocked). Cheap hash check; only schedules a push if it differs.
+    setInterval(function () {
+      if (!state.session || !state.aesKey) return;
+      var meta = readJSON(localStorage, LS_META) || {};
+      if (hashStr(canon(snapshot())) !== meta.hash) schedulePush();
+    }, 5000);
+    // Flush before the tab is hidden/closed:
+    window.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden" && state.session && state.aesKey) {
+        if (state.pushTimer) clearTimeout(state.pushTimer);
+        push(false).catch(function () {});
+      }
+    });
   }
 
   // ---- boot -----------------------------------------------------------------

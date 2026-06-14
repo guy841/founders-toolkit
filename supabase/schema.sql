@@ -10,8 +10,12 @@ create table if not exists public.vaults (
   user_id    uuid        primary key references auth.users (id) on delete cascade,
   ciphertext text        not null,
   iv         text        not null,
+  keys       jsonb,      -- wrapped Data Encryption Key: { v, pw:{iv,ct}, rec:{iv,ct} }
   updated_at timestamptz not null default now()
 );
+
+-- For existing projects created before the recovery-key feature:
+alter table public.vaults add column if not exists keys jsonb;
 
 -- Keep updated_at server-authoritative: default now() on insert, and bump it on
 -- every update (the client never sends a timestamp, so clocks can't be trusted

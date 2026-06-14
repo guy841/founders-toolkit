@@ -27,6 +27,9 @@ crypto details.
    click **Run**. You should see "Success". This creates the `vaults` table,
    turns on Row-Level Security with owner-only policies, grants table access to
    the `authenticated` role only, and adds a `delete_my_account()` function.
+   The script is idempotent — **re-run it after pulling updates** (it uses
+   `add column if not exists`, so e.g. it adds the `keys` column needed by the
+   recovery-key feature without disturbing existing data).
 
 ## 2b. Data API security settings
 
@@ -56,12 +59,13 @@ Under **Authentication → URL Configuration**, set **Site URL** to
 `https://helm.treetop.capital` and add it (and `http://localhost:*` if you test
 locally) to **Redirect URLs**.
 
-> **Important — do not advertise password reset.** Helm is end-to-end encrypted:
-> the password *is* the decryption key. Supabase's built-in "reset password"
-> would change the login password but orphan the encrypted data. Helm therefore
-> never links to Supabase's reset flow; users rotate their password from inside
-> the app (**Account → Change password**), which re-encrypts their data. Leave
-> the reset email template alone / unused.
+> **Password reset (recovery key).** Helm is end-to-end encrypted, so a normal
+> reset can't recover the data. Instead, each user gets a one-time **recovery
+> key** at sign-up. "Forgot password" sends a reset email (Supabase's recovery
+> flow); after clicking the link the user sets a new password and, if they enter
+> their recovery key, their data is restored intact. Reset therefore needs email
+> delivery working (see SMTP below). You can brand the "Reset password" email
+> template the same way as the confirmation one.
 
 ## 4. Email delivery (only if "Confirm email" is ON)
 

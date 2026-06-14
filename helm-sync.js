@@ -6,23 +6,25 @@
        <script src="helm-config.js"></script>     (adjust relative path)
        <script src="helm-sync.js"></script>
 
-   How it stays private (end-to-end, single password):
+   How it stays private (end-to-end, envelope encryption):
      • From your password we derive 64 bytes with PBKDF2-SHA256 (600k iters):
          - bytes 0..31  -> "auth secret": the only thing the server ever sees as
-            your password (it bcrypts it). It reveals nothing about the key.
-         - bytes 32..63 -> AES-GCM 256 key: NEVER sent anywhere. It encrypts your
-            data in the browser. The server only ever stores ciphertext.
-     • The two halves are independent PBKDF2 blocks, so the server's knowledge of
-       the auth secret tells it nothing about the encryption key.
-     • Salts are derived from your email + a fixed app pepper so any device can
-       recompute them from just (email, password) — no pre-login round-trip.
+            your password (it bcrypts it). It reveals nothing about the keys.
+         - bytes 32..63 -> "password KEK": NEVER sent; it WRAPS the data key.
+     • The vault is encrypted with a random Data Encryption Key (DEK). The DEK is
+       wrapped (encrypted) twice and stored server-side: once by the password KEK,
+       once by a recovery-key KEK. EITHER unlocks the data, so:
+         - changing your password just re-wraps the DEK (data untouched);
+         - forgetting your password -> reset via email + recovery key restores it.
+     • The server only ever holds ciphertext + the wrapped keys; it cannot derive
+       the DEK from either wrap without your password or recovery key.
 
    What syncs: every localStorage key beginning "founders-toolkit:" — the data
-   the tools already save on-device — snapshotted, encrypted, and stored as one
-   opaque blob per user. Tool-agnostic, so new tools are covered automatically.
+   the tools already save on-device — snapshotted, encrypted with the DEK, and
+   stored as one opaque blob per user. Tool-agnostic; new tools covered for free.
 
-   Reset/recovery: there is none, by design. The password is the key. Change it
-   only while signed in (we re-encrypt + re-key for you). Lose it = data is gone.
+   Recovery: a one-time recovery key (shown at sign-up) independently unwraps the
+   DEK. Lose BOTH the password and the recovery key = data is unrecoverable.
    ============================================================================= */
 (function () {
   "use strict";
@@ -37,6 +39,7 @@
 
   var PEPPER = "helm.treetop.capital/v1";     // fixed app-wide salt component
   var PBKDF2_ITER = 600000;                   // OWASP 2023 floor for PBKDF2-SHA256
+  var REC_ITER = 200000;                      // recovery key is already high-entropy
   var KEY_PREFIX = "founders-toolkit:";       // localStorage keys we mirror
   var PUSH_DEBOUNCE_MS = 1500;
 
@@ -93,6 +96,49 @@
     return JSON.parse(new TextDecoder().decode(pt));
   }
 
+  // ---- envelope encryption --------------------------------------------------
+  // The vault is encrypted with a random Data Encryption Key (DEK). The DEK is
+  // wrapped (encrypted) separately by the password-derived key AND a recovery-key
+  // -derived key, so EITHER can unlock the data. Changing the password just
+  // re-wraps the DEK — the data and recovery key are untouched.
+  async function genDEK() { var raw = crypto.getRandomValues(new Uint8Array(32)); return { raw: raw, key: await importAesKey(raw) }; }
+  async function wrapKey(kekBytes, dekRaw) {
+    var kek = await importAesKey(kekBytes);
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, kek, dekRaw);
+    return { iv: b64(iv), ct: b64(ct) };
+  }
+  async function unwrapKey(kekBytes, wrap) {
+    var kek = await importAesKey(kekBytes);
+    var raw = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(wrap.iv) }, kek, unb64(wrap.ct));
+    return new Uint8Array(raw);
+  }
+  // Recovery key: 160 bits of entropy, Crockford base32, dashed in groups of 4.
+  function genRecoveryKey() {
+    var A = "0123456789ABCDEFGHJKMNPQRSTVWXYZ", bytes = crypto.getRandomValues(new Uint8Array(20));
+    var bits = 0, value = 0, out = "", i;
+    for (i = 0; i < bytes.length; i++) { value = (value << 8) | bytes[i]; bits += 8; while (bits >= 5) { out += A[(value >>> (bits - 5)) & 31]; bits -= 5; } }
+    if (bits > 0) out += A[(value << (5 - bits)) & 31];
+    return out.replace(/(.{4})(?=.)/g, "$1-");
+  }
+  async function deriveRecKEK(recoveryKey) {
+    var norm = String(recoveryKey).toUpperCase().replace(/[^A-Z0-9]/g, "");
+    var base = await crypto.subtle.importKey("raw", enc(norm), "PBKDF2", false, ["deriveBits"]);
+    var bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: enc("helm-recovery:" + PEPPER), iterations: REC_ITER, hash: "SHA-256" }, base, 256);
+    return new Uint8Array(bits);
+  }
+  // Build a fresh key envelope (new DEK + new recovery key) wrapped by the given
+  // password KEK; sets it as the active key and returns the recovery key to show.
+  async function establishEnvelope(pwKekBytes) {
+    var dek = await genDEK();
+    var recoveryKey = genRecoveryKey();
+    var keys = { v: 1, pw: await wrapKey(pwKekBytes, dek.raw), rec: await wrapKey(await deriveRecKEK(recoveryKey), dek.raw) };
+    state.aesKey = dek.key;
+    cacheKeyBytes(dek.raw);
+    await push(true, keys);   // seed the vault (current local data) + store the wrapped keys
+    return recoveryKey;
+  }
+
   // ---- Supabase HTTP (no SDK) ----------------------------------------------
   function authHeaders(extra) {
     var h = { "apikey": ANON, "Content-Type": "application/json" };
@@ -128,20 +174,28 @@
   async function gotrueUpdatePassword(authSecret) {
     return api("/auth/v1/user", { method: "PUT", body: { password: authSecret } });
   }
+  async function gotrueRecover(email) {
+    return api("/auth/v1/recover", { method: "POST", body: { email: email } });
+  }
+  async function gotrueGetUser() { return api("/auth/v1/user"); }
   async function vaultGet() {
     var uid = state.session && state.session.user && state.session.user.id;
     if (!uid) return null;
-    var rows = await api("/rest/v1/vaults?select=ciphertext,iv,updated_at&user_id=eq." + encodeURIComponent(uid));
+    var rows = await api("/rest/v1/vaults?select=ciphertext,iv,keys,updated_at&user_id=eq." + encodeURIComponent(uid));
     return (rows && rows[0]) || null;
   }
-  async function vaultUpsert(ivB64, ctB64) {
+  // keys (the wrapped DEK envelope) is only sent when it changes (signup, password
+  // change, recovery); a plain data push omits it so the column is preserved.
+  async function vaultUpsert(ivB64, ctB64, keys) {
     var uid = state.session.user.id;
+    var body = { user_id: uid, iv: ivB64, ciphertext: ctB64 };
+    if (keys) body.keys = keys;
     // updated_at is set server-side (default now() on insert, trigger on update)
     // and returned to us, so timestamps are always server-authoritative.
     var rows = await api("/rest/v1/vaults?on_conflict=user_id", {
       method: "POST",
       headers: { "Prefer": "resolution=merge-duplicates,return=representation" },
-      body: { user_id: uid, iv: ivB64, ciphertext: ctB64 },
+      body: body,
     });
     return (rows && rows[0]) || null;
   }
@@ -276,16 +330,16 @@
     }
   }
 
-  async function push(force) {
+  async function push(force, keys) {
     if (!state.session || !state.aesKey) return;
     var snap = snapshot();
     var snapStr = canon(snap);
     var meta = readJSON(localStorage, LS_META) || {};
     var h = hashStr(snapStr);
-    if (!force && meta.hash === h) return;       // nothing changed
+    if (!force && !keys && meta.hash === h) return;   // nothing changed
     setStatus("syncing");
     var blob = await encryptSnapshot(state.aesKey, snap);
-    var row = await vaultUpsert(blob.iv, blob.ciphertext);
+    var row = await vaultUpsert(blob.iv, blob.ciphertext, keys);
     writeJSON(localStorage, LS_META, { updated_at: (row && row.updated_at) || nowISO(), hash: h });
     setStatus("synced");
   }
@@ -307,29 +361,48 @@
     var uid = state.session.user.id;
     evictForeign(uid);                 // remove any other account's data on this browser
     stampOwner(uid);                   // claim local data for this account (survives reload)
-    state.aesKey = await importAesKey(sec.keyBytes);
-    cacheKeyBytes(sec.keyBytes);
-    setStatus("syncing");
-    await pull({ reloadOnChange: true });
+    var row = await vaultGet();
+    if (row && row.keys && row.keys.pw) {
+      // Normal: unwrap the data key with the password-derived key.
+      var dekRaw;
+      try { dekRaw = await unwrapKey(sec.keyBytes, row.keys.pw); }
+      catch (e) { signOutLocal(); throw new Error("Wrong email or password."); }
+      state.aesKey = await importAesKey(dekRaw);
+      cacheKeyBytes(dekRaw);
+      setStatus("syncing");
+      await pull({ reloadOnChange: true });
+      setStatus("synced");
+      return {};
+    }
+    // No envelope yet — a legacy direct-encryption vault to migrate, or a brand
+    // new account (e.g. first sign-in after email confirmation).
+    if (row && row.ciphertext) {
+      var legacyKey = await importAesKey(sec.keyBytes);
+      var data;
+      try { data = await decryptBlob(legacyKey, row.iv, row.ciphertext); }
+      catch (e) { signOutLocal(); throw new Error("Wrong email or password."); }
+      applySnapshot(data);
+      writeJSON(localStorage, LS_META, { updated_at: row.updated_at, hash: hashStr(canon(data)) });
+    }
+    var recoveryKey = await establishEnvelope(sec.keyBytes);   // generates a recovery key to show
     setStatus("synced");
+    return { recoveryKey: recoveryKey, reloadAfter: true };
   }
 
   async function signUp(email, password) {
     email = email.trim().toLowerCase();
     var sec = await deriveSecrets(email, password);
     var res = await gotrueSignup(email, sec.authSecret);
-    // If email confirmation is OFF, signup returns a session -> sign straight in.
+    // If email confirmation is OFF, signup returns a session -> set up the vault.
     if (res && res.access_token) {
       persistSession(res);
       var uid = state.session.user.id;
       evictForeign(uid);         // never seed a previous account's leftover data
       stampOwner(uid);
-      state.aesKey = await importAesKey(sec.keyBytes);
-      cacheKeyBytes(sec.keyBytes);
       setStatus("syncing");
-      await push(true);          // seed the vault with this device's (own/anonymous) data
+      var recoveryKey = await establishEnvelope(sec.keyBytes);
       setStatus("synced");
-      return { needsConfirmation: false };
+      return { needsConfirmation: false, recoveryKey: recoveryKey };
     }
     // Email confirmation ON: no session until they confirm. Stash nothing secret.
     return { needsConfirmation: true };
@@ -338,22 +411,58 @@
   async function changePassword(currentPw, newPw) {
     if (!state.session) throw new Error("Sign in first.");
     var email = state.session.user.email;
-    // Re-derive current key (verify) then re-key everything to the new password.
     var curSec = await deriveSecrets(email, currentPw);
-    // Verify current password is right by refreshing a token with it.
-    await gotruePassword(email, curSec.authSecret);
+    await gotruePassword(email, curSec.authSecret);   // verify current password
+    var row = await vaultGet();
+    var dekRaw;
+    if (row && row.keys && row.keys.pw) { dekRaw = await unwrapKey(curSec.keyBytes, row.keys.pw); }
+    else { dekRaw = new Uint8Array(await crypto.subtle.exportKey("raw", state.aesKey)); }
     var newSec = await deriveSecrets(email, newPw);
-    // 1) snapshot current data, 2) change server password to new auth secret,
-    // 3) re-encrypt with the new key and push.
-    var snap = snapshot();
     await ensureFreshSession();
     await gotrueUpdatePassword(newSec.authSecret);
-    state.aesKey = await importAesKey(newSec.keyBytes);
-    cacheKeyBytes(newSec.keyBytes);
-    var blob = await encryptSnapshot(state.aesKey, snap);
-    var row = await vaultUpsert(blob.iv, blob.ciphertext);
-    writeJSON(localStorage, LS_META, { updated_at: (row && row.updated_at) || nowISO(), hash: hashStr(canon(snap)) });
+    // Re-wrap the SAME data key with the new password; recovery key is unchanged.
+    var keys = { v: 1, pw: await wrapKey(newSec.keyBytes, dekRaw), rec: (row && row.keys && row.keys.rec) || (await wrapKey(await deriveRecKEK(genRecoveryKey()), dekRaw)) };
+    state.aesKey = await importAesKey(dekRaw);
+    cacheKeyBytes(dekRaw);
+    await push(true, keys);    // re-encrypt (same data) + store the re-wrapped keys
     setStatus("synced");
+  }
+
+  // Forgot-password recovery. Runs inside a recovery session captured from the
+  // email link (handleAuthRedirect). With the recovery key, the data is restored
+  // intact; without it, a fresh vault + new recovery key are created.
+  async function resetWithRecovery(newPassword, recoveryKeyInput) {
+    if (!state.session) throw new Error("Your reset link expired — request a new one.");
+    var email = state.session.user && state.session.user.email;
+    if (!email) { var u = await gotrueGetUser(); email = u.email; state.session.user = { id: u.id, email: u.email }; }
+    var uid = state.session.user.id;
+    evictForeign(uid); stampOwner(uid);
+    var row = await vaultGet();
+    var dekRaw = null, keepRec = null;
+    if (recoveryKeyInput && row && row.keys && row.keys.rec) {
+      try { dekRaw = await unwrapKey(await deriveRecKEK(recoveryKeyInput), row.keys.rec); keepRec = row.keys.rec; }
+      catch (e) { throw new Error("That recovery key didn't match. Check it and try again."); }
+    }
+    var newSec = await deriveSecrets(email, newPassword);
+    await gotrueUpdatePassword(newSec.authSecret);
+    var newRecoveryKey = null;
+    if (!dekRaw) {                          // couldn't recover the data key -> fresh start
+      dekRaw = (await genDEK()).raw;
+      newRecoveryKey = genRecoveryKey();
+      keepRec = await wrapKey(await deriveRecKEK(newRecoveryKey), dekRaw);
+    }
+    var keys = { v: 1, pw: await wrapKey(newSec.keyBytes, dekRaw), rec: keepRec };
+    state.aesKey = await importAesKey(dekRaw);
+    cacheKeyBytes(dekRaw);
+    if (!newRecoveryKey) {                  // data recovered — pull it down, then re-store keys
+      setStatus("syncing");
+      await pull({ reloadOnChange: false });
+    }
+    await push(true, keys);
+    state.recovering = false;
+    persistSession(state.session);          // now persist — the reset succeeded, keep them signed in
+    setStatus("synced");
+    return { recoveryKey: newRecoveryKey, recovered: !newRecoveryKey };
   }
 
   function signOutLocal() {
@@ -436,6 +545,7 @@
       '.helm-x{position:absolute;top:14px;right:16px;background:none;border:0;font-size:22px;line-height:1;color:var(--muted,#8A8A85);cursor:pointer}' +
       '.helm-sheet{position:relative}' +
       '.helm-status-line{font-size:.82rem;color:var(--text-2,#5C5C58);margin:0 0 14px}' +
+      '.helm-reckey{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.05rem;letter-spacing:.04em;word-break:break-all;background:var(--input-bg,#F2F2F0);border:1px dashed var(--brand,#34577C);border-radius:10px;padding:14px 16px;color:var(--text,#1C1C1A);text-align:center}' +
       '@media (max-width:480px){.helm-pill span.lbl{display:none}}';
     var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
   }
@@ -481,6 +591,12 @@
   function closeModal() { els.modal.classList.remove("show"); }
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+  function downloadText(name, text) {
+    try {
+      var blob = new Blob([text], { type: "text/plain" }), url = URL.createObjectURL(blob), a = document.createElement("a");
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    } catch (e) {}
+  }
 
   function renderSheet(view, ctx) {
     ctx = ctx || {};
@@ -506,10 +622,11 @@
           (up ? '<div class="helm-field"><label>Confirm password</label><input id="helm-pw2" type="password" autocomplete="new-password" required minlength="8"></div>' : '') +
           '<button class="helm-btn" id="helm-submit" type="submit">' + (up ? 'Create account' : 'Sign in') + '</button>' +
         '</form>' +
-        '<div class="helm-row"><span></span>' +
+        '<div class="helm-row">' +
+          (up ? '<span></span>' : '<button class="helm-link" id="helm-forgot" type="button">Forgot password?</button>') +
           '<button class="helm-link" id="helm-toggle" type="button">' + (up ? 'Have an account? Sign in' : 'New here? Create an account') + '</button>' +
         '</div>' +
-        (up ? '<p class="helm-note">Keep your password safe. It is the key to your encrypted data — if you lose it, the data can’t be recovered, by anyone.</p>' : '');
+        (up ? '<p class="helm-note">🔒 <b>End-to-end encrypted.</b> Your details are scrambled with your password on this device before they’re saved — even if our servers were breached, your data would be unreadable. After signing up you’ll get a <b>recovery key</b> to save, in case you ever forget your password.</p>' : '');
     } else if (view === "confirm") {
       h += '<h2>Check your email</h2>' +
         '<p class="sub">We’ve sent a confirmation link to <b>' + esc(ctx.email) + '</b>. Click it, then come back and sign in.</p>' +
@@ -550,7 +667,37 @@
           '<button class="helm-link" id="helm-signout" type="button">Sign out</button></div>' +
           '<div class="helm-row"><span></span><button class="helm-link" id="helm-delete" type="button" style="color:#c0532e">Delete account</button></div>'
         )) +
-        '<p class="helm-note">Your data is end-to-end encrypted with your password before it leaves this device. We store only ciphertext and can’t read it or reset your password.</p>';
+        '<p class="helm-note">🔒 End-to-end encrypted — your data is scrambled with your password before it leaves this device, so we can only ever store unreadable ciphertext. Forgot your password? You can recover with your <b>recovery key</b>.</p>';
+    } else if (view === "forgot") {
+      h += '<h2>Reset your password</h2>' +
+        '<p class="sub">Enter your email and we’ll send a reset link. You’ll set a new password — and if you have your <b>recovery key</b>, your data comes back with it.</p>' +
+        '<div class="helm-err" id="helm-err"></div>' +
+        '<form id="helm-form">' +
+          '<div class="helm-field"><label>Email</label><input id="helm-email" type="email" autocomplete="username" required></div>' +
+          '<button class="helm-btn" id="helm-submit" type="submit">Send reset link</button>' +
+        '</form>' +
+        '<div class="helm-row"><span></span><button class="helm-link" id="helm-toggle" type="button">Back to sign in</button></div>';
+    } else if (view === "forgot-sent") {
+      h += '<h2>Check your email</h2>' +
+        '<p class="sub">If <b>' + esc(ctx.email) + '</b> has an account, a reset link is on its way. Open it on this device, then set a new password.</p>' +
+        '<button class="helm-btn" id="helm-toconfirm-signin" type="button">Back to sign in</button>';
+    } else if (view === "reset-password") {
+      h += '<h2>Set a new password</h2>' +
+        '<p class="sub">Choose a new password for <b>' + esc((state.session && state.session.user && state.session.user.email) || "your account") + '</b>. If you have your recovery key, add it to bring your data back.</p>' +
+        '<div class="helm-err" id="helm-err"></div>' +
+        '<form id="helm-form">' +
+          '<div class="helm-field"><label>New password</label><input id="helm-pw" type="password" autocomplete="new-password" required minlength="8"></div>' +
+          '<div class="helm-field"><label>Recovery key <span style="font-weight:400;color:var(--muted,#8A8A85)">— optional, to restore your data</span></label><input id="helm-rec" type="text" autocomplete="off" placeholder="XXXX-XXXX-XXXX-…"></div>' +
+          '<button class="helm-btn" id="helm-submit" type="submit">Set new password</button>' +
+        '</form>' +
+        '<p class="helm-note">No recovery key? You’ll still get back into your account, but data that lived only in the cloud was encrypted with your old password and can’t be restored.</p>';
+    } else if (view === "recovery-key") {
+      h += '<h2>Save your recovery key</h2>' +
+        '<p class="sub">' + (ctx.recovered ? 'Your data is back. ' : '') + 'This is the <b>only</b> way back into your data if you forget your password — we can’t reset it for you. Store it somewhere safe (a password manager is ideal).</p>' +
+        '<div class="helm-reckey" id="helm-reckey">' + esc(ctx.key) + '</div>' +
+        '<div class="helm-row" style="margin:10px 0 4px"><button class="helm-link" id="helm-copy-rec" type="button">Copy</button><button class="helm-link" id="helm-dl-rec" type="button">Download</button></div>' +
+        '<label style="display:flex;gap:8px;align-items:flex-start;font-size:.88rem;color:var(--text-2,#5C5C58);margin:12px 0 14px"><input type="checkbox" id="helm-rec-ack" style="margin-top:3px"> I’ve saved my recovery key somewhere safe.</label>' +
+        '<button class="helm-btn" id="helm-rec-done" type="button" disabled>Continue</button>';
     }
     els.sheet.innerHTML = h;
     wireSheet(view, ctx);
@@ -565,6 +712,7 @@
     if (view === "signin" || view === "signup") {
       var up = view === "signup";
       $("#helm-toggle").addEventListener("click", function () { renderSheet(up ? "signin" : "signup"); });
+      var fg = $("#helm-forgot"); if (fg) fg.addEventListener("click", function () { renderSheet("forgot"); });
       $("#helm-form").addEventListener("submit", async function (e) {
         e.preventDefault();
         showErr("");
@@ -573,19 +721,42 @@
         if (pw.length < 8) { showErr("Use at least 8 characters."); return; }
         var btn = $("#helm-submit"); busy(btn, true, up ? "Creating…" : "Signing in…");
         try {
-          if (up) {
-            var r = await signUp(email, pw);
-            if (r.needsConfirmation) { renderSheet("confirm", { email: email }); return; }
-          } else {
-            await signIn(email, pw);
-          }
+          var r = up ? await signUp(email, pw) : await signIn(email, pw);
+          if (up && r.needsConfirmation) { renderSheet("confirm", { email: email }); return; }
+          if (r && r.recoveryKey) { renderSheet("recovery-key", { key: r.recoveryKey, reloadAfter: r.reloadAfter }); return; }
           closeModal();
         } catch (err) {
           showErr(friendly(err));
           busy(btn, false, up ? "Create account" : "Sign in");
         }
       });
-    } else if (view === "confirm") {
+    } else if (view === "forgot") {
+      $("#helm-toggle").addEventListener("click", function () { renderSheet("signin"); });
+      $("#helm-form").addEventListener("submit", async function (e) {
+        e.preventDefault(); showErr("");
+        var email = $("#helm-email").value.trim().toLowerCase(); var btn = $("#helm-submit"); busy(btn, true, "Sending…");
+        try { await gotrueRecover(email); renderSheet("forgot-sent", { email: email }); }
+        catch (err) { showErr(friendly(err)); busy(btn, false, "Send reset link"); }
+      });
+    } else if (view === "reset-password") {
+      $("#helm-form").addEventListener("submit", async function (e) {
+        e.preventDefault(); showErr("");
+        var pw = $("#helm-pw").value, rec = $("#helm-rec").value.trim();
+        if (pw.length < 8) { showErr("Use at least 8 characters."); return; }
+        var btn = $("#helm-submit"); busy(btn, true, "Setting…");
+        try {
+          var r = await resetWithRecovery(pw, rec || null);
+          if (r.recoveryKey) { renderSheet("recovery-key", { key: r.recoveryKey, reloadAfter: true }); }
+          else { closeModal(); try { location.reload(); } catch (e) {} }   // data recovered, signed in
+        } catch (err) { showErr(friendly(err)); busy(btn, false, "Set new password"); }
+      });
+    } else if (view === "recovery-key") {
+      var keyText = ctx.key;
+      $("#helm-copy-rec").addEventListener("click", function () { try { navigator.clipboard.writeText(keyText); } catch (e) {} });
+      $("#helm-dl-rec").addEventListener("click", function () { downloadText("helm-recovery-key.txt", "Helm recovery key\n\n" + keyText + "\n\nKeep this safe. It restores your data if you forget your password.\nhelm.treetop.capital"); });
+      $("#helm-rec-ack").addEventListener("change", function (e) { $("#helm-rec-done").disabled = !e.target.checked; });
+      $("#helm-rec-done").addEventListener("click", function () { closeModal(); if (ctx.reloadAfter) { try { location.reload(); } catch (e) {} } });
+    } else if (view === "confirm" || view === "forgot-sent") {
       $("#helm-toconfirm-signin").addEventListener("click", function () { renderSheet("signin"); });
     } else if (view === "unlock") {
       $("#helm-signout").addEventListener("click", async function () { await signOut(); closeModal(); });
@@ -704,10 +875,22 @@
     var p;
     try { p = new URLSearchParams(raw); } catch (e) { return false; }
     var err = p.get("error_description") || p.get("error");
-    var confirmed = p.get("access_token") || p.get("type") === "signup" || p.get("type") === "magiclink";
-    if (!err && !confirmed) return false;
+    var at = p.get("access_token");
+    var recovery = p.get("type") === "recovery" && at;
+    var confirmed = at || p.get("type") === "signup" || p.get("type") === "magiclink";
+    if (!err && !confirmed && !recovery) return false;
     // Strip the auth params so a refresh doesn't re-trigger this.
     try { history.replaceState(null, "", location.pathname); } catch (e) {}
+    if (recovery) {
+      // Capture the recovery session IN MEMORY only (not persisted, so a stray
+      // reload doesn't leave a half-recovered state); resetWithRecovery persists
+      // it once the new password is set.
+      state.session = { access_token: at, refresh_token: p.get("refresh_token"), expires_at: Math.floor(Date.now() / 1000) + (parseInt(p.get("expires_in"), 10) || 3600), user: null };
+      state.recovering = true;
+      renderSheet("reset-password", {});
+      els.modal.classList.add("show");
+      return true;
+    }
     if (state.session) return true;   // already signed in elsewhere; nothing to prompt
     if (err) {
       var msg = /expired|invalid/i.test(err)

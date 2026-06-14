@@ -519,6 +519,9 @@
   function injectStyles() {
     var css = '' +
       '.helm-acct{position:fixed;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:9000;font-family:"Outfit",system-ui,sans-serif}' +
+      // Reserve room on the right of each tool page's top bar so the fixed pill
+      // doesn't overlap the "All tools" link.
+      '.topbar{padding-right:140px}@media (max-width:480px){.topbar{padding-right:54px}}' +
       '.helm-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border,#E5E5DF);background:var(--card,#fff);color:var(--text,#1C1C1A);font:600 13px/1 "Outfit",system-ui,sans-serif;padding:9px 13px;border-radius:999px;cursor:pointer;box-shadow:0 1px 2px rgba(28,28,26,.05),0 6px 18px rgba(28,28,26,.06)}' +
       '.helm-pill:hover{border-color:#cfcfc8}' +
       '.helm-dot{width:8px;height:8px;border-radius:50%;background:#8A8A85;flex:0 0 auto}' +

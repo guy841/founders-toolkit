@@ -117,7 +117,13 @@
       '.hc-banner .hc-eyebrow{font:600 11px/1 "Outfit",sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#8A8A85)}' +
       '.hc-banner .hc-facts-mini{color:var(--text-2,#5C5C58);font-size:.82rem;margin-left:auto}' +
       '.hc-banner a{color:var(--brand,#34577C);font:600 13px/1 "Outfit",sans-serif;text-decoration:none}' +
-      '.hc-empty{color:var(--text-2,#5C5C58);font-size:.9rem;font-family:"Manrope",system-ui,sans-serif}';
+      '.hc-empty{color:var(--text-2,#5C5C58);font-size:.9rem;font-family:"Manrope",system-ui,sans-serif}' +
+      '.hc-actions{margin-top:16px;display:flex;gap:10px;align-items:center}' +
+      '.hc-btn-primary{background:var(--brand,#34577C);border-color:var(--brand,#34577C);color:#fff}' +
+      '.hc-btn-primary:hover{background:var(--brand-dark,#2A4763)}' +
+      '.hc-saved-hint{font-size:.8rem;color:var(--muted,#8A8A85);font-family:"Manrope",system-ui,sans-serif}' +
+      '.hc-fc{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}' +
+      '.hc-fc-sum{color:var(--text-2,#5C5C58);font-size:.86rem;margin:3px 0 0;font-family:"Manrope",system-ui,sans-serif}';
     var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
   }
 
@@ -130,6 +136,22 @@
     if (p.yearEndDay && p.yearEndMonth) bits.push("year-end " + p.yearEndDay + " " + MONTHS[p.yearEndMonth - 1].slice(0, 3));
     bits.push(p.vatRegistered ? "VAT registered" : "not VAT registered");
     if (p.employsStaff) bits.push("employer");
+    return bits.join(" · ");
+  }
+  function fmtISO(iso) { var d = String(iso || "").split("-"); return (d.length === 3) ? (parseInt(d[2], 10) + " " + (MONTHS[parseInt(d[1], 10) - 1] || "?").slice(0, 3) + " " + d[0]) : ""; }
+  function hasFacts(p) {
+    if (!p) return false;
+    if (p.incorporationDate || (p.yearEndDay && p.yearEndMonth)) return true;
+    return ["employsStaff", "vatRegistered", "multiOwner", "products", "advice", "publicFacing", "handlesData", "online", "construction", "importExport"].some(function (k) { return p[k]; });
+  }
+  // Longer, human summary for the collapsed Key facts card.
+  function keyFactsSummary(p) {
+    p = p || {}; var bits = [];
+    if (p.incorporationDate) bits.push("Incorporated " + fmtISO(p.incorporationDate));
+    if (p.yearEndDay && p.yearEndMonth) bits.push("year-end " + p.yearEndDay + " " + MONTHS[p.yearEndMonth - 1].slice(0, 3));
+    bits.push(p.vatRegistered ? "VAT registered" : "not VAT registered");
+    if (p.employsStaff) bits.push("employer");
+    if (p.directors) bits.push(p.directors + " director" + (p.directors > 1 ? "s" : ""));
     return bits.join(" · ");
   }
 
@@ -178,13 +200,23 @@
   ];
   api.mountKeyFacts = function (el) {
     injectStyles();
-    function render() {
-      var c = api.active();
-      if (!c) { el.innerHTML = ""; return; }
+    var collapsed = false;
+    function renderCollapsed(c) {
+      var p = c.profile || {};
+      el.innerHTML =
+        '<div class="hc-facts"><div class="hc-fc">' +
+          '<div><h3>' + esc(c.name || "Your company") + '</h3>' +
+            '<p class="hc-fc-sum">' + esc(keyFactsSummary(p) || "No key facts set yet — add them so the tools can use them.") + '</p></div>' +
+          '<button type="button" class="hc-btn" id="hc-edit">Edit key facts</button>' +
+        '</div></div>';
+      el.querySelector("#hc-edit").addEventListener("click", function () { collapsed = false; render(); });
+    }
+    function renderEditor(c) {
       var p = c.profile || {};
       var dayOpts = '<option value="">Day</option>'; for (var d = 1; d <= 31; d++) dayOpts += '<option value="' + d + '"' + (p.yearEndDay == d ? " selected" : "") + '>' + d + '</option>';
       var monOpts = '<option value="">Month</option>'; for (var m = 1; m <= 12; m++) monOpts += '<option value="' + m + '"' + (p.yearEndMonth == m ? " selected" : "") + '>' + MONTHS[m - 1] + '</option>';
       var dirOpts = ""; for (var n = 1; n <= 4; n++) dirOpts += '<option value="' + n + '"' + ((p.directors || 1) == n ? " selected" : "") + '>' + n + (n === 4 ? "+" : "") + '</option>';
+      var vatqOpts = '<option value="">Month it ends</option>'; for (var q = 1; q <= 12; q++) vatqOpts += '<option value="' + q + '"' + (p.vatQuarterEndMonth == q ? " selected" : "") + '>' + MONTHS[q - 1] + '</option>';
       el.innerHTML =
         '<div class="hc-facts">' +
           '<h3>Key facts</h3>' +
@@ -194,32 +226,45 @@
             '<div class="hc-f"><label>Date of incorporation</label><input type="date" id="hc-inc" value="' + esc(p.incorporationDate || "") + '" /></div>' +
             '<div class="hc-f"><label>Financial year-end</label><div class="hc-ye"><select id="hc-yed">' + dayOpts + '</select><select id="hc-yem">' + monOpts + '</select></div></div>' +
             '<div class="hc-f"><label>Number of directors</label><select id="hc-dir">' + dirOpts + '</select></div>' +
+            '<div class="hc-f" id="hc-vatq-wrap" style="' + (p.vatRegistered ? '' : 'display:none') + '"><label>VAT quarter ends</label><select id="hc-vatq">' + vatqOpts + '</select></div>' +
           '</div>' +
           '<div class="hc-toggles" id="hc-toggles">' +
             TOGGLES.map(function (t) { return '<button type="button" class="hc-chip" data-k="' + t.k + '" aria-pressed="' + (p[t.k] ? "true" : "false") + '">' + esc(t.label) + '</button>'; }).join("") +
           '</div>' +
+          '<div class="hc-actions"><button type="button" class="hc-btn hc-btn-primary" id="hc-done">Done</button><span class="hc-saved-hint">Changes save automatically</span></div>' +
         '</div>';
       el.querySelector("#hc-name").addEventListener("change", function (e) { api.setProfile({ name: e.target.value }); });
       el.querySelector("#hc-inc").addEventListener("change", function (e) { api.setProfile({ incorporationDate: e.target.value }); });
       el.querySelector("#hc-yed").addEventListener("change", function (e) { api.setProfile({ yearEndDay: e.target.value ? parseInt(e.target.value, 10) : "" }); });
       el.querySelector("#hc-yem").addEventListener("change", function (e) { api.setProfile({ yearEndMonth: e.target.value ? parseInt(e.target.value, 10) : "" }); });
       el.querySelector("#hc-dir").addEventListener("change", function (e) { api.setProfile({ directors: parseInt(e.target.value, 10) }); });
+      el.querySelector("#hc-vatq").addEventListener("change", function (e) { api.setProfile({ vatQuarterEndMonth: e.target.value ? parseInt(e.target.value, 10) : "" }); });
       el.querySelectorAll(".hc-chip").forEach(function (chip) {
         chip.addEventListener("click", function () {
           var on = chip.getAttribute("aria-pressed") !== "true";
           chip.setAttribute("aria-pressed", on ? "true" : "false");
-          var patch = {}; patch[chip.getAttribute("data-k")] = on ? true : ""; api.setProfile(patch);
+          var k = chip.getAttribute("data-k");
+          var patch = {}; patch[k] = on ? true : ""; api.setProfile(patch);
+          // show/hide the VAT quarter-end field without a full re-render
+          if (k === "vatRegistered") { var w = el.querySelector("#hc-vatq-wrap"); if (w) w.style.display = on ? "" : "none"; }
         });
       });
+      el.querySelector("#hc-done").addEventListener("click", function () { collapsed = true; render(); });
+    }
+    function render() {
+      var c = api.active();
+      if (!c) { el.innerHTML = ""; return; }
+      if (collapsed) renderCollapsed(c); else renderEditor(c);
     }
     var mountedId = api.activeId();
+    collapsed = hasFacts(api.getProfile());   // a company that already has facts opens minimised
     render();
     // Re-render only when the ACTIVE COMPANY changes (e.g. via the switcher) —
     // never on a setProfile from editing a field here, which would rebuild the
     // inputs mid-entry (e.g. you couldn't finish typing a 4-digit year).
     api.onChange(function () {
       var id = api.activeId();
-      if (id !== mountedId) { mountedId = id; render(); }
+      if (id !== mountedId) { mountedId = id; collapsed = hasFacts(api.getProfile()); render(); }
     });
   };
 

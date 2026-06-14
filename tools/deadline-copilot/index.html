@@ -818,13 +818,21 @@ document.getElementById("form").addEventListener("submit", (e) => {
     if (thisYr > now) y -= 1;            // the year-end this year hasn't happened yet
     setSel("ye-day", p.yearEndDay); setSel("ye-month", p.yearEndMonth); setSel("ye-year", y);
   }
-  // PAYE — safe on/off, no extra required fields. (VAT needs a quarter date we
-  // don't hold, so leave that toggle to the user; the banner shows VAT status.)
   function ensureSwitch(id, on) {
     var b = document.getElementById(id);
     if (b && on && b.getAttribute("aria-checked") !== "true") b.click();
   }
   ensureSwitch("sw-paye", !!p.employsStaff);
+  // VAT — pull through from key facts. If the company set a VAT quarter-end month,
+  // fill the quarter-end date too (last day of that month, most recent occurrence).
+  if (p.vatRegistered) {
+    ensureSwitch("sw-vat", true);            // reveals the VAT date fields
+    if (p.vatQuarterEndMonth) {
+      var vm = p.vatQuarterEndMonth, vnow = new Date(), vy = vnow.getFullYear();
+      if (new Date(vy, vm - 1, new Date(vy, vm, 0).getDate()) > vnow) vy -= 1;   // most recent quarter-end on/before today
+      setSel("vat-day", new Date(vy, vm, 0).getDate()); setSel("vat-month", vm); setSel("vat-year", vy);
+    }
+  }
 })();
 </script>
 </body>

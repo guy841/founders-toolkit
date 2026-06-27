@@ -12,6 +12,35 @@ crypto details.
 
 ---
 
+## Go-live checklist
+
+Dashboard settings (Supabase + GitHub) to confirm before promoting the site
+publicly. None of these live in the code — they're clicks. Section numbers point
+to the detailed steps below.
+
+- [ ] **Lock the backend to our site (CORS).** Supabase → **Project Settings →
+      API** → allowed origins = `https://helm.treetop.capital` only (drop any
+      `localhost` entry once testing is done). Also set **Site URL** + **Redirect
+      URLs** (§3) — a wrong Site URL is what breaks confirmation/reset links.
+- [ ] **Connect a real email (SMTP) provider.** Supabase → **Authentication →
+      Emails → SMTP Settings** (§4). The built-in mailer is rate-limited and not
+      for production. Do this *before* turning on email confirmation.
+- [ ] **Turn on email verification.** Supabase → **Authentication → Providers →
+      Email → Confirm email = ON** (§3). Depends on SMTP above working.
+- [ ] **Force HTTPS.** GitHub repo → **Settings → Pages → Enforce HTTPS**
+      (available once the custom domain's certificate is issued).
+- [ ] **Brand the emails.** Paste `supabase/email-templates/confirm-signup.html`
+      into the Confirm-signup template (§4).
+- [ ] **Bump the service-worker cache** (`sw.js`, `const CACHE`) if any cached
+      page or script changed since the last deploy (§5).
+
+> **Quick-start shortcut:** to launch for early testing before the SMTP/DNS work,
+> leave **Confirm email OFF** (sign-up is instant, no email needed) and re-enable
+> it once SMTP is set up. CORS (item 1) and Force HTTPS (item 4) are worth doing
+> regardless.
+
+---
+
 ## 1. Create the project (~3 min)
 
 1. Sign in at <https://supabase.com> → **New project**.

@@ -1,4 +1,4 @@
-# Helm
+# HelpBnk
 
 Free, no-login web tools for UK limited company directors — the deadlines, taxes
 and obligations nobody hands you a manual for.
@@ -41,7 +41,7 @@ founders-toolkit/
 
 | Tool | Status | What it does |
 |------|--------|--------------|
-| **Deadline Copilot** | ✅ Live | Calculates every company filing & payment deadline (accounts, Corporation Tax, confirmation statement, VAT, PAYE, Self Assessment), counted down from today, with `.ics` calendar export. |
+| **Deadline Copilot** | ✅ Live | Calculates every company filing & payment deadline (accounts, Corporation Tax, confirmation statement, VAT, PAYE, Self Assessment, ICO data protection fee), counted down from today, with `.ics` calendar export. |
 | **Corporation Tax Estimator** | ✅ Live | Profit → tax owed, including 19%/25% bands and marginal relief. |
 | **Company Records** | ✅ Live | A private, on-device store for key company details (CRN, UTR, VAT, PAYE, insurance, bank, advisers) with backup export/import and print. |
 | **Salary vs Dividends Optimiser** | ✅ Live | Most tax-efficient director's salary/dividend split, plus a director's-loan comparison (BIK & s455). |
@@ -61,7 +61,7 @@ Colours and fonts live in the CSS `:root` variables at the top of each file — 
 
 ## Accounts & cross-device sync (optional)
 
-By default Helm is 100% on-device. Optionally, users can create an account to sync
+By default HelpBnk is 100% on-device. Optionally, users can create an account to sync
 their saved details across devices — and it's **end-to-end encrypted**, so the
 "we can't see your data" promise survives:
 

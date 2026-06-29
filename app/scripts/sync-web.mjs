@@ -1,4 +1,4 @@
-// Copies the Helm web app (index.html + tools/) into app/www so Capacitor can
+// Copies the HelpBnk web app (index.html + tools/) into app/www so Capacitor can
 // bundle it into the native app. The web assets stay at the repo root (which is
 // also what GitHub Pages serves), so there's a single source of truth.
 import { cpSync, rmSync, mkdirSync, existsSync } from "node:fs";

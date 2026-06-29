@@ -1,10 +1,10 @@
-# Helm — App Store listing (copy & paste into App Store Connect)
+# HelpBnk — App Store listing (copy & paste into App Store Connect)
 
 > Fill these into App Store Connect ▸ your app ▸ the relevant fields. Character limits noted.
-> If the name "Helm" is unavailable, fall back to **Helm: Director's Toolkit**.
+> If the name "HelpBnk" is unavailable, fall back to **HelpBnk Director's Toolkit**.
 
 ## Names & URLs
-- **App name** (30): `Helm`
+- **App name** (30): `HelpBnk`
 - **Subtitle** (30): `UK company director toolkit`
 - **Category:** Primary **Finance**, Secondary **Business**
 - **Price:** Free
@@ -25,7 +25,7 @@ limited company,director,corporation tax,vat,dividend,salary,deadline,paye,compa
 
 ## Description (4000)
 ```
-Helm is the toolkit every UK limited company director wishes they'd been handed on day one — the deadlines, taxes and duties of running a company, in one calm, private app.
+HelpBnk is the toolkit every UK limited company director wishes they'd been handed on day one — the deadlines, taxes and duties of running a company, in one calm, private app.
 
 No account. No sign-up. Nothing you enter leaves your device.
 
@@ -48,14 +48,14 @@ WHAT'S INSIDE
 PRIVATE BY DESIGN
 Everything you enter is saved only on your device. There are no accounts, no tracking and no ads. Company Records can be encrypted with a passphrase you choose.
 
-Helm provides general estimates based on standard UK rules (2025/26 tax year, England, Wales & Northern Ireland) and is not a substitute for professional advice. Always confirm important figures with HMRC, Companies House or a qualified adviser.
+HelpBnk provides general estimates based on standard UK rules (2025/26 tax year, England, Wales & Northern Ireland) and is not a substitute for professional advice. Always confirm important figures with HMRC, Companies House or a qualified adviser.
 
-Helm is a Tree Top Capital product.
+HelpBnk is a Tree Top Capital product.
 ```
 
 ## "What's New" (for v1.0)
 ```
-First release of Helm — seven tools to help UK company directors stay on top of deadlines, tax and company admin. We'd love your feedback.
+First release of HelpBnk — seven tools to help UK company directors stay on top of deadlines, tax and company admin. We'd love your feedback.
 ```
 
 ## Screenshots (capture later from the iOS Simulator)

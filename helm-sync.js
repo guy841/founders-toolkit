@@ -1,5 +1,5 @@
 /* =============================================================================
-   Helm — accounts + end-to-end encrypted cross-device sync
+   HelpBnk — accounts + end-to-end encrypted cross-device sync
    -----------------------------------------------------------------------------
    Drop-in, dependency-free. Include AFTER helm-config.js on every page:
 
@@ -525,8 +525,8 @@
       '.helm-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border,#E5E5DF);background:var(--card,#fff);color:var(--text,#1C1C1A);font:600 13px/1 "Outfit",system-ui,sans-serif;padding:9px 13px;border-radius:999px;cursor:pointer;box-shadow:0 1px 2px rgba(28,28,26,.05),0 6px 18px rgba(28,28,26,.06)}' +
       '.helm-pill:hover{border-color:#cfcfc8}' +
       '.helm-dot{width:8px;height:8px;border-radius:50%;background:#8A8A85;flex:0 0 auto}' +
-      '.helm-dot.ok{background:#3f9d57}.helm-dot.busy{background:#d9a23b}.helm-dot.err{background:#c0532e}.helm-dot.lock{background:#34577C}' +
-      '.helm-ava{width:22px;height:22px;border-radius:50%;background:var(--brand,#34577C);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 "Outfit",system-ui,sans-serif}' +
+      '.helm-dot.ok{background:#3f9d57}.helm-dot.busy{background:#d9a23b}.helm-dot.err{background:#c0532e}.helm-dot.lock{background:#1597C4}' +
+      '.helm-ava{width:22px;height:22px;border-radius:50%;background:var(--brand,#1597C4);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 "Outfit",system-ui,sans-serif}' +
       '.helm-modal{position:fixed;inset:0;z-index:9001;display:none;align-items:flex-start;justify-content:center;background:rgba(20,20,18,.42);backdrop-filter:blur(2px);padding:24px 16px;overflow:auto}' +
       '.helm-modal.show{display:flex}' +
       '.helm-sheet{background:var(--card,#fff);color:var(--text,#1C1C1A);border:1px solid var(--border,#E5E5DF);border-radius:18px;max-width:400px;width:100%;margin-top:6vh;padding:22px 22px 20px;box-shadow:0 24px 60px rgba(20,20,18,.28);font-family:"Manrope",system-ui,sans-serif}' +
@@ -535,20 +535,20 @@
       '.helm-field{margin:0 0 12px}' +
       '.helm-field label{display:block;font:600 12px/1 "Outfit",sans-serif;color:var(--text-2,#5C5C58);margin:0 0 5px}' +
       '.helm-field input{width:100%;box-sizing:border-box;border:1px solid var(--border,#E5E5DF);background:var(--input-bg,#F2F2F0);border-radius:10px;padding:11px 12px;font:500 15px/1.2 "Manrope",system-ui,sans-serif;color:var(--text,#1C1C1A)}' +
-      '.helm-field input:focus{outline:2px solid var(--brand,#34577C);outline-offset:1px;border-color:transparent}' +
-      '.helm-btn{width:100%;border:0;background:var(--brand,#34577C);color:#fff;font:600 15px/1 "Outfit",sans-serif;padding:13px;border-radius:11px;cursor:pointer;margin-top:4px}' +
-      '.helm-btn:hover{background:var(--brand-dark,#2A4763)}.helm-btn[disabled]{opacity:.6;cursor:default}' +
+      '.helm-field input:focus{outline:2px solid var(--brand,#1597C4);outline-offset:1px;border-color:transparent}' +
+      '.helm-btn{width:100%;border:0;background:var(--brand,#1597C4);color:#fff;font:600 15px/1 "Outfit",sans-serif;padding:13px;border-radius:11px;cursor:pointer;margin-top:4px}' +
+      '.helm-btn:hover{background:var(--brand-dark,#117C9F)}.helm-btn[disabled]{opacity:.6;cursor:default}' +
       '.helm-btn.ghost{background:transparent;color:var(--text-2,#5C5C58);border:1px solid var(--border,#E5E5DF)}' +
       '.helm-btn.ghost:hover{background:#f4f4f1}' +
       '.helm-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}' +
-      '.helm-link{background:none;border:0;color:var(--brand,#34577C);font:600 13px/1 "Outfit",sans-serif;cursor:pointer;padding:6px 2px}' +
+      '.helm-link{background:none;border:0;color:var(--brand,#1597C4);font:600 13px/1 "Outfit",sans-serif;cursor:pointer;padding:6px 2px}' +
       '.helm-err{color:#c0532e;font-size:.85rem;margin:2px 0 10px;min-height:1px}' +
       '.helm-ok{color:#2B5332;font-size:.85rem;margin:2px 0 10px}' +
       '.helm-note{font-size:.8rem;color:var(--muted,#8A8A85);line-height:1.5;margin:14px 0 0;border-top:1px solid var(--border,#E5E5DF);padding-top:12px}' +
       '.helm-x{position:absolute;top:14px;right:16px;background:none;border:0;font-size:22px;line-height:1;color:var(--muted,#8A8A85);cursor:pointer}' +
       '.helm-sheet{position:relative}' +
       '.helm-status-line{font-size:.82rem;color:var(--text-2,#5C5C58);margin:0 0 14px}' +
-      '.helm-reckey{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.05rem;letter-spacing:.04em;word-break:break-all;background:var(--input-bg,#F2F2F0);border:1px dashed var(--brand,#34577C);border-radius:10px;padding:14px 16px;color:var(--text,#1C1C1A);text-align:center}' +
+      '.helm-reckey{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.05rem;letter-spacing:.04em;word-break:break-all;background:var(--input-bg,#F2F2F0);border:1px dashed var(--brand,#1597C4);border-radius:10px;padding:14px 16px;color:var(--text,#1C1C1A);text-align:center}' +
       '@media (max-width:480px){.helm-pill span.lbl{display:none}}';
     var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
   }
@@ -606,14 +606,14 @@
     var h = '<button class="helm-x" id="helm-close" aria-label="Close">×</button>';
     if (view === "unconfigured") {
       h += '<h2>Accounts aren’t switched on yet</h2>' +
-        '<p class="sub">Cross-device sync needs a one-time backend setup. Until then, Helm works fully on this device — nothing is lost.</p>' +
+        '<p class="sub">Cross-device sync needs a one-time backend setup. Until then, HelpBnk works fully on this device — nothing is lost.</p>' +
         '<p class="helm-note">Developer: add your Supabase URL + anon key in <code>helm-config.js</code> (see SUPABASE_SETUP.md).</p>';
     } else if (view === "insecure") {
       h += '<h2>Secure connection needed</h2>' +
         '<p class="sub">Accounts and encryption need an <b>https</b> page. This works on the live site (helm.treetop.capital); it’s just disabled on insecure/local pages.</p>';
     } else if (view === "signin" || view === "signup") {
       var up = view === "signup";
-      h += '<h2>' + (up ? 'Create your Helm account' : 'Sign in to Helm') + '</h2>' +
+      h += '<h2>' + (up ? 'Create your HelpBnk account' : 'Sign in to HelpBnk') + '</h2>' +
         '<p class="sub">' + (up
           ? 'Your details are encrypted with your password before they leave this device — we can’t read them, and we can’t reset your password.'
           : 'Sync your saved company details securely across your devices.') + '</p>' +
@@ -756,7 +756,7 @@
     } else if (view === "recovery-key") {
       var keyText = ctx.key;
       $("#helm-copy-rec").addEventListener("click", function () { try { navigator.clipboard.writeText(keyText); } catch (e) {} });
-      $("#helm-dl-rec").addEventListener("click", function () { downloadText("helm-recovery-key.txt", "Helm recovery key\n\n" + keyText + "\n\nKeep this safe. It restores your data if you forget your password.\nhelm.treetop.capital"); });
+      $("#helm-dl-rec").addEventListener("click", function () { downloadText("helm-recovery-key.txt", "HelpBnk recovery key\n\n" + keyText + "\n\nKeep this safe. It restores your data if you forget your password.\nhelm.treetop.capital"); });
       $("#helm-rec-ack").addEventListener("change", function (e) { $("#helm-rec-done").disabled = !e.target.checked; });
       $("#helm-rec-done").addEventListener("click", function () { closeModal(); if (ctx.reloadAfter) { try { location.reload(); } catch (e) {} } });
     } else if (view === "confirm" || view === "forgot-sent") {

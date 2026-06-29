@@ -1,4 +1,4 @@
-/* Helm — bundled fonts (Manrope body, Outfit headings), served locally for offline use. */
+/* HelpBnk — bundled fonts (Manrope body, Outfit headings), served locally for offline use. */
 @font-face{font-family:'Manrope';font-style:normal;font-weight:400;font-display:swap;src:url("manrope-400.woff2") format("woff2");}
 @font-face{font-family:'Manrope';font-style:normal;font-weight:500;font-display:swap;src:url("manrope-500.woff2") format("woff2");}
 @font-face{font-family:'Manrope';font-style:normal;font-weight:600;font-display:swap;src:url("manrope-600.woff2") format("woff2");}

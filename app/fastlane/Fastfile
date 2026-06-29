@@ -1,4 +1,4 @@
-# Helm — fastlane lane for iOS release via CI (no local Xcode needed).
+# HelpBnk — fastlane lane for iOS release via CI (no local Xcode needed).
 # Run by .github/workflows/ios.yml in "release" mode. Needs these GitHub secrets:
 #   APPSTORE_KEY_ID, APPSTORE_ISSUER_ID, APPSTORE_PRIVATE_KEY  (App Store Connect API key; key is base64)
 #   APPLE_TEAM_ID                                              (10-char Developer Team ID)

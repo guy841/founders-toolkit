@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#34577C" />
+<meta name="theme-color" content="#1597C4" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Helm" />
-<title>Helm: Director's Toolkit — UK company director tools</title>
+<meta name="apple-mobile-web-app-title" content="HelpBnk" />
+<title>HelpBnk Director's Toolkit — UK company director tools</title>
 <meta name="description" content="Free tools for UK limited company directors: deadline tracking, Corporation Tax estimates, salary vs dividend planning, setup checklists and more. Works on your device, with optional end-to-end encrypted sync across your devices." />
 
 <link rel="manifest" href="manifest.webmanifest" />
@@ -18,8 +18,8 @@
   :root {
     --bg: #F9F9F7;
     --card: #FFFFFF;
-    --brand: #34577C;
-    --brand-dark: #2A4763;
+    --brand: #1597C4;
+    --brand-dark: #117C9F;
     --text: #1C1C1A;
     --text-2: #5C5C58;
     --muted: #8A8A85;
@@ -47,7 +47,7 @@
   .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: 40px; }
   .logo img { height: 40px; width: auto; display: block; }
   .logo .wordmark { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 700; color: var(--brand); font-size: 1.1rem; letter-spacing: -0.02em; }
-  .logo .mark { width: 34px; height: 34px; border-radius: 9px; background: var(--brand); color: #fff; display: grid; place-items: center; }
+  .logo .mark { width: 34px; height: 34px; border-radius: 9px; background: transparent; display: grid; place-items: center; }
   @media (max-width: 640px) { .logo img { height: 30px; } .logo .wordmark { font-size: 0.95rem; } .logo .mark { width: 28px; height: 28px; } }
 
   /* Hero */
@@ -109,13 +109,13 @@
 <div class="wrap">
 
   <!-- LOGO — set LOGO_URL below to use your own brand image -->
-  <a class="logo" href="#" data-testid="logo" aria-label="Helm home">
+  <a class="logo" href="#" data-testid="logo" aria-label="HelpBnk home">
     <img id="logo-img" alt="Logo" style="display:none" />
     <span class="wordmark" id="logo-fallback">
       <span class="mark" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.6"/><path d="M12 3v6.4"/><path d="M12 14.6V21"/><path d="M3 12h6.4"/><path d="M14.6 12H21"/><path d="m5.6 5.6 4.5 4.5"/><path d="m13.9 13.9 4.5 4.5"/><path d="m18.4 5.6-4.5 4.5"/><path d="m10.1 13.9-4.5 4.5"/></svg>
+        <svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 16V10M9 10L4 5M9 10L14 5" stroke="#28A8E0" stroke-width="2.6"/><path d="M15 8V14M15 14L10 19M15 14L20 19" stroke="#15B6A3" stroke-width="2.6"/></svg>
       </span>
-      Helm: Director's Toolkit
+      HelpBnk Director's Toolkit
     </span>
   </a>
 
@@ -126,10 +126,10 @@
     <div class="install-row" id="install-row">
       <button type="button" class="install-btn" id="install-btn" data-testid="install-btn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Install Helm
+        Install HelpBnk
       </button>
       <div class="ios-tip hidden" id="ios-tip">
-        Add Helm to your home screen: tap the
+        Add HelpBnk to your home screen: tap the
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
         <b>Share</b> button in Safari, then choose <b>Add to Home Screen</b>.
       </div>
@@ -213,7 +213,7 @@
 
   <footer>
     <p>These tools provide general estimates based on standard UK rules and are not a substitute for professional advice. Always confirm your exact obligations with HMRC, Companies House or a qualified adviser.</p>
-    <p>© <span id="year"></span> Helm. A Tree Top Capital product. <em>Stay on top of your UK company.</em> · <a href="privacy.html">Privacy</a></p>
+    <p>© <span id="year"></span> HelpBnk. A Tree Top Capital product. <em>Stay on top of your UK company.</em> · <a href="privacy.html">Privacy</a></p>
   </footer>
 
 </div>

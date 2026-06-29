@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#34577C" />
+<meta name="theme-color" content="#1597C4" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Helm" />
-<title>Deadline Copilot — Helm: Director's Toolkit</title>
-<meta name="description" content="Calculate your UK limited company filing and tax deadlines — accounts, Corporation Tax, confirmation statement, VAT, Self Assessment and PAYE." />
+<meta name="apple-mobile-web-app-title" content="HelpBnk" />
+<title>Deadline Copilot — HelpBnk Director's Toolkit</title>
+<meta name="description" content="Calculate your UK limited company filing and tax deadlines — accounts, Corporation Tax, confirmation statement, VAT, Self Assessment, PAYE and the annual ICO data protection fee." />
 
 <!-- Fonts: Outfit (headings) + Manrope (body) -->
 <link rel="manifest" href="../../manifest.webmanifest" />
@@ -20,8 +20,8 @@
     /* Palette */
     --bg: #F9F9F7;
     --card: #FFFFFF;
-    --brand: #34577C;
-    --brand-dark: #2A4763;
+    --brand: #1597C4;
+    --brand-dark: #117C9F;
     --text: #1C1C1A;
     --text-2: #5C5C58;
     --muted: #8A8A85;
@@ -64,7 +64,7 @@
   }
   .logo .mark {
     width: 34px; height: 34px; border-radius: 9px;
-    background: var(--brand); color: #fff;
+    background: transparent;
     display: grid; place-items: center;
   }
   @media (max-width: 640px) {
@@ -127,7 +127,7 @@
     cursor: pointer; min-height: 44px;
     transition: border-color .15s, box-shadow .15s;
   }
-  select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(52,87,124,.15); }
+  select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(21,151,196,.15); }
   select.invalid { border-color: var(--red-bd); background-color: var(--red-bg); }
 
   /* ---- Switch (toggle) ---- */
@@ -248,25 +248,25 @@
      left blank (or fails to load) the wordmark placeholder
      below is shown instead.
      =========================================================
-<a class="logo" href="../../index.html" data-testid="logo" aria-label="Helm home">
+<a class="logo" href="../../index.html" data-testid="logo" aria-label="HelpBnk home">
   <img id="logo-img" alt="Logo" style="display:none" />
   <span class="wordmark" id="logo-fallback">
     <span class="mark" aria-hidden="true">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.6"/><path d="M12 3v6.4"/><path d="M12 14.6V21"/><path d="M3 12h6.4"/><path d="M14.6 12H21"/><path d="m5.6 5.6 4.5 4.5"/><path d="m13.9 13.9 4.5 4.5"/><path d="m18.4 5.6-4.5 4.5"/><path d="m10.1 13.9-4.5 4.5"/></svg>
+      <svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 16V10M9 10L4 5M9 10L14 5" stroke="#28A8E0" stroke-width="2.6"/><path d="M15 8V14M15 14L10 19M15 14L20 19" stroke="#15B6A3" stroke-width="2.6"/></svg>
     </span>
-    Helm
+    HelpBnk
   </span>
 </a> -->
 
 <div class="wrap">
   <div class="topbar">
-  <a class="logo" href="../../index.html" data-testid="logo" aria-label="Helm home">
+  <a class="logo" href="../../index.html" data-testid="logo" aria-label="HelpBnk home">
     <img id="logo-img" alt="Logo" style="display:none" />
     <span class="wordmark" id="logo-fallback">
       <span class="mark" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.6"/><path d="M12 3v6.4"/><path d="M12 14.6V21"/><path d="M3 12h6.4"/><path d="M14.6 12H21"/><path d="m5.6 5.6 4.5 4.5"/><path d="m13.9 13.9 4.5 4.5"/><path d="m18.4 5.6-4.5 4.5"/><path d="m10.1 13.9-4.5 4.5"/></svg>
+        <svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 16V10M9 10L4 5M9 10L14 5" stroke="#28A8E0" stroke-width="2.6"/><path d="M15 8V14M15 14L10 19M15 14L20 19" stroke="#15B6A3" stroke-width="2.6"/></svg>
       </span>
-      Helm
+      HelpBnk
     </span>
   </a>
     <a class="back" href="../../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> All tools</a>
@@ -366,6 +366,32 @@
         <div class="switch-row" style="margin-top:10px">
           <span class="switch-lbl">Self Assessment</span>
           <button type="button" class="switch" id="sw-sa" data-testid="toggle-self-assessment" role="switch" aria-checked="false" aria-label="Self Assessment"></button>
+        </div>
+      </div>
+
+      <!-- Data protection -->
+      <div class="form-section">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Data protection
+        </div>
+
+        <div class="switch-row">
+          <span>
+            <span class="switch-lbl">ICO data protection fee</span>
+            <span class="switch-sub">Annual fee if you handle personal data</span>
+          </span>
+          <button type="button" class="switch" id="sw-ico" data-testid="toggle-ico" role="switch" aria-checked="false" aria-label="ICO data protection fee"></button>
+        </div>
+        <div class="collapsible hidden" id="ico-fields">
+          <div class="field" style="margin-top:12px; margin-bottom:0">
+            <label class="lbl" for="ico-day">ICO registration / last renewal date</label>
+            <div class="date-row">
+              <select id="ico-day" data-testid="ico-day" aria-label="ICO renewal day"></select>
+              <select id="ico-month" data-testid="ico-month" aria-label="ICO renewal month"></select>
+              <select id="ico-year" data-testid="ico-year" aria-label="ICO renewal year"></select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -486,6 +512,7 @@ populateDateSelects("ye",  NOW_YEAR - 8,  NOW_YEAR + 4);
 populateDateSelects("inc", 1980,          NOW_YEAR + 1);
 populateDateSelects("cs",  NOW_YEAR - 8,  NOW_YEAR + 1);
 populateDateSelects("vat", NOW_YEAR - 4,  NOW_YEAR + 2);
+populateDateSelects("ico", NOW_YEAR - 8,  NOW_YEAR + 1);
 
 /* ===================== SWITCHES ===================== */
 function toggle(btn) {
@@ -498,6 +525,7 @@ const swCs    = document.getElementById("sw-cs");
 const swVat   = document.getElementById("sw-vat");
 const swPaye  = document.getElementById("sw-paye");
 const swSa    = document.getElementById("sw-sa");
+const swIco   = document.getElementById("sw-ico");
 
 swFirst.addEventListener("click", () => toggle(swFirst));
 swCs.addEventListener("click", () => {
@@ -508,6 +536,9 @@ swVat.addEventListener("click", () => {
 });
 swPaye.addEventListener("click", () => toggle(swPaye));
 swSa.addEventListener("click", () => toggle(swSa));
+swIco.addEventListener("click", () => {
+  document.getElementById("ico-fields").classList.toggle("hidden", !toggle(swIco));
+});
 
 const isOn = (btn) => btn.getAttribute("aria-checked") === "true";
 
@@ -525,7 +556,7 @@ function markInvalid(prefix, bad) {
 }
 
 function gatherAndValidate() {
-  ["ye","inc","cs","vat"].forEach(p => markInvalid(p, false));
+  ["ye","inc","cs","vat","ico"].forEach(p => markInvalid(p, false));
   const errors = [];
 
   const ye = readDate("ye");
@@ -551,6 +582,13 @@ function gatherAndValidate() {
     else if (!isValidDate(vat.y, vat.m, vat.d)) { errors.push(`The VAT quarter-end isn't a real date — please check it.`); markInvalid("vat", true); }
   }
 
+  let ico = null;
+  if (isOn(swIco)) {
+    ico = readDate("ico");
+    if (!ico.filled) { errors.push("ICO fee is enabled — please choose your ICO registration / last renewal date."); markInvalid("ico", true); }
+    else if (!isValidDate(ico.y, ico.m, ico.d)) { errors.push(`The ICO registration / renewal date isn't a real date — please check it.`); markInvalid("ico", true); }
+  }
+
   if (errors.length) return { ok: false, errors };
 
   return {
@@ -562,6 +600,7 @@ function gatherAndValidate() {
     vat: vat ? makeDate(vat.y, vat.m, vat.d) : null,
     paye: isOn(swPaye),
     selfAssessment: isOn(swSa),
+    ico: ico ? makeDate(ico.y, ico.m, ico.d) : null,
   };
 }
 
@@ -638,6 +677,16 @@ function computeDeadlines(input) {
       category: "HMRC",
       date: new Date(saYear, 0, 31),
       description: "File your Self Assessment tax return and pay any tax due to HMRC (31 January after the tax year)."
+    });
+  }
+
+  // ICO Data Protection Fee (ICO) — renews annually on the registration anniversary
+  if (input.ico) {
+    list.push({
+      name: "ICO Data Protection Fee",
+      category: "ICO",
+      date: nextAnniversary(input.ico.getMonth()+1, input.ico.getDate(), t),
+      description: "Renew your data protection fee with the ICO (annually, by the anniversary of your registration)."
     });
   }
 
@@ -823,6 +872,7 @@ document.getElementById("form").addEventListener("submit", (e) => {
     if (b && on && b.getAttribute("aria-checked") !== "true") b.click();
   }
   ensureSwitch("sw-paye", !!p.employsStaff);
+  ensureSwitch("sw-ico", !!p.handlesData);   // ICO data-protection fee applies to most who handle personal data
   // VAT — pull through from key facts. If the company set a VAT quarter-end month,
   // fill the quarter-end date too (last day of that month, most recent occurrence).
   if (p.vatRegistered) {

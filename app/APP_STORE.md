@@ -1,6 +1,6 @@
-# Shipping Helm to the App Store
+# Shipping HelpBnk to the App Store
 
-This is the step-by-step to turn the Helm web app into a native iOS app and publish it.
+This is the step-by-step to turn the HelpBnk web app into a native iOS app and publish it.
 The web app lives at the repo root (`../index.html` + `../tools/`); this `app/` folder wraps
 it in a native shell using **Capacitor**. The same setup adds **Android** later with one command.
 
@@ -62,13 +62,13 @@ In Xcode, select the **App** target ▸ **Signing & Capabilities**:
 
 At [appstoreconnect.apple.com](https://appstoreconnect.apple.com) ▸ **Apps ▸ +**:
 
-- **Name:** Helm — *(if "Helm" is taken, try "Helm: Director's Toolkit" or "Helm for Directors")*
+- **Name:** HelpBnk — *(if "HelpBnk" is taken, try "HelpBnk Director's Toolkit" or "HelpBnk for Directors")*
 - **Primary language:** English (U.K.)
 - **Bundle ID:** `capital.treetop.helm`
 - **Category:** Finance (or Business)
 - **Privacy Policy URL:** `https://helm.treetop.capital/privacy.html`
 - **Support URL:** `https://helm.treetop.capital/`
-- **App Privacy:** choose **"Data Not Collected"** — Helm stores everything on-device. (No tracking, no analytics.)
+- **App Privacy:** choose **"Data Not Collected"** — HelpBnk stores everything on-device. (No tracking, no analytics.)
 - **Screenshots:** required for 6.7" and 6.5" iPhones. Easiest: run the app in the Xcode Simulator (iPhone 15 Pro Max), take screenshots of 3–5 tools (`Cmd+S` in Simulator).
 - **Description / keywords:** sell the tools — deadlines, Corporation Tax, salary vs dividends, VAT, company records. Keywords like *UK, limited company, director, corporation tax, VAT, dividends, deadlines*.
 
@@ -79,25 +79,25 @@ In Xcode: **Product ▸ Archive** ▸ when the Organizer opens, **Distribute App
 Then in App Store Connect:
 - The build appears under **TestFlight** after processing (a few minutes). Test it on your own iPhone via TestFlight first.
 - Attach the build to your **1.0** version, fill in the review notes, and **Submit for Review**.
-- **Review notes to include:** *"Helm is a local-first utility for UK company directors. No account or login is required and no data is collected — everything the user enters is stored only on their device."* This pre-empts the usual questions.
+- **Review notes to include:** *"HelpBnk is a local-first utility for UK company directors. No account or login is required and no data is collected — everything the user enters is stored only on their device."* This pre-empts the usual questions.
 
 Apple review typically takes **24–48 hours**.
 
 ---
 
-## App Store Connect questionnaires — the answers for Helm
+## App Store Connect questionnaires — the answers for HelpBnk
 
-These trip people up; here's how Helm should be answered:
+These trip people up; here's how HelpBnk should be answered:
 
-- **Encryption / Export Compliance.** App Store Connect asks "Does your app use encryption?" Helm uses **standard encryption only** — HTTPS, and AES‑256 (via the system's Web Crypto) for the *optional* Company Records passphrase. That is **exempt** encryption (data protection with standard algorithms). To answer it once and avoid the prompt on every upload, add this to `ios/App/App/Info.plist`:
+- **Encryption / Export Compliance.** App Store Connect asks "Does your app use encryption?" HelpBnk uses **standard encryption only** — HTTPS, and AES‑256 (via the system's Web Crypto) for the *optional* Company Records passphrase. That is **exempt** encryption (data protection with standard algorithms). To answer it once and avoid the prompt on every upload, add this to `ios/App/App/Info.plist`:
   ```xml
   <key>ITSAppUsesNonExemptEncryption</key>
   <false/>
   ```
   In the App Store Connect prompt, choose **"uses exempt encryption."** *(If you're ever unsure for a future version, confirm against Apple's export-compliance docs — but standard AES for local data protection is exempt.)*
-- **App Privacy ("nutrition label").** Select **Data Not Collected** — Helm stores everything on-device, has no accounts, no analytics and no ads.
+- **App Privacy ("nutrition label").** Select **Data Not Collected** — HelpBnk stores everything on-device, has no accounts, no analytics and no ads.
 - **Age rating.** All "None" → **4+**.
-- **Sign in with Apple.** Not required for v1 — Helm has **no login at all**. (It only becomes required once you add any third-party/email sign-in, i.e. in the accounts fast-follow.)
+- **Sign in with Apple.** Not required for v1 — HelpBnk has **no login at all**. (It only becomes required once you add any third-party/email sign-in, i.e. in the accounts fast-follow.)
 - **Content rights.** You own/are licensed for all content.
 
 The full listing copy (name, subtitle, description, keywords) is in **`store-listing.md`** next to this file.
@@ -116,7 +116,7 @@ The website (GitHub Pages) updates automatically on `git push`; the app updates 
 
 ## Custom domain — helm.treetop.capital
 
-To serve Helm from your own domain (and use it for the App Store support/privacy URLs):
+To serve HelpBnk from your own domain (and use it for the App Store support/privacy URLs):
 
 1. **Add one DNS record** at your `treetop.capital` registrar:
    ```

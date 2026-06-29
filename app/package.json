@@ -2,7 +2,7 @@
   "name": "helm-app",
   "version": "1.0.0",
   "private": true,
-  "description": "Helm — native iOS (and later Android) wrapper around the Helm web app",
+  "description": "HelpBnk — native iOS (and later Android) wrapper around the HelpBnk web app",
   "scripts": {
     "sync:web": "node scripts/sync-web.mjs",
     "build": "npm run sync:web && cap sync",

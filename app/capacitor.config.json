@@ -1,6 +1,6 @@
 {
   "appId": "capital.treetop.helm",
-  "appName": "Helm",
+  "appName": "HelpBnk",
   "webDir": "www",
   "ios": {
     "contentInset": "always"

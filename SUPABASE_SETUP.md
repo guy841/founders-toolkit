@@ -1,6 +1,6 @@
-# Helm accounts & sync — one-time Supabase setup
+# HelpBnk accounts & sync — one-time Supabase setup
 
-Helm's web tools work fully offline with no account. The optional **account +
+HelpBnk's web tools work fully offline with no account. The optional **account +
 cross-device sync** layer needs a tiny backend. We use [Supabase](https://supabase.com)
 (hosted Postgres + auth). This is the only manual step — once the two keys are in
 `helm-config.js`, sign-in/sync goes live for everyone.
@@ -16,7 +16,7 @@ crypto details.
 
 1. Sign in at <https://supabase.com> → **New project**.
 2. Name it `helm` (or anything), pick a strong DB password (save it in your
-   password manager — you won't need it for Helm), and choose a region close to
+   password manager — you won't need it for HelpBnk), and choose a region close to
    your users (e.g. **London / eu-west-2** for the UK).
 3. Wait for it to finish provisioning.
 
@@ -35,7 +35,7 @@ crypto details.
 
 Under **Project Settings → Data API** (or **API → Settings**):
 
-- **Enable Data API: ON** — required; Helm talks to the REST endpoints directly.
+- **Enable Data API: ON** — required; HelpBnk talks to the REST endpoints directly.
 - **Automatically expose new tables: OFF** (recommended, more secure). The schema
   grants the `vaults` table to `authenticated` explicitly, so it stays reachable
   with this disabled. Re-run `schema.sql` if you toggle this after creating the
@@ -51,7 +51,7 @@ Go to **Authentication → Providers → Email** and **Sign In / Providers**:
 - **Confirm email**: your call —
   - **ON (recommended for production):** users must click an emailed link before
     they can sign in. Most secure. Requires email delivery to work (see step 4).
-    Helm handles this — after sign-up it shows "Check your email".
+    HelpBnk handles this — after sign-up it shows "Check your email".
   - **OFF (frictionless):** users can sign in immediately after sign-up. Fine for
     early testing. Turn it on before you promote the site widely.
 
@@ -59,7 +59,7 @@ Under **Authentication → URL Configuration**, set **Site URL** to
 `https://helm.treetop.capital` and add it (and `http://localhost:*` if you test
 locally) to **Redirect URLs**.
 
-> **Password reset (recovery key).** Helm is end-to-end encrypted, so a normal
+> **Password reset (recovery key).** HelpBnk is end-to-end encrypted, so a normal
 > reset can't recover the data. Instead, each user gets a one-time **recovery
 > key** at sign-up. "Forgot password" sends a reset email (Supabase's recovery
 > flow); after clicking the link the user sets a new password and, if they enter
@@ -74,11 +74,11 @@ Supabase's built-in email sender is rate-limited (a few/hour) and sends from a
 SMTP provider under **Authentication → Emails → SMTP Settings** (Resend is easy:
 verify `treetop.capital` via DNS, then SMTP host `smtp.resend.com`, port `465`,
 user `resend`, password = API key). Set **Sender email** `hello@treetop.capital`
-and **Sender name** `Helm: Director's Toolkit`.
+and **Sender name** `HelpBnk Director's Toolkit`.
 
 Then brand the email itself: **Authentication → Email Templates → Confirm signup**,
 paste the contents of [`supabase/email-templates/confirm-signup.html`](supabase/email-templates/confirm-signup.html),
-and set the subject to `Confirm your email · Helm: Director's Toolkit`.
+and set the subject to `Confirm your email · HelpBnk Director's Toolkit`.
 
 > **Quick-start shortcut:** to go live before doing the SMTP/DNS setup, just turn
 > **Confirm email OFF** (sign-up becomes instant, no email needed). Re-enable it
@@ -86,7 +86,7 @@ and set the subject to `Confirm your email · Helm: Director's Toolkit`.
 > set the **Site URL** first (section 3) — a wrong Site URL is what makes the
 > confirmation link error.
 
-## 5. Wire up Helm
+## 5. Wire up HelpBnk
 
 1. **Project Settings → API.** Copy:
    - **Project URL** (e.g. `https://abcdefgh.supabase.co`)

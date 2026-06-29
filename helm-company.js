@@ -1,5 +1,5 @@
 /* =============================================================================
-   Helm — shared "active company" context
+   HelpBnk — shared "active company" context
    -----------------------------------------------------------------------------
    A lightweight company registry used across every tool. Pick a company once on
    the hub and each tool reads its key facts to pre-fill itself.
@@ -100,7 +100,7 @@
     var css =
       '.hc-switch{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:"Outfit",system-ui,sans-serif}' +
       '.hc-sel{appearance:none;-webkit-appearance:none;border:1px solid var(--border,#E5E5DF);background:var(--card,#fff) url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%235C5C58\' stroke-width=\'2.5\' stroke-linecap=\'round\'><polyline points=\'6 9 12 15 18 9\'/></svg>") no-repeat right 11px center;color:var(--text,#1C1C1A);font:600 14px/1 "Outfit",system-ui,sans-serif;padding:10px 30px 10px 12px;border-radius:10px;cursor:pointer;max-width:100%}' +
-      '.hc-sel:focus{outline:2px solid var(--brand,#34577C);outline-offset:1px}' +
+      '.hc-sel:focus{outline:2px solid var(--brand,#1597C4);outline-offset:1px}' +
       '.hc-btn{border:1px solid var(--border,#E5E5DF);background:var(--card,#fff);color:var(--text-2,#5C5C58);font:600 14px/1 "Outfit",system-ui,sans-serif;padding:10px 13px;border-radius:10px;cursor:pointer}' +
       '.hc-btn:hover{background:#f4f4f1}' +
       '.hc-facts{margin-top:14px;border:1px solid var(--border,#E5E5DF);background:var(--card,#fff);border-radius:14px;padding:16px 18px}' +
@@ -112,15 +112,15 @@
       '.hc-ye{display:flex;gap:8px}.hc-ye select{flex:1}' +
       '.hc-toggles{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}' +
       '.hc-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border,#E5E5DF);background:var(--input-bg,#F2F2F0);color:var(--text-2,#5C5C58);font:600 12.5px/1 "Outfit",sans-serif;padding:8px 12px;border-radius:999px;cursor:pointer;user-select:none}' +
-      '.hc-chip[aria-pressed=true]{background:var(--brand,#34577C);border-color:var(--brand,#34577C);color:#fff}' +
+      '.hc-chip[aria-pressed=true]{background:var(--brand,#1597C4);border-color:var(--brand,#1597C4);color:#fff}' +
       '.hc-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--border,#E5E5DF);background:var(--card,#fff);border-radius:12px;padding:9px 12px;margin:0 0 18px;font-family:"Manrope",system-ui,sans-serif}' +
       '.hc-banner .hc-eyebrow{font:600 11px/1 "Outfit",sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#8A8A85)}' +
       '.hc-banner .hc-facts-mini{color:var(--text-2,#5C5C58);font-size:.82rem;margin-left:auto}' +
-      '.hc-banner a{color:var(--brand,#34577C);font:600 13px/1 "Outfit",sans-serif;text-decoration:none}' +
+      '.hc-banner a{color:var(--brand,#1597C4);font:600 13px/1 "Outfit",sans-serif;text-decoration:none}' +
       '.hc-empty{color:var(--text-2,#5C5C58);font-size:.9rem;font-family:"Manrope",system-ui,sans-serif}' +
       '.hc-actions{margin-top:16px;display:flex;gap:10px;align-items:center}' +
-      '.hc-btn-primary{background:var(--brand,#34577C);border-color:var(--brand,#34577C);color:#fff}' +
-      '.hc-btn-primary:hover{background:var(--brand-dark,#2A4763)}' +
+      '.hc-btn-primary{background:var(--brand,#1597C4);border-color:var(--brand,#1597C4);color:#fff}' +
+      '.hc-btn-primary:hover{background:var(--brand-dark,#117C9F)}' +
       '.hc-saved-hint{font-size:.8rem;color:var(--muted,#8A8A85);font-family:"Manrope",system-ui,sans-serif}' +
       '.hc-fc{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}' +
       '.hc-fc-sum{color:var(--text-2,#5C5C58);font-size:.86rem;margin:3px 0 0;font-family:"Manrope",system-ui,sans-serif}';

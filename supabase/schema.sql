@@ -1,4 +1,4 @@
--- Helm — Supabase schema for end-to-end encrypted cross-device sync.
+-- HelpBnk — Supabase schema for end-to-end encrypted cross-device sync.
 -- Paste this whole file into the Supabase SQL editor and run it once.
 --
 -- Design: ONE row per user, holding only an opaque AES-GCM ciphertext + its IV.

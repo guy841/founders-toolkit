@@ -292,6 +292,7 @@ const SCHEMA = [
     { key: "piRenewal", label: "Professional indemnity — renewal date", type: "date" },
     { key: "otherInsurance", label: "Other cover (cyber, contents, D&O…)", multiline: true, full: true },
   ]},
+  { title: "Other renewals", icon: "note", custom: "renewals", fields: [] },
   { title: "Business banking", icon: "bank", fields: [
     { key: "bankName", label: "Bank name" },
     { key: "accountName", label: "Account name" },
@@ -320,6 +321,7 @@ const eyeSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 const eyeOffSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 const copySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const trashSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
 
 function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
@@ -354,15 +356,51 @@ function buildField(f) {
 }
 
 function render() {
-  document.getElementById("sections").innerHTML = SCHEMA.map(sec => `
-    <details class="section" ${sec.open ? "open" : ""} data-testid="section">
-      <summary>
+  document.getElementById("sections").innerHTML = SCHEMA.map(sec => {
+    const head = `<summary>
         <span class="sec-icon">${ICONS[sec.icon] || ICONS.doc}</span>
         ${esc(sec.title)}
         <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-      </summary>
-      <div class="body"><div class="fields">${sec.fields.map(buildField).join("")}</div></div>
-    </details>`).join("");
+      </summary>`;
+    const body = sec.custom === "renewals"
+      ? `<div class="body">
+          <p class="hint" style="margin:0 0 12px">Anything else that renews on a regular basis — a domain, a licence, cyber cover, a subscription. These show up in your <a href="../deadline-copilot/index.html">Deadline Copilot</a>.</p>
+          <div id="renewal-rows"></div>
+          <button type="button" class="btn" id="add-renewal" style="margin-top:4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add renewal</button>
+          <input type="hidden" id="fld-customRenewals" data-key="customRenewals" />
+        </div>`
+      : `<div class="body"><div class="fields">${sec.fields.map(buildField).join("")}</div></div>`;
+    return `<details class="section" ${sec.open ? "open" : ""} data-testid="section">${head}${body}</details>`;
+  }).join("");
+}
+
+/* ---------- Custom (repeatable) renewals ---------- */
+function parseCustomRenewals(v) { if (!v) return []; try { const a = JSON.parse(v); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+function renewalRowHTML(r) {
+  r = r || {};
+  return `<div class="renewal-row" style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+    <input class="f rn-name" type="text" data-rn="name" placeholder="What renews (e.g. Domain name)" value="${esc(r.name || "")}" />
+    <input class="f rn-date" type="date" data-rn="date" value="${esc(r.date || "")}" style="max-width:180px" />
+    <button type="button" class="icon-btn rn-del" aria-label="Remove renewal" title="Remove">${trashSvg}</button>
+  </div>`;
+}
+function renderRenewalRows(list) {
+  const c = document.getElementById("renewal-rows"); if (!c) return;
+  c.innerHTML = (list && list.length ? list : []).map(renewalRowHTML).join("");
+}
+function readRenewalRows() {
+  const out = [];
+  document.querySelectorAll("#renewal-rows .renewal-row").forEach(row => {
+    const name = (row.querySelector(".rn-name").value || "").trim();
+    const date = (row.querySelector(".rn-date").value || "").trim();
+    if (name || date) out.push({ name, date });
+  });
+  return out;
+}
+function serializeRenewalRows() {
+  const h = document.getElementById("fld-customRenewals"); if (!h) return;
+  const rows = readRenewalRows();
+  h.value = rows.length ? JSON.stringify(rows) : "";
 }
 
 /* ---------- State + persistence ----------
@@ -384,6 +422,7 @@ function activeData() { const id = activeId(); return (id && recs[id]) ? recs[id
 function companyLabelById(id) { const c = HC() && HC().list().find(x => x.id === id); return (c && c.name && c.name.trim()) || "Untitled company"; }
 function writeActiveFromForm() {
   const id = activeId(); if (!id) return;
+  serializeRenewalRows();        // fold the repeatable rows into the hidden customRenewals field
   recs[id] = collectForm();
   // keep the registry name in sync with the companyName field
   if (HC()) HC().rename(id, recs[id].companyName || "");
@@ -411,6 +450,10 @@ function renewalsFromData(data) {
   const out = [];
   if (!data) return out;
   RENEWAL_FIELDS.forEach(r => { const iso = toISODate(data[r.key]); if (iso) out.push({ name: r.name, date: iso }); });
+  parseCustomRenewals(data.customRenewals).forEach(c => {
+    const iso = toISODate(c && c.date); const nm = (c && c.name || "").trim();
+    if (iso && nm) out.push({ name: nm, date: iso });
+  });
   return out;
 }
 // Publish the active company's renewals into its shared profile (only if changed).
@@ -621,6 +664,7 @@ function renderSwitcher() {
 function renderForm() {
   const data = activeData() || {};
   document.querySelectorAll("[data-key]").forEach(el => { el.value = data[el.getAttribute("data-key")] || ""; });
+  renderRenewalRows(parseCustomRenewals(data.customRenewals));
 }
 
 function showSaved(iso) {
@@ -668,8 +712,23 @@ document.getElementById("sections").addEventListener("input", (e) => {
   }, 350);
 });
 
-// Reveal / copy (event delegation)
+// Reveal / copy / renewal rows (event delegation)
 document.getElementById("sections").addEventListener("click", async (e) => {
+  const addRn = e.target.closest("#add-renewal");
+  if (addRn) {
+    const c = document.getElementById("renewal-rows");
+    c.insertAdjacentHTML("beforeend", renewalRowHTML({}));
+    const nm = c.lastElementChild && c.lastElementChild.querySelector(".rn-name");
+    if (nm) nm.focus();
+    return;
+  }
+  const delRn = e.target.closest(".rn-del");
+  if (delRn) {
+    const row = delRn.closest(".renewal-row");
+    if (row) row.remove();
+    writeActiveFromForm(); persist();
+    return;
+  }
   const reveal = e.target.closest(".reveal-btn");
   if (reveal) {
     const inp = document.getElementById(reveal.getAttribute("data-target"));

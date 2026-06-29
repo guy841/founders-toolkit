@@ -96,6 +96,12 @@ Sync talks only to your Supabase project (a different origin), so it works on an
 static host and is never touched by the offline service-worker cache. After editing
 `helm-config.js` or `helm-sync.js`, bump `const CACHE` in `sw.js` so clients update.
 
+## Architecture & operations
+
+For a technical overview (logins, encryption, database, hosting) with diagrams, see
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). For deploy, restore, key-rotation and
+incident procedures, see [`docs/OPS_RUNBOOK.md`](docs/OPS_RUNBOOK.md).
+
 ## Disclaimer
 
 These tools provide general estimates based on standard UK rules and are not a

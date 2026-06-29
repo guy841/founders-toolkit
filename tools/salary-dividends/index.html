@@ -33,7 +33,7 @@
   .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
   .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
   .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
-  .logo img { height: 46px; width: auto; display: block; border-radius: 9px; }
+  .logo img { height: 50px; width: auto; display: block; }
   .logo .wordmark { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 700; color: var(--brand); font-size: 1.05rem; letter-spacing: -0.02em; }
   .logo .mark { width: 32px; height: 32px; border-radius: 9px; background: transparent; display: grid; place-items: center; }
   .back { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.85rem; text-decoration: none; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
@@ -230,7 +230,7 @@
 
 <script>
 /* CONFIG — set your own logo */
-const LOGO_URL = "../../icons/helpbnk-logo.png";
+const LOGO_URL = "../../icons/helpbnk-logo.jpg";
 (function(){ if(LOGO_URL){ const i=document.getElementById("logo-img"); i.src=LOGO_URL; i.onload=()=>{i.style.display="block";document.getElementById("logo-fallback").style.display="none";}; i.onerror=()=>{i.style.display="none";document.getElementById("logo-fallback").style.display="flex";}; } })();
 
 /* ===== 2025/26 tax constants (England/Wales/NI) ===== */

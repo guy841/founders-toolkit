@@ -276,20 +276,20 @@ const SCHEMA = [
   { title: "Other registrations", icon: "doc", fields: [
     { key: "eori", label: "EORI number", hint: "Only if you import or export goods" },
     { key: "icoRef", label: "ICO data protection registration", hint: "Reference from paying the annual data protection fee" },
-    { key: "icoRenewal", label: "ICO fee renewal date", hint: "The fee renews every year — diarise it" },
+    { key: "icoRenewal", label: "ICO fee renewal date", hint: "The fee renews every year — shows in the Deadline Copilot", type: "date" },
     { key: "cisRef", label: "CIS reference", hint: "Construction Industry Scheme, if relevant" },
     { key: "otherReg", label: "Other registrations / licences", multiline: true, full: true },
   ]},
   { title: "Insurance", icon: "shield", fields: [
     { key: "elInsurer", label: "Employers' liability — insurer", hint: "Legally required once you have staff" },
     { key: "elPolicy", label: "Employers' liability — policy number" },
-    { key: "elRenewal", label: "Employers' liability — renewal date" },
+    { key: "elRenewal", label: "Employers' liability — renewal date", type: "date" },
     { key: "plInsurer", label: "Public liability — insurer" },
     { key: "plPolicy", label: "Public liability — policy number" },
-    { key: "plRenewal", label: "Public liability — renewal date" },
+    { key: "plRenewal", label: "Public liability — renewal date", type: "date" },
     { key: "piInsurer", label: "Professional indemnity — insurer" },
     { key: "piPolicy", label: "Professional indemnity — policy number" },
-    { key: "piRenewal", label: "Professional indemnity — renewal date" },
+    { key: "piRenewal", label: "Professional indemnity — renewal date", type: "date" },
     { key: "otherInsurance", label: "Other cover (cyber, contents, D&O…)", multiline: true, full: true },
   ]},
   { title: "Business banking", icon: "bank", fields: [
@@ -327,6 +327,13 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt
 function buildField(f) {
   const cls = f.full ? "field full" : "field";
   const tag = f.sensitive ? `<span class="sensitive-tag">private</span>` : "";
+  if (f.type === "date") {
+    return `<div class="${cls}">
+      <label class="lbl" for="fld-${f.key}">${esc(f.label)}${tag}</label>
+      <div class="input-wrap"><input class="f" type="date" id="fld-${f.key}" data-key="${f.key}" /></div>
+      ${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ""}
+    </div>`;
+  }
   if (f.multiline) {
     return `<div class="${cls}">
       <label class="lbl" for="fld-${f.key}">${esc(f.label)}${tag}</label>
@@ -384,6 +391,37 @@ function writeActiveFromForm() {
 // Add a registry company (preserving id) for a record we're importing/migrating.
 function ensureRegistry(id, name) { if (HC()) HC().ensure(id, name || ""); }
 
+/* ---------- Renewals bridge ----------
+   Any field with a renewal date is published to the shared company profile as
+   { name, date(YYYY-MM-DD) } so the Deadline Copilot can show it. */
+const RENEWAL_FIELDS = [
+  { key: "icoRenewal", name: "ICO data protection fee" },
+  { key: "elRenewal",  name: "Employers' liability insurance" },
+  { key: "plRenewal",  name: "Public liability insurance" },
+  { key: "piRenewal",  name: "Professional indemnity insurance" },
+];
+function toISODate(v) {
+  if (!v) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;          // already ISO (date input)
+  const t = Date.parse(v); if (isNaN(t)) return "";      // tolerate legacy free-text
+  const d = new Date(t);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function renewalsFromData(data) {
+  const out = [];
+  if (!data) return out;
+  RENEWAL_FIELDS.forEach(r => { const iso = toISODate(data[r.key]); if (iso) out.push({ name: r.name, date: iso }); });
+  return out;
+}
+// Publish the active company's renewals into its shared profile (only if changed).
+function syncRenewalsToProfile() {
+  if (!HC()) return;
+  const id = activeId(); if (!id) return;
+  const next = renewalsFromData(recs[id]);
+  const cur = (HC().getProfile() || {}).renewals || [];
+  if (JSON.stringify(cur) !== JSON.stringify(next)) HC().setProfile({ renewals: next });
+}
+
 /* Encryption (optional passphrase protection via Web Crypto) */
 const ENC_KEY = STORAGE_KEY + ":enc";
 const KDF_ITER = 250000;
@@ -413,6 +451,7 @@ async function decryptBlob(blob, key) {
 async function persist() {
   try {
     savedAt = new Date().toISOString();
+    syncRenewalsToProfile();   // publish renewal dates to the shared profile for the Deadline Copilot
     if (cryptoKey) {
       localStorage.setItem(ENC_KEY, JSON.stringify(await encryptStore()));
       localStorage.removeItem(STORAGE_KEY);      // never leave plaintext detail behind

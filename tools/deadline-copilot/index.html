@@ -363,30 +363,13 @@
         </div>
       </div>
 
-      <!-- Data protection -->
+      <!-- Renewals — pulled from Company Records -->
       <div class="form-section">
         <div class="section-title">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Data protection
+          Insurance &amp; data-protection renewals
         </div>
-
-        <div class="switch-row">
-          <span>
-            <span class="switch-lbl">ICO data protection fee</span>
-            <span class="switch-sub">Annual fee if you handle personal data</span>
-          </span>
-          <button type="button" class="switch" id="sw-ico" data-testid="toggle-ico" role="switch" aria-checked="false" aria-label="ICO data protection fee"></button>
-        </div>
-        <div class="collapsible hidden" id="ico-fields">
-          <div class="field" style="margin-top:12px; margin-bottom:0">
-            <label class="lbl" for="ico-day">ICO registration / last renewal date</label>
-            <div class="date-row">
-              <select id="ico-day" data-testid="ico-day" aria-label="ICO renewal day"></select>
-              <select id="ico-month" data-testid="ico-month" aria-label="ICO renewal month"></select>
-              <select id="ico-year" data-testid="ico-year" aria-label="ICO renewal year"></select>
-            </div>
-          </div>
-        </div>
+        <p style="font-size:0.85rem;color:var(--muted);margin:6px 0 0;line-height:1.5">Renewal dates for your insurance policies and the ICO data-protection fee are pulled automatically from your <a href="../company-records/index.html">Company Records</a> — add them there and they'll show up in your deadlines below.</p>
       </div>
 
       <button type="submit" class="btn btn-primary" id="calc-btn" data-testid="calculate-btn">
@@ -506,7 +489,6 @@ populateDateSelects("ye",  NOW_YEAR - 8,  NOW_YEAR + 4);
 populateDateSelects("inc", 1980,          NOW_YEAR + 1);
 populateDateSelects("cs",  NOW_YEAR - 8,  NOW_YEAR + 1);
 populateDateSelects("vat", NOW_YEAR - 4,  NOW_YEAR + 2);
-populateDateSelects("ico", NOW_YEAR - 8,  NOW_YEAR + 1);
 
 /* ===================== SWITCHES ===================== */
 function toggle(btn) {
@@ -519,7 +501,6 @@ const swCs    = document.getElementById("sw-cs");
 const swVat   = document.getElementById("sw-vat");
 const swPaye  = document.getElementById("sw-paye");
 const swSa    = document.getElementById("sw-sa");
-const swIco   = document.getElementById("sw-ico");
 
 swFirst.addEventListener("click", () => toggle(swFirst));
 swCs.addEventListener("click", () => {
@@ -530,9 +511,6 @@ swVat.addEventListener("click", () => {
 });
 swPaye.addEventListener("click", () => toggle(swPaye));
 swSa.addEventListener("click", () => toggle(swSa));
-swIco.addEventListener("click", () => {
-  document.getElementById("ico-fields").classList.toggle("hidden", !toggle(swIco));
-});
 
 const isOn = (btn) => btn.getAttribute("aria-checked") === "true";
 
@@ -550,7 +528,7 @@ function markInvalid(prefix, bad) {
 }
 
 function gatherAndValidate() {
-  ["ye","inc","cs","vat","ico"].forEach(p => markInvalid(p, false));
+  ["ye","inc","cs","vat"].forEach(p => markInvalid(p, false));
   const errors = [];
 
   const ye = readDate("ye");
@@ -576,14 +554,12 @@ function gatherAndValidate() {
     else if (!isValidDate(vat.y, vat.m, vat.d)) { errors.push(`The VAT quarter-end isn't a real date — please check it.`); markInvalid("vat", true); }
   }
 
-  let ico = null;
-  if (isOn(swIco)) {
-    ico = readDate("ico");
-    if (!ico.filled) { errors.push("ICO fee is enabled — please choose your ICO registration / last renewal date."); markInvalid("ico", true); }
-    else if (!isValidDate(ico.y, ico.m, ico.d)) { errors.push(`The ICO registration / renewal date isn't a real date — please check it.`); markInvalid("ico", true); }
-  }
-
   if (errors.length) return { ok: false, errors };
+
+  // Renewal dates (insurance, ICO fee) are entered in Company Records and pulled
+  // through here via the shared company profile.
+  var prof = (window.HelmCompany && HelmCompany.getProfile()) || {};
+  var renewals = Array.isArray(prof.renewals) ? prof.renewals : [];
 
   return {
     ok: true,
@@ -594,7 +570,7 @@ function gatherAndValidate() {
     vat: vat ? makeDate(vat.y, vat.m, vat.d) : null,
     paye: isOn(swPaye),
     selfAssessment: isOn(swSa),
-    ico: ico ? makeDate(ico.y, ico.m, ico.d) : null,
+    renewals: renewals,
   };
 }
 
@@ -674,15 +650,21 @@ function computeDeadlines(input) {
     });
   }
 
-  // ICO Data Protection Fee (ICO) — renews annually on the registration anniversary
-  if (input.ico) {
+  // Renewals from Company Records (insurance policies, ICO fee) — each renews
+  // annually, so show the next anniversary of the stored date.
+  (input.renewals || []).forEach(function (r) {
+    if (!r || !r.date) return;
+    var parts = String(r.date).split("-");          // expects YYYY-MM-DD
+    if (parts.length !== 3) return;
+    var y = +parts[0], m = +parts[1], d = +parts[2];
+    if (!isValidDate(y, m, d)) return;
     list.push({
-      name: "ICO Data Protection Fee",
-      category: "ICO",
-      date: nextAnniversary(input.ico.getMonth()+1, input.ico.getDate(), t),
-      description: "Renew your data protection fee with the ICO (annually, by the anniversary of your registration)."
+      name: r.name + " renewal",
+      category: "Renewal",
+      date: nextAnniversary(m, d, t),
+      description: "Renew your " + r.name.toLowerCase() + " (annual renewal, from your Company Records)."
     });
-  }
+  });
 
   // PAYE Payment (HMRC) — 22nd of each month (electronic). Show next upcoming.
   if (input.paye) {
@@ -866,7 +848,6 @@ document.getElementById("form").addEventListener("submit", (e) => {
     if (b && on && b.getAttribute("aria-checked") !== "true") b.click();
   }
   ensureSwitch("sw-paye", !!p.employsStaff);
-  ensureSwitch("sw-ico", !!p.handlesData);   // ICO data-protection fee applies to most who handle personal data
   // VAT — pull through from key facts. If the company set a VAT quarter-end month,
   // fill the quarter-end date too (last day of that month, most recent occurrence).
   if (p.vatRegistered) {

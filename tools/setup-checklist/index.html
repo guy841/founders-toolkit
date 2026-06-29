@@ -119,7 +119,6 @@
     <a class="logo" href="../../index.html" data-testid="logo" aria-label="HelpBnk home">
       <img id="logo-img" alt="Logo" style="display:none" />
       <span class="wordmark" id="logo-fallback">
-        <span class="mark" aria-hidden="true"><svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 16V10M9 10L4 5M9 10L14 5" stroke="#28A8E0" stroke-width="2.6"/><path d="M15 8V14M15 14L10 19M15 14L20 19" stroke="#15B6A3" stroke-width="2.6"/></svg></span>
         HelpBnk
       </span>
     </a>
@@ -157,7 +156,7 @@
 
 <script>
 /* CONFIG — set your own logo */
-const LOGO_URL = "../../icons/helpbnk-logo.jpg";
+const LOGO_URL = "";
 (function(){ if(LOGO_URL){ const i=document.getElementById("logo-img"); i.src=LOGO_URL; i.onload=()=>{i.style.display="block";document.getElementById("logo-fallback").style.display="none";}; i.onerror=()=>{i.style.display="none";document.getElementById("logo-fallback").style.display="flex";}; } })();
 
 const STORAGE_KEY = "founders-toolkit:setup-checklist:v1";

@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="HelpBnk" />
 <title>HelpBnk Director's Toolkit — UK company director tools</title>
-<meta name="description" content="Free tools for UK limited company directors: deadline tracking, Corporation Tax estimates, salary vs dividend planning, setup checklists and more. Works on your device, with optional end-to-end encrypted sync across your devices." />
+<meta name="description" content="Free tools for UK limited company directors: deadline tracking, Corporation Tax estimates, salary vs dividend planning, setup checklists and more. Sign up for end-to-end encrypted sync across your devices — recoverable, and readable only by you — or work offline on this device." />
 
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
@@ -45,7 +45,7 @@
 
   /* Logo */
   .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: 40px; }
-  .logo img { height: 40px; width: auto; display: block; }
+  .logo img { height: 46px; width: auto; display: block; border-radius: 9px; }
   .logo .wordmark { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 700; color: var(--brand); font-size: 1.1rem; letter-spacing: -0.02em; }
   .logo .mark { width: 34px; height: 34px; border-radius: 9px; background: transparent; display: grid; place-items: center; }
   @media (max-width: 640px) { .logo img { height: 30px; } .logo .wordmark { font-size: 0.95rem; } .logo .mark { width: 28px; height: 28px; } }
@@ -120,9 +120,9 @@
   </a>
 
   <header class="hero">
-    <div class="eyebrow">Free · No sign-up required · Optional end-to-end encrypted sync</div>
+    <div class="eyebrow">Free · Sign-up recommended · End-to-end encrypted sync with recovery key</div>
     <h1>Everything a UK company director needs to stay on top of.</h1>
-    <p>Simple, accurate tools for the deadlines, taxes and duties of running a limited company — whether you incorporated last week or have been at the helm for years.</p>
+    <p>Simple, accurate tools for the deadlines, taxes and duties of running a limited company — whether you incorporated last week or years ago. Create a free account to keep everything in sync across your devices, end-to-end encrypted so only you can read it — now with a recovery key, so a forgotten password no longer means lost data.</p>
     <div class="install-row" id="install-row">
       <button type="button" class="install-btn" id="install-btn" data-testid="install-btn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -223,7 +223,7 @@
    CONFIG
    - LOGO_URL: your brand image (leave "" for the placeholder)
    ========================================================= */
-const LOGO_URL = "";
+const LOGO_URL = "icons/helpbnk-logo.png";
 
 (function init(){
   if (LOGO_URL) {

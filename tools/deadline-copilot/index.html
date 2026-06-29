@@ -56,7 +56,7 @@
     display: inline-flex; align-items: center; gap: 10px;
     text-decoration: none;
   }
-  .logo img { height: 40px; width: auto; display: block; }
+  .logo img { height: 46px; width: auto; display: block; border-radius: 9px; }
   .logo .wordmark {
     display: flex; align-items: center; gap: 10px;
     font-family: "Outfit", sans-serif; font-weight: 700;
@@ -274,7 +274,7 @@
 
   <header class="hero">
     <h1>Director's Deadline Copilot</h1>
-    <p>Enter your UK limited company details to see every filing and payment deadline, counted down from today. No sign-up required — the details you enter stay on your device.</p>
+    <p>Enter your UK limited company details to see every filing and payment deadline, counted down from today. Sign up to sync your details across devices, end-to-end encrypted — or keep everything on this device.</p>
   </header>
 
   <div id="hc-banner"></div>
@@ -432,7 +432,7 @@
    CONFIG — set your own logo here.
    Leave as "" to show the built-in wordmark placeholder.
    ========================================================= */
-const LOGO_URL = ""; // e.g. "https://yourdomain.com/logo.png"
+const LOGO_URL = "../../icons/helpbnk-logo.png"; // e.g. "https://yourdomain.com/logo.png"
 
 (function initLogo(){
   if (LOGO_URL) {

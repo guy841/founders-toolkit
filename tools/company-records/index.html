@@ -167,6 +167,7 @@
     <button type="button" class="btn" id="export-btn" data-testid="export-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export backup</button>
     <button type="button" class="btn" id="import-btn" data-testid="import-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import</button>
     <input type="file" id="import-file" accept="application/json,.json" style="display:none" />
+    <button type="button" class="btn" id="demo-btn" data-testid="demo-btn" title="Load a sample company to explore the tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4M4 19h4"/><path d="M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5L13 3z"/></svg> Load demo company</button>
     <button type="button" class="btn" id="print-btn" data-testid="print-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print / PDF</button>
     <button type="button" class="btn btn-danger" id="clear-btn" data-testid="clear-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Clear this company</button>
     <span class="save-status" id="save-status"></span>
@@ -698,6 +699,35 @@ document.getElementById("export-btn").addEventListener("click", () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
+// Normalise any backup shape to a list of {id, name, profile, data}.
+function normalizeBackup(parsed) {
+  let companies;
+  if (parsed && Array.isArray(parsed.companies)) {
+    companies = parsed.companies.filter(c => c && typeof c === "object").map(c => ({
+      id: c.id || uid(), name: c.name || (c.data && c.data.companyName) || "",
+      profile: (c.profile && typeof c.profile === "object") ? c.profile : {},
+      data: (c.data && typeof c.data === "object") ? c.data : {},
+    }));
+  } else if (parsed && parsed.data && typeof parsed.data === "object") {
+    companies = [{ id: uid(), name: parsed.data.companyName || "", profile: {}, data: parsed.data }];
+  } else if (parsed && typeof parsed === "object") {
+    companies = [{ id: uid(), name: parsed.companyName || "", profile: {}, data: parsed }];
+  } else throw new Error("bad");
+  if (!companies.length) throw new Error("empty");
+  return companies;
+}
+// Apply a normalised list into the registry + records, then re-render.
+function ingestCompanies(companies) {
+  companies.forEach(c => {
+    recs[c.id] = c.data;
+    HC().ensure(c.id, c.name);
+    if (Object.keys(c.profile).length) { HC().setActive(c.id); HC().setProfile(c.profile); }
+  });
+  HC().setActive(companies[0].id);
+  renderedId = activeId();
+  renderSwitcher(); renderForm(); persist();
+}
+
 document.getElementById("import-btn").addEventListener("click", () => document.getElementById("import-file").click());
 document.getElementById("import-file").addEventListener("change", (e) => {
   const file = e.target.files[0];
@@ -705,30 +735,9 @@ document.getElementById("import-file").addEventListener("change", (e) => {
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      const parsed = JSON.parse(reader.result);
-      // Normalise any backup shape to a list of {id, name, profile, data}.
-      let companies;
-      if (parsed && Array.isArray(parsed.companies)) {
-        companies = parsed.companies.filter(c => c && typeof c === "object").map(c => ({
-          id: c.id || uid(), name: c.name || (c.data && c.data.companyName) || "",
-          profile: (c.profile && typeof c.profile === "object") ? c.profile : {},
-          data: (c.data && typeof c.data === "object") ? c.data : {},
-        }));
-      } else if (parsed && parsed.data && typeof parsed.data === "object") {
-        companies = [{ id: uid(), name: parsed.data.companyName || "", profile: {}, data: parsed.data }];
-      } else if (parsed && typeof parsed === "object") {
-        companies = [{ id: uid(), name: parsed.companyName || "", profile: {}, data: parsed }];
-      } else throw new Error("bad");
-      if (!companies.length) throw new Error("empty");
+      const companies = normalizeBackup(JSON.parse(reader.result));
       if (!confirm("Import " + companies.length + " compan" + (companies.length === 1 ? "y" : "ies") + " into your list? Existing companies are kept; any with a matching id are updated.")) return;
-      companies.forEach(c => {
-        recs[c.id] = c.data;
-        HC().ensure(c.id, c.name);
-        if (Object.keys(c.profile).length) { HC().setActive(c.id); HC().setProfile(c.profile); }
-      });
-      HC().setActive(companies[0].id);
-      renderedId = activeId();
-      renderSwitcher(); renderForm(); persist();
+      ingestCompanies(companies);
     } catch (err) {
       alert("That file didn't look like a valid records backup.");
     }
@@ -736,6 +745,25 @@ document.getElementById("import-file").addEventListener("change", (e) => {
   reader.readAsText(file);
   e.target.value = "";
 });
+
+// Load a ready-made sample company so the tools can be demoed populated.
+async function loadDemo(skipConfirm) {
+  if (!HC()) return;
+  if (!skipConfirm && !confirm("Load the sample company “Brightwave Studio Ltd”? It's added to your list (existing companies are kept) so you can explore every tool with realistic data.")) return;
+  try {
+    const res = await fetch("../../demo/helpbnk-demo-company.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("fetch");
+    ingestCompanies(normalizeBackup(await res.json()));
+  } catch (err) {
+    alert("Couldn't load the demo company. If you're offline, open the live site and try again.");
+  }
+}
+document.getElementById("demo-btn").addEventListener("click", () => loadDemo(false));
+// Shareable demo link: /tools/company-records/?demo=1 auto-loads the sample company.
+(function demoParam() {
+  try { if (new URLSearchParams(location.search).get("demo") !== "1") return; } catch (e) { return; }
+  (function waitHC() { if (!window.HelmCompany) { setTimeout(waitHC, 30); return; } loadDemo(true); })();
+})();
 
 document.getElementById("print-btn").addEventListener("click", () => { writeActiveFromForm(); window.print(); });
 

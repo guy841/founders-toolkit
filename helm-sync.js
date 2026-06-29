@@ -516,6 +516,9 @@
   //  UI — a fixed account pill (top-right) + a modal. All injected from here.
   // =========================================================================
   var els = {};
+  var userActed = false;          // becomes true after the first real interaction
+  var savePromptOff = false;      // user dismissed the "create account to save" nudge this session
+  try { savePromptOff = sessionStorage.getItem("helm:savePrompt:off") === "1"; } catch (e) {}
   function injectStyles() {
     var css = '' +
       '.helm-acct{position:fixed;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:9000;font-family:"Outfit",system-ui,sans-serif}' +
@@ -549,7 +552,13 @@
       '.helm-sheet{position:relative}' +
       '.helm-status-line{font-size:.82rem;color:var(--text-2,#5C5C58);margin:0 0 14px}' +
       '.helm-reckey{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.05rem;letter-spacing:.04em;word-break:break-all;background:var(--input-bg,#F2F2F0);border:1px dashed var(--brand,#1597C4);border-radius:10px;padding:14px 16px;color:var(--text,#1C1C1A);text-align:center}' +
-      '@media (max-width:480px){.helm-pill span.lbl{display:none}}';
+      '@media (max-width:480px){.helm-pill span.lbl{display:none}}' +
+      '.helm-toast{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9002;display:none;max-width:460px;width:calc(100% - 32px);box-sizing:border-box;background:var(--card,#fff);border:1px solid var(--border,#E5E5DF);border-radius:14px;box-shadow:0 12px 40px rgba(20,20,18,.22);padding:14px 16px;font-family:"Manrope",system-ui,sans-serif}' +
+      '.helm-toast.show{display:block}' +
+      '.helm-toast p{margin:0 0 10px;font-size:.9rem;color:var(--text,#1C1C1A);line-height:1.45}' +
+      '.helm-toast .row{display:flex;gap:8px;justify-content:flex-end}' +
+      '.helm-toast .b{font:600 13px/1 "Outfit",sans-serif;border-radius:9px;padding:9px 13px;cursor:pointer;border:1px solid var(--border,#E5E5DF);background:var(--card,#fff);color:var(--text-2,#5C5C58)}' +
+      '.helm-toast .b.primary{background:var(--brand,#1597C4);border-color:var(--brand,#1597C4);color:#fff}';
     var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
   }
 
@@ -592,6 +601,50 @@
     els.modal.classList.add("show");
   }
   function closeModal() { els.modal.classList.remove("show"); }
+
+  // Open the account modal straight to a chosen view ("signup" | "signin").
+  // Falls back to whatever view is appropriate for the current state.
+  function openTo(view) {
+    if (!els.modal) return;                                   // dormant (not configured)
+    state.changeOpen = false; state.deleteOpen = false;
+    if (!CONFIGURED) { renderSheet("unconfigured"); }
+    else if (!CRYPTO_OK) { renderSheet("insecure"); }
+    else if (state.status === "locked") { renderSheet("unlock"); }
+    else if (state.session) { renderSheet("account"); }
+    else { renderSheet(view === "signin" ? "signin" : "signup"); }
+    els.modal.classList.add("show");
+  }
+
+  // ---- "save your work" nudge (soft gate) -----------------------------------
+  // Shown the first time a signed-out visitor saves real data, so their work
+  // gets backed up instead of living only in this browser. Fully dismissible.
+  function ensureToast() {
+    if (els.toast) return;
+    var t = document.createElement("div");
+    t.className = "helm-toast"; t.id = "helm-toast";
+    t.innerHTML =
+      '<p><b>Save your work?</b> Create a free account to back up &amp; sync this across your devices — end-to-end encrypted, readable only by you. Or keep it on this device.</p>' +
+      '<div class="row">' +
+        '<button class="b" id="helm-toast-no" type="button">Not now</button>' +
+        '<button class="b primary" id="helm-toast-yes" type="button">Create account</button>' +
+      '</div>';
+    document.body.appendChild(t);
+    els.toast = t;
+    $("#helm-toast-no").addEventListener("click", dismissSavePrompt);
+    $("#helm-toast-yes").addEventListener("click", function () { hideSavePrompt(); openTo("signup"); });
+  }
+  function hideSavePrompt() { if (els.toast) els.toast.classList.remove("show"); }
+  function dismissSavePrompt() {
+    hideSavePrompt(); savePromptOff = true;
+    try { sessionStorage.setItem("helm:savePrompt:off", "1"); } catch (e) {}
+  }
+  function maybePromptSave() {
+    if (!CONFIGURED || !CRYPTO_OK) return;     // accounts unavailable
+    if (state.session) return;                 // already signed in
+    if (savePromptOff || !userActed) return;   // dismissed, or not a user-driven write
+    ensureToast();
+    if (!els.toast.classList.contains("show")) els.toast.classList.add("show");
+  }
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
   function downloadText(name, text) {
@@ -842,7 +895,7 @@
       var proto = window.Storage && window.Storage.prototype;
       if (proto && !proto.__helmPatched) {
         var oSet = proto.setItem, oRem = proto.removeItem;
-        proto.setItem = function (k, v) { oSet.call(this, k, v); if (this === window.localStorage && k && k.indexOf(KEY_PREFIX) === 0) schedulePush(); };
+        proto.setItem = function (k, v) { oSet.call(this, k, v); if (this === window.localStorage && k && k.indexOf(KEY_PREFIX) === 0) { schedulePush(); maybePromptSave(); } };
         proto.removeItem = function (k) { oRem.call(this, k); if (this === window.localStorage && k && k.indexOf(KEY_PREFIX) === 0) schedulePush(); };
         proto.__helmPatched = true;
       }
@@ -914,6 +967,11 @@
     injectStyles();
     buildDOM();
     renderWidget();
+    // Only treat storage writes as "save intent" once the visitor has actually
+    // interacted, so default/initial writes on load don't trigger the nudge.
+    ["pointerdown", "keydown", "change"].forEach(function (ev) {
+      document.addEventListener(ev, function () { userActed = true; }, { once: true, capture: true });
+    });
     if (!CRYPTO_OK) return;   // configured but insecure context (e.g. http): show pill, explain
     hookStorage();
     resume().catch(function (e) { setStatus("error", e.message); });
@@ -925,6 +983,8 @@
     syncNow: function () { return push(true); },
     isSignedIn: function () { return !!state.session; },
     status: function () { return state.status; },
+    open: function (view) { openTo(view); },          // open account modal (e.g. "signup")
+    promptSave: function () { userActed = true; maybePromptSave(); },
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

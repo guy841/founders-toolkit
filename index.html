@@ -59,16 +59,11 @@
   /* Section label */
   .section-label { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 8px 0 16px; }
 
-  /* Install (PWA) */
-  .install-row { margin-top: 20px; display: none; }
-  .install-row.show { display: block; }
-  .install-btn { display: inline-flex; align-items: center; gap: 8px; font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.9rem; color: var(--brand); background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-btn); padding: 11px 16px; min-height: 44px; cursor: pointer; transition: background .14s, border-color .14s; }
-  .install-btn:hover { background: var(--input-bg); border-color: #D7D7CF; }
-  .install-btn svg { width: 17px; height: 17px; }
-  .ios-tip { margin-top: 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 14px 16px; max-width: 440px; font-size: 0.86rem; color: var(--text-2); box-shadow: var(--shadow); }
-  .ios-tip.hidden { display: none; }
-  .ios-tip b { color: var(--text); }
-  .ios-tip svg { width: 15px; height: 15px; vertical-align: -3px; }
+  /* Hero account CTA */
+  .hero-cta { margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .cta-btn { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 0.95rem; color: #fff; background: var(--brand); border: 1px solid var(--brand); border-radius: var(--radius-btn); padding: 12px 20px; min-height: 46px; cursor: pointer; transition: background .14s; }
+  .cta-btn:hover { background: var(--brand-dark); }
+  .cta-sub { font-size: 0.82rem; color: var(--muted); }
 
   /* Tile grid */
   .grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
@@ -119,16 +114,9 @@
   <header class="hero">
     <h1>Everything a UK company director needs to stay on top of.</h1>
     <p>Simple, accurate tools for the deadlines, taxes and duties of running a limited company — whether you incorporated last week or years ago. Create a free account to keep everything in sync across your devices, end-to-end encrypted so only you can read it — now with a recovery key, so a forgotten password no longer means lost data.</p>
-    <div class="install-row" id="install-row">
-      <button type="button" class="install-btn" id="install-btn" data-testid="install-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Install Director’s Toolkit
-      </button>
-      <div class="ios-tip hidden" id="ios-tip">
-        Add Director’s Toolkit to your home screen: tap the
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-        <b>Share</b> button in Safari, then choose <b>Add to Home Screen</b>.
-      </div>
+    <div class="hero-cta">
+      <button type="button" class="cta-btn" id="create-account-btn" data-testid="create-account-btn">Create a free account</button>
+      <span class="cta-sub">Free · syncs across your devices · end-to-end encrypted</span>
     </div>
   </header>
 
@@ -232,26 +220,13 @@ const LOGO_URL = "";
   document.getElementById("year").textContent = new Date().getFullYear();
 })();
 
-/* PWA: install button (Android/desktop prompt + iOS add-to-home-screen hint) */
-(function pwaInstall(){
-  const row = document.getElementById("install-row");
-  const btn = document.getElementById("install-btn");
-  const tip = document.getElementById("ios-tip");
-  if (!row || !btn) return;
-  const mm = window.matchMedia ? window.matchMedia("(display-mode: standalone)") : null;
-  const standalone = (mm && mm.matches) || window.navigator.standalone === true;
-  if (standalone) return; // already installed
-  const ua = navigator.userAgent || "";
-  const isiOS = /iphone|ipad|ipod/i.test(ua);
-  const isSafari = /safari/i.test(ua) && !/crios|fxios|edgios/i.test(ua);
-  let deferred = null;
-  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferred = e; row.classList.add("show"); });
-  if (isiOS && isSafari) row.classList.add("show");   // iOS can't prompt — show the hint button
-  btn.addEventListener("click", async () => {
-    if (deferred) { deferred.prompt(); const r = await deferred.userChoice; deferred = null; if (r && r.outcome === "accepted") row.classList.remove("show"); }
-    else if (tip) tip.classList.toggle("hidden");     // iOS / no-prompt browsers: reveal instructions
-  });
-  window.addEventListener("appinstalled", () => row.classList.remove("show"));
+/* Hero CTA: open the account modal (create account / sign in). */
+(function accountCta(){
+  const btn = document.getElementById("create-account-btn");
+  if (!btn) return;
+  btn.addEventListener("click", () => { if (window.HelmSync && HelmSync.open) HelmSync.open("signup"); });
+  // If already signed in, soften the label so it reads as account management.
+  setTimeout(() => { if (window.HelmSync && HelmSync.isSignedIn && HelmSync.isSignedIn()) btn.textContent = "Manage your account"; }, 400);
 })();
 
 /* PWA: register the service worker (web only — skipped inside the native app) */

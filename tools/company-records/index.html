@@ -121,10 +121,32 @@
   .icon-btn.copied { color: var(--green-tx); }
   .sensitive-tag { display: inline-block; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--amber-tx); background: var(--amber-bg); border: 1px solid var(--amber-bd); border-radius: 999px; padding: 2px 7px; margin-left: 7px; vertical-align: middle; }
 
+  /* ---- SIC code picker widget ---- */
+  .sic-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .sic-chips:empty { display: none; }
+  .sic-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 999px; padding: 6px 6px 6px 12px; font-size: 0.86rem; max-width: 100%; }
+  .sic-chip .sic-chip-code { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .sic-chip .sic-chip-desc { color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sic-chip .sic-chip-del { flex: none; width: 22px; height: 22px; border: none; background: transparent; border-radius: 50%; cursor: pointer; color: var(--muted); display: grid; place-items: center; }
+  .sic-chip .sic-chip-del:hover { background: rgba(28,28,26,.08); color: var(--text); }
+  .sic-chip .sic-chip-del svg { width: 13px; height: 13px; }
+  .sic-search-wrap { position: relative; }
+  .sic-results { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); max-height: 264px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 0.6rem; box-shadow: 0 10px 30px rgba(28,28,26,.12); }
+  .sic-results[hidden] { display: none; }
+  .sic-result { display: flex; gap: 10px; align-items: baseline; padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .sic-result:last-child { border-bottom: none; }
+  .sic-result:hover, .sic-result.active { background: var(--input-bg); }
+  .sic-result .sic-r-code { font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }
+  .sic-result .sic-r-desc { color: var(--text-2); font-size: 0.9rem; }
+  .sic-result mark { background: transparent; color: var(--brand); font-weight: 700; }
+  .sic-empty { padding: 11px 12px; color: var(--muted); font-size: 0.88rem; }
+  .sic-full-note { font-size: 0.78rem; color: var(--amber-tx); margin-top: 6px; }
+
   .disclaimer { margin-top: 24px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 16px; }
 
   @media print {
-    .topbar, .toolbar, .privacy, .input-actions, .disclaimer, .hero p { display: none !important; }
+    .topbar, .toolbar, .privacy, .input-actions, .disclaimer, .hero p, .sic-search-wrap, .sic-results, .sic-full-note { display: none !important; }
+    .sic-chip { border: 1px solid #ccc; }
     .section { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
     .section .body { display: block !important; }
     input.f, textarea.f { border: none; background: transparent; padding-left: 0; }
@@ -223,6 +245,7 @@
   </div>
 </div>
 
+<script src="../../sic-codes.js"></script>
 <script>
 /* CONFIG — set your own logo */
 const LOGO_URL = "";
@@ -249,7 +272,7 @@ const SCHEMA = [
     { key: "incorporationDate", label: "Date of incorporation", placeholder: "e.g. 14 May 2024" },
     { key: "registeredOffice", label: "Registered office address", multiline: true, full: true },
     { key: "tradingAddress", label: "Trading address (if different)", multiline: true, full: true },
-    { key: "sicCodes", label: "SIC code(s)", hint: "Nature-of-business codes" },
+    { key: "sicCodes", label: "SIC code(s)", full: true, custom: "sic", hint: "The nature-of-business codes on your Companies House record. Search by activity or code and pick up to 4." },
     { key: "chAuthCode", label: "Companies House authentication code", hint: "6-character WebFiling code — keep private", sensitive: true },
   ]},
   { title: "Corporation Tax (HMRC)", icon: "pound", fields: [
@@ -328,6 +351,21 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt
 function buildField(f) {
   const cls = f.full ? "field full" : "field";
   const tag = f.sensitive ? `<span class="sensitive-tag">private</span>` : "";
+  if (f.custom === "sic") {
+    return `<div class="${cls}">
+      <label class="lbl" for="sic-search">${esc(f.label)}${tag}</label>
+      <div class="sic-widget">
+        <div class="sic-chips" id="sic-chips"></div>
+        <div class="sic-search-wrap">
+          <input class="f" type="text" id="sic-search" autocomplete="off" placeholder="Search by activity or code — e.g. “software” or 62020" aria-label="Search SIC codes" aria-expanded="false" role="combobox" aria-controls="sic-results" />
+          <div class="sic-results" id="sic-results" role="listbox" hidden></div>
+        </div>
+        <div class="sic-full-note" id="sic-full-note" style="display:none">Companies House allows up to 4 SIC codes — remove one to add another.</div>
+        <input type="hidden" id="fld-sicCodes" data-key="sicCodes" />
+      </div>
+      ${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ""}
+    </div>`;
+  }
   if (f.type === "date") {
     return `<div class="${cls}">
       <label class="lbl" for="fld-${f.key}">${esc(f.label)}${tag}</label>
@@ -400,6 +438,120 @@ function serializeRenewalRows() {
   const h = document.getElementById("fld-customRenewals"); if (!h) return;
   const rows = readRenewalRows();
   h.value = rows.length ? JSON.stringify(rows) : "";
+}
+
+/* ---------- SIC code picker ----------
+   Searchable picker over the official Companies House condensed SIC 2007 list
+   (window.SIC_CODES, loaded from ../../sic-codes.js). Selected codes are stored
+   in the plain `sicCodes` field as "code — description; …" so they still print,
+   copy and round-trip if the list ever changes. */
+const SIC_X_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+const SIC_MAX = 4;   // Companies House allows up to 4 SIC codes per company
+let sicSelected = [];
+let sicActiveIdx = -1;
+let sicByCode = null;
+function sicMap() { if (!sicByCode) { sicByCode = new Map(Array.isArray(window.SIC_CODES) ? window.SIC_CODES : []); } return sicByCode; }
+function sicDesc(code) { return sicMap().get(code) || ""; }
+function sicParse(value) {
+  const out = []; const re = /\b\d{5}\b/g; let m;
+  while ((m = re.exec(String(value || ""))) !== null) {
+    const c = m[0];
+    if (sicDesc(c) && out.indexOf(c) === -1) out.push(c);
+    if (out.length >= SIC_MAX) break;
+  }
+  return out;
+}
+function sicSerialize() { return sicSelected.map(c => c + " — " + sicDesc(c)).join("; "); }
+function sicRenderChips() {
+  const c = document.getElementById("sic-chips"); if (!c) return;
+  c.innerHTML = sicSelected.map(code => `
+    <span class="sic-chip" data-code="${esc(code)}">
+      <span class="sic-chip-code">${esc(code)}</span>
+      <span class="sic-chip-desc" title="${esc(sicDesc(code))}">${esc(sicDesc(code))}</span>
+      <button type="button" class="sic-chip-del" data-code="${esc(code)}" aria-label="Remove SIC ${esc(code)}">${SIC_X_SVG}</button>
+    </span>`).join("");
+  const note = document.getElementById("sic-full-note");
+  if (note) note.style.display = sicSelected.length >= SIC_MAX ? "block" : "none";
+}
+// Populate the picker from the stored field value (called on load / company switch).
+function sicRenderFromValue() {
+  const hidden = document.getElementById("fld-sicCodes");
+  sicSelected = sicParse(hidden ? hidden.value : "");
+  if (hidden) hidden.value = sicSerialize();   // normalise the stored text
+  sicRenderChips();
+  sicCloseResults();
+  const s = document.getElementById("sic-search"); if (s) s.value = "";
+}
+function sicHighlight(text, q, digits) {
+  if (digits || !q) return esc(text);
+  const idx = text.toLowerCase().indexOf(q);
+  if (idx < 0) return esc(text);
+  return esc(text.slice(0, idx)) + "<mark>" + esc(text.slice(idx, idx + q.length)) + "</mark>" + esc(text.slice(idx + q.length));
+}
+function sicSearch(raw) {
+  const results = document.getElementById("sic-results"); if (!results) return;
+  const q = (raw || "").trim().toLowerCase();
+  if (!q) { sicCloseResults(); return; }
+  const digits = /^\d+$/.test(q);
+  const scored = [];
+  const list = Array.isArray(window.SIC_CODES) ? window.SIC_CODES : [];
+  for (let i = 0; i < list.length; i++) {
+    const code = list[i][0], desc = list[i][1];
+    if (sicSelected.indexOf(code) !== -1) continue;
+    const dl = desc.toLowerCase(); let score = -1;
+    if (digits) {
+      if (code === q) score = 0; else if (code.indexOf(q) === 0) score = 1; else if (code.indexOf(q) !== -1) score = 2;
+    } else {
+      const di = dl.indexOf(q);
+      if (di === 0) score = 0;
+      else if (di > 0) score = (dl[di - 1] === " " || dl[di - 1] === "(" || dl[di - 1] === ",") ? 1 : 2;
+      else if (code.indexOf(q) !== -1) score = 4;
+    }
+    if (score >= 0) scored.push([score, code, desc]);
+  }
+  scored.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
+  const top = scored.slice(0, 25);
+  sicActiveIdx = -1;
+  results.innerHTML = top.length
+    ? top.map(([, code, desc]) => `<div class="sic-result" role="option" data-code="${esc(code)}"><span class="sic-r-code">${esc(code)}</span><span class="sic-r-desc">${sicHighlight(desc, q, digits)}</span></div>`).join("")
+    : `<div class="sic-empty">No matching SIC codes — try another word.</div>`;
+  results.hidden = false;
+  const inp = document.getElementById("sic-search"); if (inp) inp.setAttribute("aria-expanded", "true");
+}
+function sicCloseResults() {
+  const results = document.getElementById("sic-results");
+  if (results) { results.hidden = true; results.innerHTML = ""; }
+  sicActiveIdx = -1;
+  const inp = document.getElementById("sic-search"); if (inp) inp.setAttribute("aria-expanded", "false");
+}
+function sicCommit() {
+  const hidden = document.getElementById("fld-sicCodes");
+  if (hidden) hidden.value = sicSerialize();
+  sicRenderChips();
+  writeActiveFromForm();
+  persist();
+}
+function sicAdd(code) {
+  if (!code || sicSelected.indexOf(code) !== -1 || !sicDesc(code)) return;
+  if (sicSelected.length >= SIC_MAX) { const n = document.getElementById("sic-full-note"); if (n) n.style.display = "block"; return; }
+  sicSelected.push(code);
+  sicCommit();
+  const inp = document.getElementById("sic-search"); if (inp) { inp.value = ""; inp.focus(); }
+  sicCloseResults();
+}
+function sicRemove(code) { sicSelected = sicSelected.filter(c => c !== code); sicCommit(); }
+function sicPaintActive(items) {
+  items.forEach((el, i) => el.classList.toggle("active", i === sicActiveIdx));
+  if (sicActiveIdx >= 0 && items[sicActiveIdx]) items[sicActiveIdx].scrollIntoView({ block: "nearest" });
+}
+function sicKeydown(e) {
+  const results = document.getElementById("sic-results");
+  if (!results || results.hidden) { return; }
+  const items = Array.prototype.slice.call(results.querySelectorAll(".sic-result"));
+  if (e.key === "ArrowDown") { e.preventDefault(); sicActiveIdx = Math.min(sicActiveIdx + 1, items.length - 1); sicPaintActive(items); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); sicActiveIdx = Math.max(sicActiveIdx - 1, 0); sicPaintActive(items); }
+  else if (e.key === "Enter") { e.preventDefault(); const pick = sicActiveIdx >= 0 ? items[sicActiveIdx] : items[0]; if (pick) sicAdd(pick.getAttribute("data-code")); }
+  else if (e.key === "Escape") { sicCloseResults(); }
 }
 
 /* ---------- State + persistence ----------
@@ -664,6 +816,7 @@ function renderForm() {
   const data = activeData() || {};
   document.querySelectorAll("[data-key]").forEach(el => { el.value = data[el.getAttribute("data-key")] || ""; });
   renderRenewalRows(parseCustomRenewals(data.customRenewals));
+  sicRenderFromValue();
 }
 
 function showSaved(iso) {
@@ -697,6 +850,7 @@ function onExternalCompanyChange() {
 
 let saveTimer = null;
 document.getElementById("sections").addEventListener("input", (e) => {
+  if (e.target && e.target.id === "sic-search") { sicSearch(e.target.value); return; }   // search box isn't a stored field
   // keep the switcher label in sync as the company name is typed
   if (e.target.getAttribute && e.target.getAttribute("data-key") === "companyName") {
     const opt = document.querySelector('#company-select option[value="' + activeId() + '"]');
@@ -710,6 +864,19 @@ document.getElementById("sections").addEventListener("input", (e) => {
     persist();
   }, 350);
 });
+
+// SIC picker (event delegation — survives section re-renders)
+document.getElementById("sections").addEventListener("click", (e) => {
+  const res = e.target.closest(".sic-result");
+  if (res) { sicAdd(res.getAttribute("data-code")); return; }
+  const del = e.target.closest(".sic-chip-del");
+  if (del) { sicRemove(del.getAttribute("data-code")); return; }
+});
+document.getElementById("sections").addEventListener("keydown", (e) => {
+  if (e.target && e.target.id === "sic-search") sicKeydown(e);
+});
+// Close the results dropdown when clicking away from the search box.
+document.addEventListener("click", (e) => { if (!e.target.closest(".sic-search-wrap")) sicCloseResults(); });
 
 // Reveal / copy / renewal rows (event delegation)
 document.getElementById("sections").addEventListener("click", async (e) => {

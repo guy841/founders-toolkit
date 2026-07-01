@@ -1,9 +1,9 @@
 /* HelpBnk service worker — makes the web app installable and fully offline.
    Cache-first for the app shell; network fallback; runtime-cache other GETs. */
-const CACHE = "helpbnk-v24";
+const CACHE = "helpbnk-v25";
 const CORE = [
   "./", "./index.html", "./privacy.html", "./manifest.webmanifest",
-  "./helm-config.js", "./helm-sync.js", "./helm-company.js",
+  "./helm-config.js", "./helm-sync.js", "./helm-company.js", "./sic-codes.js",
   "./fonts/fonts.css",
   "./fonts/manrope-400.woff2", "./fonts/manrope-500.woff2", "./fonts/manrope-600.woff2", "./fonts/manrope-700.woff2",
   "./fonts/outfit-500.woff2", "./fonts/outfit-600.woff2", "./fonts/outfit-700.woff2",

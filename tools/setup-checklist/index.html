@@ -149,7 +149,7 @@
   <div id="checklist"></div>
 
   <div class="disclaimer">
-    This checklist covers common obligations for UK limited companies and is general information, not legal or tax advice. Requirements depend on your specific circumstances — confirm anything important with HMRC, Companies House, the relevant regulator, or a qualified adviser. Thresholds and rules current for the 2024/25 tax year.
+    This checklist covers common obligations for UK limited companies and is general information, not legal or tax advice. Requirements depend on your specific circumstances — confirm anything important with HMRC, Companies House, the relevant regulator, or a qualified adviser. Rules and thresholds reflect the 2025/26 tax year, including recent Companies House changes under the Economic Crime and Corporate Transparency Act (registered email address and identity verification); confirm current figures before you rely on them.
   </div>
 
 </div>
@@ -173,6 +173,8 @@ const QUESTIONS = [
   { key: "highTurnover",label: "Will turnover approach £90,000 a year?",       sub: "The VAT registration threshold" },
   { key: "construction",label: "Do you work in construction?",                 sub: "May fall under CIS" },
   { key: "importExport",label: "Do you import or export goods?",               sub: "Needs an EORI number" },
+  { key: "premises",    label: "Do you work from business premises?",          sub: "An office, shop, unit or studio (not just home)" },
+  { key: "food",        label: "Do you prepare or sell food or drink?",        sub: "Any food business — even from a home kitchen" },
 ];
 
 /* ---------- Checklist items ---------- */
@@ -193,8 +195,15 @@ const show = {
 const ITEMS = [
   // Registrations & set-up
   { id: "incorporate", cat: "registration", level: "law", title: "Register the company with Companies House",
-    desc: "You'll have done this if the company already exists. Keep your incorporation certificate and company number to hand.",
+    desc: "You'll have done this if the company already exists. Keep your incorporation certificate and company number to hand. When you incorporate — and again at each confirmation statement — you also confirm the company is being run for a lawful purpose.",
     link: "https://www.gov.uk/limited-company-formation", linkLabel: "gov.uk", cost: "£50 online", show: () => true },
+  { id: "regemail", cat: "registration", level: "law", title: "Give Companies House a registered email address",
+    desc: "Since March 2024 every company must keep an 'appropriate' registered email address on the register (and a registered office that isn't just a PO box). Companies House uses it to reach you, so monitor it — a commonly-missed new duty.",
+    link: "https://www.gov.uk/guidance/changes-to-uk-company-law", linkLabel: "gov.uk", cost: "Free", show: () => true },
+  { id: "idverify", cat: "registration", level: "law", title: "Verify your identity at Companies House",
+    desc: "Under the Economic Crime and Corporate Transparency Act, directors and people with significant control (PSCs) must verify their identity with Companies House. New appointments verify up front; existing directors verify by their next confirmation statement.",
+    link: "https://www.gov.uk/guidance/changes-to-uk-company-law", linkLabel: "gov.uk", cost: "Free",
+    tool: DEADLINE_TOOL, toolLabel: "Check your confirmation statement date", show: () => true },
   { id: "authcode", cat: "registration", level: "required", title: "Get your Companies House authentication code",
     desc: "The code you need to file online (confirmation statements, accounts, changes). Request it early — it's posted to your registered office.",
     link: "https://www.gov.uk/guidance/company-authentication-codes-for-online-filing", linkLabel: "gov.uk", cost: "Free", show: () => true },
@@ -207,17 +216,27 @@ const ITEMS = [
   { id: "deadlines", cat: "registration", level: "law", title: "Diarise your filing deadlines",
     desc: "Annual accounts and the confirmation statement must be filed on time. Use the Deadline Copilot to calculate yours.",
     link: DEADLINE_TOOL, linkLabel: "Open Deadline Copilot", cost: "—", show: () => true },
+  { id: "businessrates", cat: "registration", level: "required", title: "Sort out business rates on your premises",
+    desc: "If you occupy non-domestic premises (an office, shop, unit or studio) you'll usually pay business rates — though small business rate relief often reduces or removes them. Working from home can also trigger rates on the business-used part.",
+    link: "https://www.gov.uk/introduction-to-business-rates", linkLabel: "gov.uk", cost: "varies", show: (a) => a.premises },
+  { id: "food", cat: "registration", level: "law", title: "Register as a food business",
+    desc: "If you prepare, sell, store or distribute food or drink you must register with your local authority at least 28 days before you start trading. It's free and can't be refused.",
+    link: "https://www.gov.uk/food-business-registration", linkLabel: "gov.uk", cost: "Free", show: (a) => a.food },
   { id: "accountant", cat: "registration", level: "recommended", title: "Appoint an accountant",
     desc: "Not required, but most directors save more than the fee in tax, time and avoided penalties.",
     cost: "varies", show: () => true },
+  { id: "bookkeeping", cat: "registration", level: "recommended", title: "Set up bookkeeping / accounting software",
+    desc: "Keep your records digitally from day one — it's also how you'll meet Making Tax Digital, under which VAT-registered businesses must keep digital records and file through compatible software.",
+    link: "https://www.gov.uk/vat-record-keeping", linkLabel: "gov.uk", cost: "£0–£30/mo", show: () => true },
 
   // Tax
   { id: "corptax", cat: "tax", level: "law", title: "Register for Corporation Tax with HMRC",
     desc: "You must register within 3 months of starting to do business (trading, advertising, employing, etc.).",
     link: "https://www.gov.uk/corporation-tax", linkLabel: "gov.uk", cost: "Free", show: () => true },
   { id: "vat", cat: "tax", level: "required", title: "Register for VAT",
-    desc: "Mandatory once VAT-taxable turnover exceeds £90,000 in any rolling 12 months. You can also register voluntarily below that.",
-    link: "https://www.gov.uk/vat-registration", linkLabel: "gov.uk", cost: "Free", show: (a) => a.highTurnover || a.products },
+    desc: "Mandatory once VAT-taxable turnover exceeds £90,000 in any rolling 12 months — you can also register voluntarily below that. Once registered you must keep digital records and file under Making Tax Digital for VAT.",
+    link: "https://www.gov.uk/vat-registration", linkLabel: "gov.uk", cost: "Free",
+    tool: "../vat-checker/index.html", toolLabel: "Open the VAT threshold checker", show: (a) => a.highTurnover || a.products },
   { id: "sa", cat: "tax", level: "recommended", title: "Check if you need Self Assessment",
     desc: "Directors often need to file a personal Self Assessment return — for example if you take dividends. Register if so.",
     link: "https://www.gov.uk/register-for-self-assessment", linkLabel: "gov.uk", cost: "Free", show: () => true },
@@ -274,6 +293,10 @@ const ITEMS = [
   { id: "shareholders", cat: "good", level: "recommended", title: "Put a shareholders' agreement in place",
     desc: "With more than one owner, agree up front what happens if someone wants out, dies, or you disagree.",
     cost: "varies", show: (a) => a.multiOwner },
+  { id: "dividends", cat: "good", level: "recommended", title: "Document any dividends properly",
+    desc: "If you take profits as dividends, hold a board meeting to declare each one (even as a sole director) and keep a dividend voucher and minutes. Without the paperwork HMRC can recharacterise them as salary or an overdrawn director's loan.",
+    link: "https://www.gov.uk/running-a-limited-company/taking-money-out-of-a-limited-company", linkLabel: "gov.uk", cost: "—",
+    tool: "../salary-dividends/index.html", toolLabel: "Salary vs Dividends optimiser", show: () => true },
   { id: "taxpot", cat: "good", level: "recommended", title: "Set aside money for tax",
     desc: "Keep Corporation Tax (and VAT, if registered) in a separate pot from day one — the classic year-one cash-flow trap.",
     cost: "—", show: () => true },
@@ -335,6 +358,8 @@ function renderChecklist(){
       const meta = [];
       if (it.cost) meta.push(`<span class="cost">${esc(it.cost)}</span>`);
       if (it.link) meta.push(`<a href="${esc(it.link)}" ${extLink(it.link) ? 'target="_blank" rel="noopener"' : ''}>${esc(it.linkLabel || "Open")} ${extLink(it.link) ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' : ''}</a>`);
+      // Optional internal cross-link to another tool in the toolkit.
+      if (it.tool) meta.push(`<a href="${esc(it.tool)}">${esc(it.toolLabel || "Open tool")} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>`);
       html += `
         <div class="item ${done ? "done" : ""}" data-testid="checklist-item">
           <label class="check">
@@ -411,7 +436,7 @@ document.getElementById("reset-btn").addEventListener("click", () => {
   HelmCompany.mountBanner(document.getElementById("hc-banner"), { hubHref: "../../index.html" });
   var aid = HelmCompany.activeId(); var p = HelmCompany.getProfile() || {};
   if (!aid) return;
-  var map = { employees: "employsStaff", publicFacing: "publicFacing", advice: "advice", products: "products", data: "handlesData", online: "online", multiOwner: "multiOwner", highTurnover: "vatRegistered", construction: "construction", importExport: "importExport" };
+  var map = { employees: "employsStaff", publicFacing: "publicFacing", advice: "advice", products: "products", data: "handlesData", online: "online", multiOwner: "multiOwner", highTurnover: "vatRegistered", construction: "construction", importExport: "importExport", premises: "premises", food: "food" };
   var seeded = false;
   Object.keys(map).forEach(function (qk) {
     if (Object.prototype.hasOwnProperty.call(state.answers, qk)) return;  // already answered/defaulted for this company

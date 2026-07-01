@@ -623,9 +623,10 @@ function computeDeadlines(input) {
     name: "Confirmation Statement",
     category: "Companies House",
     date: csDate,
-    description: input.confirmation
+    description: (input.confirmation
       ? "File your confirmation statement with Companies House (1 year after your last statement, plus 14 days)."
-      : "File your confirmation statement with Companies House (incorporation anniversary, plus 14 days)."
+      : "File your confirmation statement with Companies House (incorporation anniversary, plus 14 days).")
+      + " Also confirm your registered email and lawful purpose, and check every director's and PSC's identity verification is done."
   });
 
   // VAT Return (HMRC) — 1 month + 7 days after quarter-end

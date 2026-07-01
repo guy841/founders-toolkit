@@ -22,7 +22,7 @@
    Profile fields (all optional): incorporationDate "YYYY-MM-DD", yearEndDay 1-31,
    yearEndMonth 1-12, vatRegistered, vatQuarterEndMonth, employsStaff, directors,
    multiOwner, and "what you do" flags: products, advice, publicFacing,
-   handlesData, online, construction, importExport.
+   handlesData, online, construction, importExport, premises, food.
    ============================================================================= */
 (function () {
   "use strict";
@@ -142,7 +142,7 @@
   function hasFacts(p) {
     if (!p) return false;
     if (p.incorporationDate || (p.yearEndDay && p.yearEndMonth)) return true;
-    return ["employsStaff", "vatRegistered", "multiOwner", "products", "advice", "publicFacing", "handlesData", "online", "construction", "importExport"].some(function (k) { return p[k]; });
+    return ["employsStaff", "vatRegistered", "multiOwner", "products", "advice", "publicFacing", "handlesData", "online", "construction", "importExport", "premises", "food"].some(function (k) { return p[k]; });
   }
   // Longer, human summary for the collapsed Key facts card.
   function keyFactsSummary(p) {
@@ -197,6 +197,8 @@
     { k: "online", label: "Takes online / card payments" },
     { k: "construction", label: "Works in construction" },
     { k: "importExport", label: "Imports / exports goods" },
+    { k: "premises", label: "Has business premises" },
+    { k: "food", label: "Prepares or sells food" },
   ];
   api.mountKeyFacts = function (el) {
     injectStyles();

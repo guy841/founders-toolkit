@@ -1,6 +1,6 @@
 /* HelpBnk service worker — makes the web app installable and fully offline.
    Cache-first for the app shell; network fallback; runtime-cache other GETs. */
-const CACHE = "helpbnk-v23";
+const CACHE = "helpbnk-v24";
 const CORE = [
   "./", "./index.html", "./privacy.html", "./manifest.webmanifest",
   "./helm-config.js", "./helm-sync.js", "./helm-company.js",
@@ -15,7 +15,6 @@ const CORE = [
   "./tools/insurance-check/index.html",
   "./tools/salary-dividends/index.html",
   "./tools/vat-checker/index.html",
-  "./demo/helpbnk-demo-company.json",
 ];
 
 self.addEventListener("install", (e) => {

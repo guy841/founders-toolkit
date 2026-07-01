@@ -21,7 +21,9 @@
         "online": true,
         "products": false,
         "construction": false,
-        "importExport": false
+        "importExport": false,
+        "premises": true,
+        "food": false
       },
       "data": {
         "companyName": "Brightwave Studio Ltd",
